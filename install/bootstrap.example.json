@@ -1,0 +1,9 @@
+{
+  "ip": "192.168.1.70",
+  "lan_cidrs": ["192.168.1.0/24"],
+  "hostname": "dota2-lan",
+  "panel_port": 8443,
+  "game_port": 27015,
+  "timezone": "Asia/Tokyo",
+  "steamcmd_sha256": ""
+}

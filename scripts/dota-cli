@@ -1,0 +1,4 @@
+#!/bin/sh
+# Installed root-owned; invoke from LXC root or a user allowed on the agent socket.
+cd /opt/dota2-lan-kit || exit 1
+exec /usr/bin/python3 -m panel.cli "$@"

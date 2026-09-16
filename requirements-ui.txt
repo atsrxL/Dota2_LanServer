@@ -1,0 +1,2 @@
+# Optional local-only browser testing. NOT required for production.
+playwright>=1.50,<2

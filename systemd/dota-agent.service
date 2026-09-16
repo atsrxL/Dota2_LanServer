@@ -1,0 +1,43 @@
+[Unit]
+Description=Dota 2 LAN game and SteamCMD supervisor
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=120
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=steam
+Group=dota-control
+WorkingDirectory=/opt/dota2-lan-kit
+Environment=HOME=/var/lib/dota2 LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 -m panel.agent
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=55
+KillMode=mixed
+RuntimeDirectory=dota-agent
+RuntimeDirectoryMode=0750
+UMask=0077
+LimitNOFILE=65536
+LimitCORE=0
+NoNewPrivileges=true
+CapabilityBoundingSet=
+ProtectSystem=strict
+ReadWritePaths=/var/lib/dota2 /srv/dota2 /srv/steamcmd /run/dota-agent
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+# Do not use SystemCallArchitectures=native: SteamCMD needs 32-bit compatibility.
+# Do not use MemoryDenyWriteExecute: game/runtime JIT behavior can require it.
+
+[Install]
+WantedBy=multi-user.target

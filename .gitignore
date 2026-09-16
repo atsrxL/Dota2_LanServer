@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+pve/lxc.env
+pve/*.backup-*
+*.local.md
+*.key
+auth.json
+credentials*

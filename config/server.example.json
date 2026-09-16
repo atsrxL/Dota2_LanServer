@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "hostname": "Dota 2 LAN",
+  "port": 27015,
+  "map": "dota",
+  "game_mode": 1,
+  "game_password": "",
+  "insecure": false,
+  "cheats": false,
+  "auto_start": false,
+  "auto_restart": true,
+  "steam_username": ""
+}

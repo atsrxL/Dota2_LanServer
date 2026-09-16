@@ -1,0 +1,21 @@
+{
+  "scope": "Loopback development demo with fake SteamCMD and fake Dota only; not PVE or actual multiplayer",
+  "transport": "Offline DOM + real loopback HTTP via Python; browser navigation/TLS NOT TESTED",
+  "checks_passed": 13,
+  "checks": [
+    "Unauthenticated login page renders",
+    "Wrong password rejected and displayed",
+    "Authenticated dashboard shows real fake-process status / test Build ID",
+    "Steam action submitted; secret cleared and redacted from output",
+    "Task history updates",
+    "Server logs and restricted console preset operate",
+    "Settings form loads stored values",
+    "Configuration backup appears in UI",
+    "Authenticated diagnostics download is valid JSON",
+    "Served help page renders with Steam Guard guidance",
+    "390px mobile viewport has no horizontal page overflow",
+    "Logout invalidates session",
+    "No uncaught JavaScript page errors"
+  ],
+  "page_errors": []
+}
