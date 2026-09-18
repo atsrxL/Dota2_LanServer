@@ -17,7 +17,7 @@ PlayerResource={
  SetCustomTeamAssignment=function(_,i,t)players[i].team=t end,
  GetSteamAccountID=function(_,i)return i+1 end,
  GetPlayerName=function(_,i)return players[i].name end}
-local emitted={};local mode={SetPauseEnabled=function()end,SetBotThinkingEnabled=function(_,v)emitted.thinking=v end,
+local emitted={};local mode={SetFreeCourierModeEnabled=function(_,v)emitted.free_courier=v end,SetPauseEnabled=function()end,SetBotThinkingEnabled=function(_,v)emitted.thinking=v end,
  SetContextThink=function(_,name,fn)emitted.tick=fn end}
 local state=2;local cheat=false
 GameRules={GetGameModeEntity=function()return mode end,IsCheatMode=function()return cheat end,
@@ -35,7 +35,7 @@ Convars={RegisterCommand=function()end,GetCommandClient=function()return nil end
 SendToServerConsole=function(s)assert(not s:find('sv_cheats'));end
 PauseGame=function(v)emitted.pause=v end
 local engine=Engine.new({client_revision='v1',session=string.rep('a',32),source_sha256='fixture',bot_available=true,bot_globals={'GetBot'}})
-engine:init();assert(emitted.autolaunch==false and emitted.timeout==-1 and emitted.thinking==false)
+engine:init();assert(emitted.free_courier==true);assert(emitted.autolaunch==false and emitted.timeout==-1 and emitted.thinking==false)
 engine:tick();assert(engine.room.phase=='setup' and not engine.room.started)
 local function act(id,action,data)
  local k=data or {};k.action=action;k.revision=engine.room.revision;k.client_revision='v1'

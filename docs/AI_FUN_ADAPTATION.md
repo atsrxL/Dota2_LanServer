@@ -47,3 +47,9 @@ At pregame/playing, the same left panel replaces setup controls with Player (res
 Live r15 showed expected/observed 9 bot player slots, but repeated AI_POSITIONS only listed one Luna. That hero moved and native Tiandixing callbacks reached 1024. All AddBot calls previously requested the same Luna; changed allocation to distinct standard heroes excluding already-selected player heroes. Added hero-entity count verification in addition to fake-client slot counts. This targets the observed missing-hero issue; new-match hero-count verification remains necessary. Hero allocation is now this addon's fixed pool rather than claiming Tiandixing chose every hero.
 
 In-match menu defaults to a 60px Tools launcher to the right of the top scoreboard; expanded width245px with smaller buttons. Position uses Panorama reference coordinates and awaits visual confirmation at client's resolution. Real compilation and 42 addon tests passed, including unique hero allocation. r16 deployed.
+
+## Free courier fix and pending neutral acceleration
+
+Restored original AI Fun SetFreeCourierModeEnabled(true) during game-mode initialization. This enables standard free courier spawning, not the removed fast courier modifier. 42 addon tests passed with explicit initialization assertion; deployed server-side, gameplay spawning awaits confirmation.
+
+Requested neutral acceleration: tier1 default, tiers2–5 at 5/10/15/20 minutes, tier5 recrafting at25. Current build's neutral_items.txt has neutral_tiers/start_time and madstone_limits/madstone_no_limit_time=70:00, no separate recraft time. Public Lua API lacks a runtime schema setter. A setup-panel switch remains unimplemented pending proven schema load/reload and recraft gating; no dummy control added and madstone limit not misrepresented as a proven recraft-time field.

@@ -306,6 +306,7 @@ end
 function Engine:init()
     if method(Convars,'SetBool') then Convars:SetBool('sv_cheats',true) end
     self.mode=GameRules:GetGameModeEntity()
+    if method(self.mode,'SetFreeCourierModeEnabled') then self.mode:SetFreeCourierModeEnabled(true) end
     require('lan.cheats').init(self)
     for _,name in ipairs({'EnableCustomGameSetupAutoLaunch','SetCustomGameSetupTimeout','FinishCustomGameSetup',
         'SetCustomGameTeamMaxPlayers','LockCustomGameSetupTeamAssignment','SetHeroSelectionTime','SetPreGameTime'}) do
