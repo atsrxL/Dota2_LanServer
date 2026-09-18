@@ -139,3 +139,16 @@ chats.handle(tutorial,{playerid=0,text='-gold 100'});assert(balance==700)
 chats.handle(tutorial,{playerid=0,text='-lvlup 2'});assert(level==3)
 chats.handle(tutorial,{playerid=0,text='-gold 100;quit'});assert(balance==700)
 chats.handle(tutorial,{playerid=1,text='-gold 100'});assert(balance==700)
+
+-- Menu targets selected side bots, never other humans, with fixed amounts.
+tutorial.room.phase='playing';tutorial.room.players[0].hello=true
+local amounts={[0]=600,[1]=600,[2]=600,[3]=600}
+players={[0]={team=2,conn=2},[1]={team=2,conn=2},[2]={team=3,conn=2},[3]={team=3,conn=2}}
+PlayerResource.GetTeam=function(_,pid)return players[pid].team end
+PlayerResource.IsFakeClient=function(_,pid)return pid==1 or pid==2 end
+PlayerResource.GetUnreliableGold=function(_,pid)return amounts[pid] end
+PlayerResource.GetSelectedHeroEntity=function(_,pid)return {SetGold=function(_,n)amounts[pid]=n end} end
+assert(chats.button(tutorial,0,'ally_gold'));assert(amounts[1]==1600 and amounts[0]==600 and amounts[2]==600)
+assert(chats.button(tutorial,0,'enemy_gold'));assert(amounts[2]==1600 and amounts[3]==600)
+assert(not chats.button(tutorial,0,'arbitrary_command'))
+tutorial.room.phase='setup';assert(not chats.button(tutorial,0,'self_gold'))

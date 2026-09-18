@@ -41,3 +41,13 @@ Button:disabled { opacity:0.35; }
 #LANWindow { max-height:94%; margin-top:20px; }
 #LANBody { max-height:780px; overflow:squish scroll; }
 .GameOptionsSubPanel_DropDown { min-height:38px; margin-top:7px; }
+
+#MatchBody { visibility:collapse; width:100%; flow-children:down; }
+#LANRoot.InMatch #LANBody { visibility:collapse; }
+#LANRoot.InMatch #MatchBody { visibility:visible; }
+#LANRoot.InMatch #LANWindow { width:320px; }
+#LANRoot.Compact #MatchBody { visibility:collapse; }
+#LANRoot.InMatch.Compact #LANWindow { width:220px; }
+.ToolSection { color:#e6a152; font-size:18px; margin:12px 0px 5px 0px; }
+.ToolButton { width:100%; margin-top:5px; padding:8px; }
+.ToolButton Label { font-size:17px; }

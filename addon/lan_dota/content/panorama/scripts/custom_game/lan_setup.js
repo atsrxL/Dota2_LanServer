@@ -48,12 +48,15 @@ function el(id){return context.FindChildTraverse(id);}
 function value(id){return Number(el(id).GetSelected().id);}
 
 function yes(v){return v===true || v===1 || v==='1';}
-function msg(s){el('Message').text=String(s);}
+function msg(s){el('Message').text=String(s);el('ToolMessage').text=String(s);}
 function send(action,extra){var d=extra||{};d.action=action;d.revision=state?Number(state.revision):0;d.client_revision='lanlab-130.1';GameEvents.SendCustomGameEventToServer('lan_action',d);}
 function render(s){
  if(!s)return;state=s;
- if(lastPhase!==s.phase){lastPhase=s.phase;collapsed=['hero_selection','pregame','playing','postgame'].indexOf(s.phase)>=0;}
+ if(lastPhase!==s.phase){lastPhase=s.phase;collapsed=['hero_selection','postgame'].indexOf(s.phase)>=0;}
  el('LANRoot').SetHasClass('Compact',collapsed);
+ var inMatch=['pregame','playing','postgame'].indexOf(s.phase)>=0;
+ el('LANRoot').SetHasClass('InMatch',inMatch);
+ el('MenuTitle').text=inMatch?'对局操作':'游戏选项';
  var phases={setup:'调整参数后开始',waiting_engine:'等待服务器',starting:'正在开始',hero_selection:'英雄选择',pregame:'准备出兵',playing:'比赛中',postgame:'比赛结束',error:'运行异常'};
  el('Phase').text=phases[s.phase]||s.phase;
  if(!initialized && s.options){initialized=true;el('Difficulty').SetSelected(String(s.options.difficulty));el('SelectionSeconds').SetSelected(String(s.options.selection_seconds));el('PregameSeconds').SetSelected(String(s.options.pregame_seconds));el('AllowPause').checked=yes(s.options.allow_pause);}
@@ -87,9 +90,10 @@ send('solo_start',{options:options});
  $.Schedule(5,function(){if(pending){pending=false;msg('尚未收到确认，请检查连接后重试。');render(state);}});
  }catch(e){pending=false;msg('操作失败：'+String(e));render(state);}
 });
+[['SelfRespawn','self_respawn'],['SelfRefresh','self_refresh'],['SelfGold','self_gold'],['AllyGold','ally_gold'],['EnemyGold','enemy_gold'],['AllyLevel','ally_level'],['EnemyLevel','enemy_level']].forEach(function(pair){el(pair[0]).SetPanelEvent('onactivate',function(){msg('正在执行…');send('match_tool',{tool:pair[1]});});});
 el('Toggle').SetPanelEvent('onactivate',function(){collapsed=!collapsed;render(state);});
 var errors={solo_requires_one_player:'单人模式只允许一名真人连接。',bot_snapshot_missing:'尚未加载 AI 脚本。',invalid_options:'参数无效，请检查数字范围。',invalid_number:'选人30–120秒，赛前10–60秒，金币25–1000%。',bot_populate_requires_explicit_cheats:'服务器需要开启 sv_cheats 后重开。',stale_revision:'状态已更新，请重试。'};
-GameEvents.Subscribe('lan_reply',function(r){pending=false;msg(yes(r.ok)?'设置已确认。':(errors[r.message]||String(r.message)));render(state);});
+GameEvents.Subscribe('lan_reply',function(r){pending=false;msg(yes(r.ok)?(r.message&&r.message!=='ok'?r.message:'设置已确认。'):(errors[r.message]||String(r.message)));render(state);});
 CustomNetTables.SubscribeNetTableListener('lan_room',function(_,key,v){if(key==='state')render(v);});
 function poll(){if(!context.IsValid())return;var s=CustomNetTables.GetTableValue('lan_room','state');render(s);var ps=s?Object.keys(s.players||{}).map(function(k){return s.players[k];}):[];if(!ps.some(function(p){return Number(p.pid)===Game.GetLocalPlayerID()&&yes(p.hello);}))send('hello');$.Schedule(2,poll);}
 poll();

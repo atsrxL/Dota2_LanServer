@@ -77,6 +77,8 @@ function Engine:dispatch(source,keys)
         local before=self.room.players[pid] and self.room.players[pid].hello
         ok,err=self.room:hello(pid,keys.client_revision)
         if ok and not before then self:emit('UI_HELLO',tostring(pid)) end
+    elseif action=='match_tool' then
+        ok,err=require('lan.cheats').button(self,pid,keys.tool)
     elseif action=='solo_start' then
         ok,err=self.room:authorize(pid,rev,true)
         if ok then

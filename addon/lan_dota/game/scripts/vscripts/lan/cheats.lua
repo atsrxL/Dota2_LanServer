@@ -40,6 +40,43 @@ function M.handle(e,k)
  end
  e:emit('CHAT_CHEAT',result)
 end
+function M.button(e,pid,action)
+ local actions={self_respawn=true,self_refresh=true,self_gold=true,ally_gold=true,enemy_gold=true,ally_level=true,enemy_level=true}
+ if not actions[action] then return false,'未知操作' end
+ if e.room.phase~='pregame' and e.room.phase~='playing' then return false,'进入比赛后才能操作' end
+ local p=e.room.players[pid]
+ if not p or not p.connected or not p.hello then return false,'ui_handshake_required' end
+ if not Convars:GetBool('sv_cheats') then return false,'作弊开关未开启' end
+ local team=PlayerResource:GetTeam(pid)
+ local count=0
+ for target=0,63 do
+  if PlayerResource:IsValidPlayerID(target) then
+   local own=action:sub(1,5)=='self_'
+   local bot=PlayerResource.IsFakeClient and PlayerResource:IsFakeClient(target)
+   local same=PlayerResource:GetTeam(target)==team
+   local selected=(own and target==pid) or (not own and bot and ((action:sub(1,5)=='ally_' and same) or (action:sub(1,6)=='enemy_' and not same and (PlayerResource:GetTeam(target)==2 or PlayerResource:GetTeam(target)==3))))
+   local h=selected and PlayerResource:GetSelectedHeroEntity(target) or nil
+   if h then
+    if action:find('_gold',1,true) then
+     h:SetGold(PlayerResource:GetUnreliableGold(target)+1000,false)
+    elseif action:find('_level',1,true) then
+     if h:GetLevel()<(e.room.options.max_level or 30) then h:HeroLevelUp(false) end
+    else
+     if action=='self_respawn' and not h:IsAlive() then h:RespawnHero(false,false) end
+     if action=='self_respawn' and type(GetTeamFountain)=='function' and type(FindClearSpaceForUnit)=='function' then
+      local fountain=GetTeamFountain(team);if fountain then FindClearSpaceForUnit(h,fountain:GetAbsOrigin(),true) end
+     end
+     h:SetHealth(h:GetMaxHealth());h:SetMana(h:GetMaxMana())
+     for n=0,23 do local a=h:GetAbilityByIndex(n);if a then a:EndCooldown() end end
+     for n=0,16 do local item=h:GetItemInSlot(n);if item then item:EndCooldown() end end
+    end
+    count=count+1
+   end
+  end
+ end
+ e:emit('MENU_CHEAT',{pid=pid,action=action,targets=count})
+ return count>0,count>0 and ('已执行，目标 '..count..' 个') or '没有可操作的英雄'
+end
 function M.init(e)
  if type(ListenToGameEvent)~='function' then return end
  ListenToGameEvent('player_chat',function(k)

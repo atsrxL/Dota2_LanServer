@@ -36,6 +36,7 @@ assert(sent.at(-1).action==='solo_start' && sent.at(-1).options.radiant_gold_mul
 assert(!all.get('Start').enabled);
 handlers.lan_reply({ok:0,message:'invalid_number'});assert(all.get('Start').enabled);
 current.phase='playing';listeners.lan_room('lan_room','state',current);
-assert(all.get('LANRoot').classes.Compact);
-all.get('Toggle').events.onactivate();assert(!all.get('LANRoot').classes.Compact);
+assert(all.get('LANRoot').classes.InMatch && !all.get('LANRoot').classes.Compact);
+all.get('EnemyGold').events.onactivate();assert(sent.at(-1).action==='match_tool' && sent.at(-1).tool==='enemy_gold');
+all.get('Toggle').events.onactivate();assert(all.get('LANRoot').classes.Compact);
 console.log('Panorama MOCK: adapted dynamic options, solo request, pending/reply, compact toggle PASS');

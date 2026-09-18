@@ -2,7 +2,7 @@
 <styles><include src="s2r://panorama/styles/dotastyles.vcss" /><include src="file://{resources}/styles/custom_game/lan_setup.css" /></styles>
 <scripts><include src="file://{resources}/scripts/custom_game/lan_setup.js" /></scripts>
 <Panel class="LANRoot" hittest="false"><Panel id="LANRoot" hittest="false"><Panel id="LANWindow">
-<Panel class="Header"><Label class="Title" text="游戏选项" /><Button id="Toggle"><Label hittest="false" text="收起 / 展开" /></Button></Panel>
+<Panel class="Header"><Label id="MenuTitle" class="Title" text="游戏选项" /><Button id="Toggle"><Label hittest="false" text="收起 / 展开" /></Button></Panel>
 <Label id="Phase" text="连接服务器中…" />
 <Panel id="LANBody">
 <Label class="Subtitle" text="单人 AI 对战" />
@@ -12,4 +12,4 @@
 <Label id="BotInfo" class="Hint" text="检查 AI 脚本…" />
 <Label id="Message" class="Message" text="确认后自动补 AI 并进入英雄选择。" />
 <Button id="Start" class="Primary"><Label hittest="false" text="确认设置并开始" /></Button>
-</Panel></Panel></Panel></Panel></root>
+</Panel><Panel id="MatchBody"><Label class="ToolSection" text="玩家" /><Button id="SelfRespawn" class="ToolButton"><Label hittest="false" text="重置" /></Button><Button id="SelfRefresh" class="ToolButton"><Label hittest="false" text="刷新" /></Button><Button id="SelfGold" class="ToolButton"><Label hittest="false" text="给自己 +1000 金币" /></Button><Label class="ToolSection" text="金币" /><Button id="AllyGold" class="ToolButton"><Label hittest="false" text="给己方 Bot +1000 金币" /></Button><Button id="EnemyGold" class="ToolButton"><Label hittest="false" text="给对方 Bot +1000 金币" /></Button><Label class="ToolSection" text="等级" /><Button id="AllyLevel" class="ToolButton"><Label hittest="false" text="给己方 Bot +1 级" /></Button><Button id="EnemyLevel" class="ToolButton"><Label hittest="false" text="给对方 Bot +1 级" /></Button><Label id="ToolMessage" class="Message" text="选择操作" /></Panel></Panel></Panel></Panel></root>

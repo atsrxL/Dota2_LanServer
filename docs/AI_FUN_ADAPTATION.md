@@ -35,3 +35,9 @@ r12 live match reached playing with expected=12/observed=12 and no pause/error; 
 ## r14 chat cheats (explicit compatibility bridge)
 
 User verified native -gold 100 had no effect with sv_cheats true. No verified setter for GC lobby allow_cheats was found. Added explicitly scoped addon player_chat handlers for -gold, -lvlup, -refresh, -respawn, default enabled via sv_cheats. Does NOT claim full native cheat mode or change GameRules:IsCheatMode. Uses engine player_chat identity, fixed command parsing, no arbitrary console execution, exact gold changes independent of income multiplier, bounded level gain. Records CHAT_CHEAT before/after. 42 addon tests pass; actual client chat effects require verification after reconnection.
+
+## r15 in-match tools menu
+
+At pregame/playing, the same left panel replaces setup controls with Player (reset/refresh/self +1000), Gold (all allied/enemy bots +1000 each), Levels (all allied/enemy bots +1 each). Setup controls stay hidden even when expanded. Team is resolved server-side from event-source player; bot operations filter IsFakeClient and exclude other humans. Fixed action allowlist, phase/handshake checks; gold bypasses income scaling; levels capped. MENU_CHEAT logs target counts. Reset revives and refreshes, and returns to fountain if GetTeamFountain is available. This remains an addon API implementation, not native lobby cheat mode.
+
+42 addon tests passed with team targeting, excluded humans, invalid action/phase, and menu transition payload checks; real Windows compilation passed. r15 deployed; actual visual/button effects await user gameplay validation.
