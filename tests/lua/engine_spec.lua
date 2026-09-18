@@ -80,3 +80,24 @@ recovered:start_match()
 local gain={gold=37};assert(filter(gain) and gain.gold==74)
 local loss={gold=-100};assert(filter(loss) and loss.gold==-100)
 local zero={gold=0};assert(filter(zero) and zero.gold==0)
+
+-- Solo confirmation validates authority/count and starts only once.
+players={[0]={team=5,conn=2,name='Solo'}};state=2;cheat=true
+local solo=Engine.new({client_revision='v1',session=string.rep('c',32),source_sha256='fixture',bot_available=true})
+solo:init();solo:tick()
+local function soloact(action,opts)
+ emitted.listener(100,{action=action,revision=solo.room.revision,client_revision='v1',options=opts})
+end
+soloact('hello')
+players[1]={team=5,conn=2,name='Other'};solo:tick()
+soloact('solo_start',{})
+assert(emitted.reply.message=='solo_requires_one_player' and not solo.room.started)
+players[1]=nil;solo:tick()
+soloact('solo_start',{gold_percent=0})
+assert(not solo.room.started)
+local before=emitted.finish
+soloact('solo_start',{gold_percent=150,difficulty=2,allow_pause=1})
+assert(solo.room.started and players[0].team==2 and solo.room.options.fill_bots)
+assert(solo.room.options.gold_percent==150 and emitted.finish==before+1)
+soloact('solo_start',{})
+assert(emitted.finish==before+1)

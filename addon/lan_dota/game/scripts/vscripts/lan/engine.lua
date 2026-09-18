@@ -77,6 +77,42 @@ function Engine:dispatch(source,keys)
         local before=self.room.players[pid] and self.room.players[pid].hello
         ok,err=self.room:hello(pid,keys.client_revision)
         if ok and not before then self:emit('UI_HELLO',tostring(pid)) end
+    elseif action=='solo_start' then
+        ok,err=self.room:authorize(pid,rev,true)
+        if ok then
+            local count=0
+            for _,p in pairs(self.room.players) do if p.connected then count=count+1 end end
+            if count~=1 then ok=false;err='solo_requires_one_player' end
+        end
+        if ok then
+            local raw=keys.options
+            local value={bot_mode='tiandixing_native_lab',fill_bots=true,ack_unverified=true}
+            local allowed={difficulty=true,gold_percent=true,selection_seconds=true,pregame_seconds=true,allow_pause=true}
+            if type(raw)~='table' then ok=false else
+                for k,v in pairs(raw) do
+                    if not allowed[k] then ok=false
+                    elseif k=='allow_pause' then
+                        if v~=0 and v~=1 then ok=false else value[k]=v==1 end
+                    else value[k]=numeric(v);if value[k]==nil then ok=false end end
+                end
+            end
+            if not ok then err='invalid_options'
+            else ok,err=self.room:set_options(pid,rev,value) end
+        end
+        if ok then
+            self.room.cheats=GameRules:IsCheatMode()
+            if not self.room.cheats then ok=false;err='bot_populate_requires_explicit_cheats' end
+        end
+        if ok then
+            PlayerResource:SetCustomTeamAssignment(pid,2)
+            if PlayerResource:GetCustomTeamAssignment(pid)~=2 then ok=false;err='engine_team_assignment_failed'
+            else
+                self.room:assign(pid,2,1)
+                ok,err=self.room:set_ready(pid,self.room.revision,true)
+                if ok then ok,err=self.room:can_start(pid,self.room.revision) end
+                if ok then self:start_match() end
+            end
+        end
     elseif action=='team' then
         local team,role=numeric(keys.team),numeric(keys.role)
         ok,err=self.room:check_team(pid,rev,team,role)

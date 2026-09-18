@@ -1,58 +1,39 @@
 .LANRoot, #LANRoot { width:100%; height:100%; }
+#LANWindow { width:440px; max-height:850px; horizontal-align:left; vertical-align:top; margin:52px 0px 0px 16px; padding:18px; flow-children:down; background-color:gradient(linear,0% 0%,0% 100%,from(#20282ff5),to(#0c1118f5)); border:1px solid #46535c; overflow:squish scroll; }
 #LANBody { width:100%; flow-children:down; }
-#LANWindow { width:1120px; max-height:960px; horizontal-align:center; vertical-align:center; flow-children:down; padding:24px; background-color:#111a26f5; border:1px solid #526476; box-shadow:fill #000a 0px 4px 18px 0px; overflow:squish scroll; }
-#LANRoot.Compact #LANWindow { width:450px; horizontal-align:right; vertical-align:top; margin:74px 24px 0px 0px; }
-#LANRoot.Compact #LANBody { visibility:collapse; }
-Label { color:#e0e8ed; font-size:18px; font-family:Arial; }
-.Title { font-size:34px; font-weight:bold; margin:8px 0px; }
-.Eyebrow { font-size:14px; color:#82b9cd; width:fill-parent-flow(1); }
-.TitleRow { flow-children:right; width:100%; vertical-align:center; }
-#Phase { color:#88d8be; margin-bottom:8px; }
-.Message { color:#e8cb89; width:100%; font-size:17px; margin-bottom:8px; }
-.Warning { color:#d0b687; font-size:16px; width:100%; margin-bottom:12px; }
-.Teams { flow-children:right; width:100%; }
-.TeamColumn { width:fill-parent-flow(1); flow-children:down; background-color:#1b2b37; padding:12px; margin-right:12px; }
-.TeamTitle { color:#a8d8df; font-size:20px; margin-bottom:8px; }
-#RadiantRows, #DireRows { flow-children:down; width:100%; }
-.PlayerRow { font-size:17px; width:100%; min-height:29px; }
-.Row { flow-children:right; width:100%; min-height:44px; margin:8px 0px; vertical-align:center; }
-.FieldName { width:230px; vertical-align:center; }
-.Footnote { color:#95a9b8; font-size:15px; width:100%; margin:3px 0px; }
-.Row .Footnote { width:fill-parent-flow(1); vertical-align:center; }
-#HostOptions { flow-children:down; width:100%; margin-top:14px; padding-top:12px; border-top:1px solid #395061; }
-Button { background-color:#314958; border:1px solid #658295; padding:9px 14px; margin-right:9px; }
+Label { color:#dce3e8; font-family:Arial; font-size:17px; }
+.Header { width:100%; flow-children:right; margin-bottom:12px; }
+.Title { color:#e6a152; font-size:27px; width:fill-parent-flow(1); }
+#Phase { color:#8bc7ba; font-size:15px; margin-bottom:12px; }
+.Subtitle { font-size:20px; margin:8px 0px; }
+.Hint { color:#8fa3b0; font-size:15px; width:100%; margin:6px 0px; }
+.Row { width:100%; flow-children:right; min-height:44px; margin-top:10px; }
+.FieldName { width:fill-parent-flow(1); vertical-align:center; }
+DropDown { width:170px; height:38px; margin:0px; }
+DropDown Label { font-size:17px; }
+DropDownMenu { flow-children:down; background-color:#202c35; max-height:320px; overflow:squish scroll; }
+DropDownMenu Label { width:100%; padding:8px 12px; font-size:17px; }
+TextEntry { width:170px; height:38px; padding:6px 10px; color:white; font-size:18px; background-color:#111b23; border:1px solid #52636e; }
+ToggleButton { width:34px; height:34px; margin-right:130px; }
+Button { padding:6px 10px; background-color:#263744; border:1px solid #526775; }
+Button Label { horizontal-align:center; font-size:15px; }
 Button:hover { brightness:1.4; }
-Button:disabled { saturation:0; opacity:0.35; }
-Button.Primary { background-color:#235b56; border:1px solid #58aa98; }
-Button Label { font-size:17px; }
-DropDown { width:260px; height:40px; background-color:#20333f; margin-right:12px; }
-#MyTeam { width:150px; }
-#MyRole { width:230px; }
-#TransferTarget { width:220px; }
-ToggleButton { min-width:180px; min-height:36px; }
-DropDown Label { font-size:17px; vertical-align:center; }
-DropDownMenu { background-color:#20333f; border:1px solid #587483; }
-DropDownMenu Label { font-size:17px; padding:8px; }
-TextEntry { width:90px; height:40px; margin-right:12px; color:#fff; font-size:20px; background-color:#213340; }
-ToggleButton { margin:5px 14px 5px 0px; vertical-align:center; }
-ToggleButton Label { font-size:16px; color:#d7e3e9; }
-#Owner { color:#a1c7d4; vertical-align:center; }
-.Footer { margin-top:16px; }
+Button:disabled { opacity:0.35; }
+.Primary { width:100%; margin-top:18px; padding:12px; background-color:#24636b; border:1px solid #52969c; }
+.Primary Label { font-size:23px; }
+.Message { width:100%; color:#e4bf85; margin-top:12px; font-size:16px; }
+#LANRoot.Compact #LANWindow { width:220px; padding:8px; margin:52px 0px 0px 12px; }
+#LANRoot.Compact #LANBody, #LANRoot.Compact .Title { visibility:collapse; }
+#LANRoot.Compact .Header { margin-bottom:0px; }
+#LANRoot.Compact #Phase { margin:4px 0px 0px 0px; }
 
-/* Base controls require dotastyles.css: selection visibility, popup lifecycle,
-   dropdown arrow and checkbox children are engine-managed. Scope our overrides. */
-#LANWindow DropDown { padding:0px 30px 0px 10px; border:1px solid #587483; }
-#LANWindow DropDown Label { width:100%; margin:0px; padding:0px; text-overflow:ellipsis; }
-/* Native DropDown controls selected-label visibility. */
-DropDownMenu { flow-children:down; max-height:360px; overflow:squish scroll; padding:4px; }
-DropDownMenu Label { width:100%; min-height:38px; margin:0px; padding:8px 12px; }
-DropDownMenu Label:hover { background-color:#365463; }
-#LANWindow ToggleButton { flow-children:right; }
-#LANWindow ToggleButton Label { vertical-align:center; margin-left:8px; }
-#LANWindow TextEntry { padding:6px 8px; }
-
-#LANRoot.Compact #LANWindow { width:260px; padding:8px; margin:70px 12px 0px 0px; max-height:110px; }
-#LANRoot.Compact .Title, #LANRoot.Compact .Eyebrow, #LANRoot.Compact #Message { visibility:collapse; }
-#LANRoot.Compact #Phase { font-size:15px; margin:4px 0px 0px 0px; }
-#LANRoot.Compact #Toggle { padding:4px 8px; }
-#LANRoot.Compact #Toggle Label { font-size:14px; }
+/* Adapted from AI Fun custom_loading_screen.css option rows/buttons. */
+.GameOptionsSubPanel_DropDown{flow-children: right;margin-top: 10px;width: 100%;tooltip-position: left;}
+.GameOptionsSubPanel_DropDown Label{text-align: left;horizontal-align: middle;vertical-align:center;color: #ffffff;}
+.GameOptionsSubPanel_DropDown .GameOptionsDropdown{margin-left: 10px;width: 200px;horizontal-align:right;flow-children:down;}
+.GameOptionButton{margin-top: 30px;width: 100%;height: 40px;background-image: url("s2r://panorama/images/backgrounds/background_play_button_large_2x_png.vtex");background-size: 100% 100%;background-color: gradient( linear, 0% 0%, 0% 100%, from( #303090FF ), to( #4444D0FF ) );box-shadow: #000000 0px 0px 10px 0px;transition-property: background-color;transition-duration: 0.2s;}
+.GameOptionButton Label{font-size: 24px;horizontal-align: center;vertical-align: center;color: #ffffff;}
+#GameOptionSubpanelContainerInner { width:100%; flow-children:down; }
+.GameOptionsSubPanel_DropDown Label { width:fill-parent-flow(1); }
+.GameOptionsSubPanel_DropDown .GameOptionsDropdown { width:155px; flow-children:none; }
+.GameOptionsDropdown Label { width:100%; }

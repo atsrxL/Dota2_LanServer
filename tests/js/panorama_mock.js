@@ -21,20 +21,21 @@ const sandbox={console,JSON,Object,String,Number,
  Game:{GetLocalPlayerID:()=>0},
  GameEvents:{SendCustomGameEventToServer(name,data){assert(name==='lan_action');assert(!('PlayerID' in data));sent.push(data);},Subscribe(name,fn){handlers[name]=fn;}},
  CustomNetTables:{SubscribeNetTableListener(name,fn){listeners[name]=fn;},GetTableValue(){return current;}}};
+
+sandbox.$=Object.assign(function(selector){return all.get(selector.slice(1));},sandbox.$);
+const create=sandbox.$.CreatePanel;
+sandbox.$.CreatePanel=function(type,parent,id,attrs){const p=create(type,parent,id);Object.assign(p,attrs||{});return p;};
 vm.runInNewContext(source,sandbox,{filename:'lan_setup.js'});
-assert(sent[0].action==='hello');assert(all.get('MyTeam').selected==='team2');
-current={phase:'setup',revision:9,host:0,players:[{pid:0,name:'TEST PLAYER',connected:1,hello:1,ready:0,team:2,role:1}],
- options:{bot_mode:'none',fill_bots:0,ack_unverified:0,difficulty:2,selection_seconds:60,pregame_seconds:30,allow_pause:1},
- bot_available:0,cheats:0};
+assert(sent[0].action==='hello');
+current={phase:'setup',revision:9,host:0,players:[{pid:0,hello:1}],bot_available:1,options:{difficulty:2,gold_percent:100,selection_seconds:60,pregame_seconds:30,allow_pause:1}};
 listeners.lan_room('lan_room','state',current);
-assert(all.get('Start').enabled&&all.get('Ready').enabled);
-assert(all.get('RadiantRows').children.length===5);
-all.get('Assign').events.onactivate();assert(sent.at(-1).action==='team'&&sent.at(-1).team===2);
-all.get('Ready').events.onactivate();assert(sent.at(-1).ready===1);
-all.get('SaveOptions').events.onactivate();assert(sent.at(-1).options.selection_seconds===60);
-all.get('Start').events.onactivate();assert(sent.at(-1).action==='start'&&sent.at(-1).revision===9);
-handlers.lan_reply({ok:0,message:'host_only'});assert(all.get('Message').text.includes('配置者'));
-current.host=1;listeners.lan_room('lan_room','state',current);assert(!all.get('Start').enabled);
-current.phase='playing';listeners.lan_room('lan_room','state',current);assert(all.get('LANRoot').classes.Compact&&!all.get('Ready').enabled);
-current.phase='error';current.error='ENGINE TEST FAILURE';listeners.lan_room('lan_room','state',current);assert(all.get('Message').text==='ENGINE TEST FAILURE');
-console.log('Panorama MOCK: XML ids, hello, rendering, 5 slots/team, team/options/ready/start payloads, authority UI, errors PASS');
+all.get('GoldPercent').SetSelected('200');
+all.get('GoldPercent').events.oninputsubmit();
+all.get('Start').events.onactivate();
+assert(sent.at(-1).action==='solo_start' && sent.at(-1).options.gold_percent===200);
+assert(!all.get('Start').enabled);
+handlers.lan_reply({ok:0,message:'invalid_number'});assert(all.get('Start').enabled);
+current.phase='playing';listeners.lan_room('lan_room','state',current);
+assert(all.get('LANRoot').classes.Compact);
+all.get('Toggle').events.onactivate();assert(!all.get('LANRoot').classes.Compact);
+console.log('Panorama MOCK: adapted dynamic options, solo request, pending/reply, compact toggle PASS');
