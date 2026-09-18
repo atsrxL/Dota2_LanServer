@@ -53,3 +53,7 @@ In-match menu defaults to a 60px Tools launcher to the right of the top scoreboa
 Restored original AI Fun SetFreeCourierModeEnabled(true) during game-mode initialization. This enables standard free courier spawning, not the removed fast courier modifier. 42 addon tests passed with explicit initialization assertion; deployed server-side, gameplay spawning awaits confirmation.
 
 Requested neutral acceleration: tier1 default, tiers2–5 at 5/10/15/20 minutes, tier5 recrafting at25. Current build's neutral_items.txt has neutral_tiers/start_time and madstone_limits/madstone_no_limit_time=70:00, no separate recraft time. Public Lua API lacks a runtime schema setter. A setup-panel switch remains unimplemented pending proven schema load/reload and recraft gating; no dummy control added and madstone limit not misrepresented as a proven recraft-time field.
+
+## Fixed accelerated neutral schema
+
+User chose fixed defaults instead of a runtime switch. Added scripts/npc/npc_neutral_items_custom.txt, derived from this installed build's neutral_items.txt; only changes are tier2–5 start_time=5:00/10:00/15:00/20:00 and madstone_no_limit_time=25:00 (was70:00). Tier1 remains0:00; all pools, costs, enhancements unchanged. Synced .98 game addon and managed server addon. The 25-minute field removes the madstone cap; it is not an independently documented recraft-time setter. Actual tier UI/recraft behavior still requires gameplay verification. Source schema is Valve-derived local deployment data, not original project-authored content.
