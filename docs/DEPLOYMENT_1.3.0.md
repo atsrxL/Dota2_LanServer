@@ -46,3 +46,15 @@ CT 升级前代码、配置与状态备份位于 /root/agent.backup/dota130-preu
 Linux 当前不支持 dota_launch_custom_game；-addon 参数也未挂载 addon。按引擎 map 帮助实测，实际 argv 应为 +dota_force_gamemode 15 +map dota customgamemode lan_dota；等号形式被解析成单个 KV key 而失败。现已记录 Mounting addon 与 addon=lan_dota，但无 Lua BOOT/STATE，不能认定准备阶段通过。
 
 用户正在真实客户端尝试连接；客户端初次报告出错，服务器未见握手。已要求开启 con_logfile lanlab-client.log 后重试，以读取具体错误。
+
+## Panorama 准备阶段修复与规则工作进展
+
+2026-09-18 后续实测：map 必须显式包含 gamemode 15 customgamemode lan_dota，才载入 addon_game_mode.lua。已收到真实 BOOT/STATE。INIT 卡住时仅在玩家连接后调用 ResetToCustomGameSetup 一次；用户已看到面板，服务器确认 phase=setup、hello=1、host=0，无错误。
+
+修复 LANBody 缺少 flow-children:down 导致的区域重叠，缩窄下拉框及行内说明宽度。真实资源已重新编译至 r4，但更新后的游戏内视觉与交互仍待用户复核。
+
+新增金币倍率 25%–1000%，默认 100%，服务端范围校验与 SetModifyGoldFilter，正向金币事件乘倍率、负值和零保持。39 项 addon 测试通过，含 INIT 单次恢复与金币正负值验证；尚未实测收益账目。
+
+中立装备解锁时间：当前 build 25329722 的 scripts/npc/neutral_items.txt 使用 neutral_tiers/start_time，依次 0:00/15:00/25:00/35:00/60:00。尚未实现自定义时间的可靠运行时加载，不开放无效控件。
+
+普通服天地星 1573671599 已从 Windows Workshop 导入，固定版本 ea5bacf5e672376dc1514f0758e7def17c48b28b8bf4a35a83c1308795f7f438，实测 1 人 + 9 Bot，用户观察暂未发现逻辑异常。addon 原生 Bot 路线仍未验收，不能把普通服结果套用。

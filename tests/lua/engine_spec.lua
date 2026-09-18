@@ -60,3 +60,23 @@ engine:error('fixture_error');clock=20;engine:tick();assert(emitted.state.phase=
 local other=Engine.new({client_revision='v1',session=string.rep('b',32),source_sha256='fixture',bot_available=false})
 state=2;other:init();other:tick();state=3;other:tick();assert(other.room.phase=='error')
 print('engine_spec: MOCK waiting/identity/invalid input/start/fill/heartbeat/watchdog PASS')
+
+-- Dedicated INIT recovery must not force hero selection or bypass host start.
+DOTA_GAMERULES_STATE_INIT=0
+state=0
+local resets=0
+GameRules.ResetToCustomGameSetup=function() resets=resets+1;state=2 end
+local recovered=Engine.new({client_revision='v1',session=string.rep('b',32),source_sha256='fixture'})
+recovered:init();recovered:tick()
+assert(resets==1 and recovered.room.phase=='setup' and not recovered.room.started)
+recovered:tick();assert(resets==1)
+
+-- Positive rewards scale; spending and losses remain unchanged.
+local filter
+mode.SetModifyGoldFilter=function(_,fn,ctx) filter=function(e)return fn(ctx,e)end end
+mode.SetFilterMoreGold=function(_,enabled) assert(enabled) end
+recovered.room.options.gold_percent=200
+recovered:start_match()
+local gain={gold=37};assert(filter(gain) and gain.gold==74)
+local loss={gold=-100};assert(filter(loss) and loss.gold==-100)
+local zero={gold=0};assert(filter(zero) and zero.gold==0)

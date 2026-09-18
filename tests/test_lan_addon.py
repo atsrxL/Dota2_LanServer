@@ -163,7 +163,7 @@ def test_addon_command_exclusive(paths,method):
     if method=='addon_flag': assert cmd[cmd.index('+dota_force_gamemode')+1]=='15'
     else: assert '+dota_force_gamemode' not in cmd
     assert cmd.count('+map')==(0 if method=='custom_command' else 1)
-    assert cmd[-3:]==['+dota_launch_custom_game','lan_dota','dota'] if method=='custom_command' else cmd[-4:]==['+map','dota','customgamemode','lan_dota']
+    assert cmd[-3:]==['+dota_launch_custom_game','lan_dota','dota'] if method=='custom_command' else cmd[-6:]==['+map','dota','gamemode','15','customgamemode','lan_dota']
     assert cmd[cmd.index('+sv_cheats')+1]=='0'
 
 def test_telemetry_current_token_split_and_stale():

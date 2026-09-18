@@ -53,6 +53,7 @@
             el('BotMode').SetSelected(o.bot_mode); el('Difficulty').SetSelected('diff'+o.difficulty);
             el('FillBots').checked=truth(o.fill_bots); el('AckUnverified').checked=truth(o.ack_unverified);
             el('AllowPause').checked=truth(o.allow_pause);
+            el('GoldPercent').text=String(o.gold_percent || 100);
             el('SelectionSeconds').text=String(o.selection_seconds); el('PregameSeconds').text=String(o.pregame_seconds);
         }
         el('BotInfo').text = (truth(state.bot_available)?'本局有天地星快照：'+String(state.bot_version).slice(0,16):'本局没有天地星快照')+'；作弊开关：'+(truth(state.cheats)?'已明确开启':'关闭');
@@ -74,7 +75,7 @@
     bind('SaveOptions',function(){send('options',{options:{bot_mode:chosen('BotMode','none'),
         fill_bots:el('FillBots').checked?1:0,ack_unverified:el('AckUnverified').checked?1:0,
         allow_pause:el('AllowPause').checked?1:0,difficulty:Number(chosen('Difficulty','diff2').slice(4)),
-        selection_seconds:Number(el('SelectionSeconds').text),pregame_seconds:Number(el('PregameSeconds').text)}});});
+        gold_percent:Number(el('GoldPercent').text),selection_seconds:Number(el('SelectionSeconds').text),pregame_seconds:Number(el('PregameSeconds').text)}});});
     bind('Transfer',function(){send('transfer',{target:Number(chosen('TransferTarget','player-1').slice(6))});});
     bind('Toggle',function(){collapsed=!collapsed;if(state)render(state);});
     el('MyTeam').SetSelected('team2'); el('MyRole').SetSelected('role1');

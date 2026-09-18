@@ -89,7 +89,7 @@ function Engine:dispatch(source,keys)
         local raw=keys.options
         if type(raw)=='table' then
             local allowed={bot_mode=true,fill_bots=true,ack_unverified=true,difficulty=true,
-                selection_seconds=true,pregame_seconds=true,allow_pause=true}
+                selection_seconds=true,pregame_seconds=true,allow_pause=true,gold_percent=true}
             local value={}; local unknown=false
             for k,v in pairs(raw) do
                 if not allowed[k] then unknown=true
@@ -118,6 +118,19 @@ function Engine:dispatch(source,keys)
 end
 function Engine:start_match()
     local r=self.room; local o=r.options
+    if o.gold_percent~=100 and not method(self.mode,'SetModifyGoldFilter') then
+        self:error('gold_filter_unavailable'); return
+    end
+    if method(self.mode,'SetModifyGoldFilter') then
+        if method(self.mode,'SetFilterMoreGold') then self.mode:SetFilterMoreGold(true) end
+        self.mode:SetModifyGoldFilter(function(_,event)
+            if type(event.gold)=='number' and event.gold>0 then
+                event.gold=math.floor(event.gold*o.gold_percent/100)
+            end
+            return true
+        end,self)
+        self:emit('GOLD_RULE',{percent=o.gold_percent,scope='positive_gold_filter_events'})
+    end
     r:begin() -- latch before any engine side effect / duplicate event
     GameRules:SetHeroSelectionTime(o.selection_seconds)
     GameRules:SetPreGameTime(o.pregame_seconds)
@@ -151,6 +164,17 @@ function Engine:tick()
     end
     self:refresh_players()
     local state=GameRules:State_Get(); local phase
+    if state==DOTA_GAMERULES_STATE_INIT and not self.init_setup_requested then
+        for _,player in pairs(self.room.players) do
+            if player.connected and method(GameRules,'ResetToCustomGameSetup') then
+                self.init_setup_requested=true
+                self:emit('INIT_SETUP','ResetToCustomGameSetup_requested')
+                GameRules:ResetToCustomGameSetup()
+                state=GameRules:State_Get()
+                break
+            end
+        end
+    end
     if state==DOTA_GAMERULES_STATE_CUSTOM_GAME_SETUP then phase=self.room.started and 'starting' or 'setup'
     elseif state==DOTA_GAMERULES_STATE_HERO_SELECTION or state==DOTA_GAMERULES_STATE_STRATEGY_TIME or state==DOTA_GAMERULES_STATE_WAIT_FOR_MAP_TO_LOAD then phase='hero_selection'
     elseif state==DOTA_GAMERULES_STATE_PRE_GAME then phase='pregame'

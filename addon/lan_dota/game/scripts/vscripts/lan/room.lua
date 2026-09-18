@@ -4,7 +4,7 @@ local function copy(t) local out={} for k,v in pairs(t) do out[k]=v end return o
 local function integer(v,lo,hi) return type(v)=='number' and v==math.floor(v) and v>=lo and v<=hi end
 local function default_options()
     return {bot_mode='none', fill_bots=false, ack_unverified=false, difficulty=2,
-            selection_seconds=60, pregame_seconds=30, allow_pause=true}
+            selection_seconds=60, pregame_seconds=30, allow_pause=true, gold_percent=100}
 end
 function Room.new(clock, revision)
     return setmetatable({clock=clock, client_revision=revision, revision=1, phase='waiting_engine',
@@ -93,7 +93,7 @@ function Room:set_options(pid,expected,raw)
         if type(value[key])~='boolean' then return false,'invalid_boolean' end
     end
     if not integer(value.difficulty,0,3) or not integer(value.selection_seconds,30,120)
-        or not integer(value.pregame_seconds,10,60) then return false,'invalid_number' end
+        or not integer(value.pregame_seconds,10,60) or not integer(value.gold_percent,25,1000) then return false,'invalid_number' end
     if value.bot_mode=='none' and value.fill_bots then return false,'fill_requires_bot_mode' end
     if value.bot_mode~='none' and not self.bot_available then return false,'bot_snapshot_missing' end
     self.options=value; self:changed(true); return true

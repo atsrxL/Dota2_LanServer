@@ -25,6 +25,7 @@
                     <Panel class="Row"><Label class="FieldName" text="AI 运行方式" /><DropDown id="BotMode"><Label id="none" text="无机器人 / 连接验证" /><Label id="tiandixing_native_lab" text="天地星原生 Bot 实验" /></DropDown><ToggleButton id="FillBots" text="开始时自动补空位" /></Panel>
                     <Panel class="Row"><Label class="FieldName" text="AI 难度（待实测）" /><DropDown id="Difficulty"><Label id="diff0" text="0 简单" /><Label id="diff1" text="1 中等" /><Label id="diff2" text="2 困难" /><Label id="diff3" text="3 不公平" /></DropDown><ToggleButton id="AllowPause" text="允许暂停" /></Panel>
                     <Panel class="Row"><Label class="FieldName" text="选人 / 出兵前秒数" /><TextEntry id="SelectionSeconds" text="60" maxchars="3" /><TextEntry id="PregameSeconds" text="30" maxchars="2" /><Label class="Footnote" text="选人 30–120 / 赛前 10–60" /></Panel>
+                    <Panel class="Row"><Label class="FieldName" text="金币收入倍率（%）" /><TextEntry id="GoldPercent" text="100" maxchars="4" /><Label class="Footnote" text="25–1000；100 为原倍率，仅正向金币事件，实机验证中" /></Panel>
                     <ToggleButton id="AckUnverified" text="我了解天地星兼容性未完成实机验收；本局用于验证" />
                     <Label id="BotInfo" class="Footnote" text="未读取脚本快照" />
                     <Panel class="Row"><Button id="SaveOptions"><Label text="保存参数（清除准备）" /></Button><DropDown id="TransferTarget" /><Button id="Transfer"><Label text="转交配置权" /></Button></Panel>
