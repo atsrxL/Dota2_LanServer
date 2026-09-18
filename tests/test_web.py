@@ -84,8 +84,9 @@ def test_tokens_rotate_only_on_backend_restart():
 def test_workshop_api_and_static_asset_no_auth(app):
     r=request(app,'/api/bots')
     assert r['status']==200 and r['body']['op']=='bots'
-    asset=request(app,'/bots.js');assert asset['status']==200
-    assert 'textContent' in asset['raw'].decode() and 'innerHTML' not in asset['raw'].decode()
+    assert request(app,'/bots.js')['status']==404
+    html=request(app,'/')['raw'].decode()
+    assert 'data-page="bots"' not in html and 'data-command="bots"' not in html
     data={'action':'bot_download','item_id':'1627071163','select_after':True}
     assert request(app,'/api/actions','POST',data,app.csrf)['status']==202
     assert request(app,'/api/actions','POST',data,app.csrf,origin='http://evil.test')['status']==403

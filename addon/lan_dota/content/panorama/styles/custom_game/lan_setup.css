@@ -61,3 +61,12 @@ Button:disabled { opacity:0.35; }
 #LANRoot.InMatch .ToolSection { font-size:15px; margin:7px 0px 3px 0px; }
 #LANRoot.InMatch .ToolButton { padding:4px 6px; margin-top:3px; }
 #LANRoot.InMatch .ToolButton Label { font-size:14px; }
+
+.QuickReset { visibility:collapse; margin-right:4px; }
+#LANRoot.InMatch .QuickReset { visibility:visible; }
+#LANRoot.InMatch.Compact #LANWindow { width:122px; }
+#LANRoot.InMatch .Header { flow-children:right; }
+#LANRoot.InMatch .Title { visibility:collapse; }
+#LANRoot.InMatch #MatchBody { max-height:760px; overflow:squish scroll; }
+.BatButtons { width:100%; flow-children:right; }
+.BatButtons Button { width:fill-parent-flow(1); margin-right:3px; padding:6px 2px; }

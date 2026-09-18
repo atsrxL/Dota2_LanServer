@@ -6,7 +6,7 @@ window.AddonPanel = (() => {
   function text(id,value){$(id).textContent=value;}
   function render(d){
     data=d;
-    if(!editing){$('addonEnabled').checked=d.config.enabled;$('addonProbe').checked=d.config.probe_bots;$('addonLaunch').value=d.config.launch_method;}
+    if(!editing){$('addonEnabled').checked=d.config.enabled;$('addonLaunch').value=d.config.launch_method;}
     text('addonAssetState',d.source.ready?'已核对编译资源文件（引擎待验收）':'缺少 / 无效编译资源');
     text('addonAssetReason',d.source.reason);
     text('addonSourceHash',d.source.source_sha256||'未读取源码');
@@ -21,7 +21,7 @@ window.AddonPanel = (() => {
       for(const p of s.players){const row=document.createElement('p');row.textContent=`${p.pid} · ${p.name} · ${p.team===2?'天辉':p.team===3?'夜魇':'未选边'} / 意向${p.role||'—'}号位 · ${p.connected?(p.ready?'已准备':'未准备'):'断线'}`;ps.append(row);}
       if(!s.players.length)ps.textContent='尚无玩家进入准备界面。';
     } else ps.textContent='没有新鲜玩家状态；不会沿用旧会话显示“等待开局”。';
-    text('addonAudit',d.audit ? `固定版本 ${d.audit.content_sha256}\nLua 文件 ${d.audit.lua_files} / 入口 ${d.audit.entries.length} / 候选全局 API ${d.audit.bot_globals.length}\n${d.audit.notice}` : '尚未静态扫描。先在机器人页下载并选择 1627071163。');
+    text('addonAudit',d.audit ? `固定版本 ${d.audit.content_sha256}\nLua 文件 ${d.audit.lua_files} / 入口 ${d.audit.entries.length} / 候选全局 API ${d.audit.bot_globals.length}\n${d.audit.notice}` : '尚未静态扫描。本服固定使用天地星 1573671599。');
     const evidence=r ? [`原生脚本入口：${r.bot_entries.length}`,`被调用的回调种类：${Object.keys(r.bot_callbacks).length}`,`缺失 API 记录：${Object.values(r.bot_missing_apis).filter(x=>x.length).length}`,`GetBot 返回有效句柄的入口：${Object.values(r.bot_contexts).filter(x=>x==='bot_handle').length}`,`完整 AI / 槽位 / 对局：仍需现场验收`,...r.connection_rejections.map(x=>'连接拒绝：'+x),...r.errors.map(x=>'异常：'+x)] : ['尚无当前游戏进程的探针证据。'];
     text('addonEvidence',evidence.join('\n'));
     text('addonEvents',r?.events.length?r.events.slice(-20).map(e=>`${e.elapsed}s [${e.kind}] ${e.detail}`).join('\n'):'暂无事件。');
@@ -30,7 +30,7 @@ window.AddonPanel = (() => {
   async function refresh(){if(polling)return;polling=true;try{render(await api('/api/addon'));}finally{polling=false;}}
   $('addonForm').addEventListener('change',()=>editing=true);
   $('addonForm').addEventListener('submit',async e=>{e.preventDefault();try{
-    await api('/api/addon',{schema:1,enabled:$('addonEnabled').checked,probe_bots:$('addonProbe').checked,launch_method:$('addonLaunch').value});
+    await api('/api/addon',{schema:1,enabled:$('addonEnabled').checked,probe_bots:true,launch_method:$('addonLaunch').value});
     editing=false;await refresh();showMessage('附加模式配置已保存。启动前会检查编译资源；没有自动重启。');
   }catch(err){showMessage(err.message,true);}});
   $('addonReload').onclick=()=>{editing=false;refresh().catch(e=>showMessage(e.message,true));};

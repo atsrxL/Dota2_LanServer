@@ -1,13 +1,12 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dota 2 LAN · 控制中心</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script><script src="/metrics.js" defer></script><script src="/bots.js" defer></script><script src="/addon.js" defer></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dota 2 LAN · 控制中心</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script><script src="/metrics.js" defer></script><script src="/addon.js" defer></script></head>
 <body>
 <div id="application" class="shell">
   <aside class="sidebar"><div class="brand"><span class="brand-mark small">D2</span><div><strong>LAN CONTROL</strong><small>Dota 2 / 自托管控制台</small></div></div>
     <p class="nav-caption">工作空间</p><nav id="navigation">
       <button data-page="overview" class="nav active"><span>◈</span>运行概览</button>
       <button data-page="steam" class="nav"><span>↓</span>SteamCMD</button>
-      <button data-page="bots" class="nav"><span>◉</span>机器人脚本</button>
       <button data-page="addon" class="nav"><span>◇</span>LAN 附加模式</button>
       <button data-page="jobs" class="nav"><span>≡</span>任务记录</button>
       <button data-page="logs" class="nav"><span>›_</span>日志与控制台</button>
@@ -47,44 +46,16 @@
       <article class="card"><h3>安装与维护</h3><p class="muted">耗时任务由独立运行代理管理。重复任务会被拒绝；任务中断后先完成校验。</p><div class="stack-buttons"><button class="primary steam-action" data-action="install">↓ 安装 Dota 2（含校验）</button><button class="secondary steam-action" data-action="update">↻ 更新现有安装</button><button class="secondary steam-action" data-action="validate">✓ 校验 / 修复游戏文件</button></div><label class="check"><input id="stopForUpdate" type="checkbox">允许本次维护先停止正在运行的服务器</label><label class="check"><input id="restartAfter" type="checkbox">成功后恢复原先运行中的服务器</label><p class="footnote">这两项默认关闭。更新失败不自动开服，不会定时打断对局。校验可能覆盖对 Valve 原始文件的修改。</p></article></div>
       <article class="card"><div class="section-head"><h3>最近任务输出</h3><button id="cancelTask" class="danger-button">取消当前 SteamCMD 任务</button></div><pre id="steamLog" class="console">暂无任务日志。</pre></article>
     </section>
-    <section id="bots" class="page" hidden>
-      <div class="notice subtle">输入 Workshop ID 即可由服务端下载。机器人 Lua 会在游戏进程中执行，请只安装可信条目。原生房间同步尚未接入。</div>
-      <div class="two-columns">
-        <article class="card"><p class="eyebrow">WORKSHOP / APP 570</p><h3>下载机器人脚本</h3>
-          <form id="botDownloadForm" class="form-stack">
-            <label>Workshop 条目 ID<input id="botItemId" inputmode="numeric" pattern="[1-9][0-9]{0,19}" maxlength="20" value="1627071163" placeholder="例如 1627071163" required></label>
-            <p class="footnote">预填：天地星AI · 固定搭配。名称和可用性以实时元数据为准。只接受单个条目，不接受合集或任意网址。</p>
-            <label>下一局机器人难度（控制台值）<select id="botDifficulty"><option value="0">0 · 简单</option><option value="1">1 · 中等</option><option value="2" selected>2 · 困难</option><option value="3">3 · 不公平</option></select></label>
-            <label class="check"><input id="botSelectAfter" type="checkbox" checked>安装成功后设为下一局使用；不改变当前对局</label>
-            <label class="check"><input id="botEntryProbe" type="checkbox" checked>部署副本添加入口日志探针（原始版本不改动）</label>
-            <div class="button-row"><button type="submit" id="botDownload" class="primary bot-action">↓ 下载并安装</button><button type="button" id="botCheck" class="secondary bot-action">核对条目信息</button></div>
-            <div id="botLookup" class="footnote" role="status">首次请在 SteamCMD 页面保存账号名。缓存授权失效时，面板顶部会要求一次性 Steam 密码或验证码。</div>
-          </form>
-        </article>
-        <article class="card"><p class="eyebrow">PINNED VERSION / NEXT MATCH</p><h3>当前与下一局</h3>
-          <dl class="bot-summary"><dt>下一局选择</dt><dd id="botNext">正在读取…</dd><dt>运行中的脚本快照</dt><dd id="botRunning">未运行</dd><dt>实际加载证据</dt><dd id="botEvidence">未验证</dd></dl>
-          <p class="footnote">入口探针只证明 hero_selection 入口执行，不能证明全部 AI、槽位或联机正确。下载成功绝不显示为实机验证通过。</p>
-          <div id="botRecovery" class="notice danger" hidden></div>
-          <div class="button-row"><button id="botDefault" type="button" class="secondary bot-action">下一局停用自定义脚本</button><button id="botRollback" type="button" class="ghost bot-action">恢复上次选择</button></div>
-          <p class="footnote">停用时恢复接管前 bots 目录；原目录也可能是你自己安装的脚本。自动崩溃重启仍使用该局锁定版本。</p>
-          <hr class="bot-divider"><h3>玩家到齐后再补机器人</h3><p class="muted">先启动服务器，玩家 connect 并加入队伍后，再手动填充空位，避免机器人提前占满位置。</p>
-          <button id="botPopulate" type="button" class="secondary">填充当前比赛空位</button><p class="footnote">是否支持与何时生效，以当前游戏日志为准。本按钮不是同步原生房间槽位。</p>
-        </article>
-      </div>
-      <article class="card"><div class="section-head"><div><p class="eyebrow">IMMUTABLE SCRIPT LIBRARY</p><h3>已安装版本</h3></div><button id="botRefresh" type="button" class="ghost">刷新</button></div><div id="botLibrary" class="bot-library">正在读取脚本库…</div><p class="footnote">更新只安装新版本，不自动覆盖旧选择。版本号为脚本内容 SHA-256；保留最多 50 个条目、每条目 12 个版本。被引用的版本禁止删除。</p></article>
-      <article class="card"><div class="section-head"><h3>机器人任务日志</h3><button id="botCancel" type="button" class="danger-button" disabled>取消下载 / 检查</button></div><pre id="botLog" class="console">暂无机器人任务。</pre><p class="footnote">不显示虚假下载百分比；进度以 SteamCMD 输出为准。下载缓存和已部署版本相互独立。</p></article>
-    </section>
     <section id="addon" class="page" hidden>
       <div class="notice subtle" id="addonWarning">标准 dota 地图 + 游戏内准备界面 + 天地星原生 Bot 实验，不连接私人 GC。</div>
       <div id="addonRecovery" class="notice danger" hidden></div>
       <div class="two-columns"><article class="card"><p class="eyebrow">01 / LAUNCH &amp; ASSETS</p><h3>附加模式启动</h3>
         <form id="addonForm" class="form-stack">
           <label class="check"><input id="addonEnabled" type="checkbox">启用 LAN 附加模式（固定标准 dota 地图）</label>
-          <label class="check"><input id="addonProbe" type="checkbox">将选中的天地星 1627071163 固定版本用于原生 Bot 实验</label>
           <label>实验启动策略<select id="addonLaunch"><option value="custom_command">dota_launch_custom_game（旧候选，当前 Linux 不支持）</option><option value="addon_flag">map customgamemode（当前 Linux 已挂载验证）</option></select></label>
           <div class="button-row"><button class="primary" type="submit">停服后保存设置</button><button id="addonReload" type="button" class="ghost">重新读取</button></div>
         </form>
-        <p class="footnote">普通模式的 map / game_mode 不应用到附加模式。首次关闭 Bot 探针，只验证连接与准备阶段。机器人实验不会偷偷开启作弊。</p>
+        <p class="footnote">普通模式的 map / game_mode 不应用到附加模式。本服固定使用天地星 AI，游戏内选择难度和人数。默认开启 sv_cheats。</p>
         <h4 id="addonAssetState">读取资源状态…</h4><p id="addonAssetReason" class="muted"></p><code id="addonSourceHash" class="hash-wrap"></code><p id="addonDeployState"></p>
         <div class="button-row"><button class="secondary action" data-action="addon_deploy">停服部署模块</button><button class="primary action" data-action="start">启动已选模式</button><button class="danger-button action" data-action="stop">停止</button></div>
         <p class="footnote">Panorama 源码必须先由本地 Workshop Tools 编译。接手文件提供双端打包工具；不把 XML 改名成已编译资源。客户端也需要同版 UI。</p>
@@ -98,7 +69,7 @@
       <article class="card"><h3>当前进程实验事件</h3><pre id="addonEvents" class="console">暂无事件。</pre></article>
     </section>
     <section id="jobs" class="page" hidden><article class="card"><div class="section-head"><h3>任务历史</h3><span class="muted">保留最近 100 条</span></div><div class="table-wrap"><table><thead><tr><th>任务 / ID</th><th>状态</th><th>阶段</th><th>开始时间</th><th>结果</th></tr></thead><tbody id="jobTable"></tbody></table></div></article></section>
-    <section id="logs" class="page" hidden><article class="card"><div class="section-head"><h3>日志流</h3><div class="button-row"><select id="logChoice" aria-label="日志来源"><option value="server">游戏服务器</option><option value="agent">运行代理</option></select><button id="refreshLog" class="ghost">刷新</button></div></div><pre id="mainLog" class="console tall">暂无日志。</pre><p class="footnote">展示最近约 48 KiB；日志会轮转。这里不是 SSH，也不接受任意 Shell 命令。</p></article><article class="card"><h3>受限游戏控制台</h3><div class="button-row"><button class="secondary console-preset" data-command="status">status</button><button class="secondary console-preset" data-command="bots">填充机器人</button><button class="secondary console-preset" data-command="pause">暂停 / 恢复</button></div><form id="sayForm" class="inline-form"><input id="sayText" maxlength="160" placeholder="向游戏内发送消息" required><button class="secondary" type="submit">发送 say</button></form><p class="footnote">命令会写入游戏 PTY。机器人、暂停及聊天能否生效取决于当前 Dota 2 模式/版本，请核对输出。</p></article></section>
+    <section id="logs" class="page" hidden><article class="card"><div class="section-head"><h3>日志流</h3><div class="button-row"><select id="logChoice" aria-label="日志来源"><option value="server">游戏服务器</option><option value="agent">运行代理</option></select><button id="refreshLog" class="ghost">刷新</button></div></div><pre id="mainLog" class="console tall">暂无日志。</pre><p class="footnote">展示最近约 48 KiB；日志会轮转。这里不是 SSH，也不接受任意 Shell 命令。</p></article><article class="card"><h3>受限游戏控制台</h3><div class="button-row"><button class="secondary console-preset" data-command="status">status</button><button class="secondary console-preset" data-command="pause">暂停 / 恢复</button></div><form id="sayForm" class="inline-form"><input id="sayText" maxlength="160" placeholder="向游戏内发送消息" required><button class="secondary" type="submit">发送 say</button></form><p class="footnote">命令会写入游戏 PTY。机器人、暂停及聊天能否生效取决于当前 Dota 2 模式/版本，请核对输出。</p></article></section>
     <section id="settings" class="page" hidden><form id="configForm" class="card"><div class="section-head"><h3>启动配置</h3><button id="reloadConfig" type="button" class="ghost">重新读取</button></div><div class="form-grid"><label>服务器名称<input name="hostname" maxlength="80" required></label><label>游戏端口<input name="port" type="number" min="1024" max="65535" required></label><label>初始地图<input name="map" required></label><label>游戏模式编号<input name="game_mode" type="number" min="0" max="30" required><small>1 = 常用 All Pick；0 = 不强制模式。兼容性以游戏实际响应为准。</small></label><label>游戏连接密码<input name="game_password" type="password" maxlength="64" autocomplete="off"></label><label>保存的 Steam 账号名<input name="steam_username" autocomplete="off"></label></div><div class="form-grid"><label class="check"><input name="auto_start" type="checkbox">代理启动时自动开服（安装完整时）</label><label class="check"><input name="auto_restart" type="checkbox">崩溃自动拉起（10 分钟最多 3 次）</label><label class="check"><input name="cheats" type="checkbox">允许游戏作弊指令（训练用途）</label><label class="check"><input name="insecure" type="checkbox">启用 -insecure（关闭服务器 VAC，非默认）</label></div><div class="notice subtle">sv_lan 固定为 1。更改游戏端口不会自动修改 PVE 防火墙；所有游戏启动参数在下次开服时生效。无任意可执行路径或启动 Shell 输入框。</div><button type="submit" class="primary">保存配置</button></form></section>
     <section id="backups" class="page" hidden><div class="two-columns"><article class="card"><h3>配置快照</h3><p class="muted">保存服务器配置，不复制数十 GB 游戏资源。修改配置和维护前自动快照，保留最近 20 份。</p><button class="primary action" data-action="backup">立即备份配置</button><div id="backupList" class="backup-list"></div><p class="footnote">配置备份可能含游戏连接密码；不含 Steam 密码或登录缓存。</p></article><article class="card"><h3>排查与交接</h3><p class="muted">导出代理状态、本地 Build ID、依赖检查、启动参数和已脱敏日志，供本机排查或 Codex 接手。</p><a class="button secondary" href="/api/diagnostics">导出诊断 JSON ↓</a><div class="notice subtle">完整恢复请用 PVE 备份。Steam 缓存是敏感数据，PVE 全量备份应访问受控。</div><h3>恢复原则</h3><p class="muted">配置恢复必须先停服。此功能不能回滚 Valve 游戏版本，也不能恢复正在进行的比赛。</p></article></div></section>
     <footer>LOCAL-FIRST · 无 Docker / 无 GPU / 无公共 RCON <span id="version">v1.3.0</span></footer>

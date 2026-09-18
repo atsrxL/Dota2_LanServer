@@ -242,7 +242,7 @@ function Engine:tick()
             self:emit('FILL','no_empty_slots')
         else
             if self.room.caps.tutorial_bots then
-                local pool={'axe','bane','bloodseeker','crystal_maiden','drow_ranger','earthshaker','juggernaut','mirana','nevermore','phantom_lancer','puck','pudge','razor','sand_king','storm_spirit','sven','tiny','vengefulspirit','windrunner','zuus','kunkka','lina','lich','lion'}
+                local pool=(self.config.bot and self.config.bot.hero_pool) or {'axe','bane','bloodseeker','crystal_maiden','drow_ranger','earthshaker','juggernaut','mirana','nevermore','phantom_lancer','puck','pudge','razor','sand_king','storm_spirit','sven','tiny','vengefulspirit','windrunner','zuus','kunkka','lina','lich','lion'}
                 local used={}
                 if method(PlayerResource,'GetSelectedHeroName') then
                     for id=0,63 do if PlayerResource:IsValidPlayerID(id) then used[PlayerResource:GetSelectedHeroName(id) or '']=true end end
@@ -308,6 +308,7 @@ function Engine:init()
     self.mode=GameRules:GetGameModeEntity()
     if method(self.mode,'SetFreeCourierModeEnabled') then self.mode:SetFreeCourierModeEnabled(true) end
     require('lan.cheats').init(self)
+    require('lan.runes').init(self)
     for _,name in ipairs({'EnableCustomGameSetupAutoLaunch','SetCustomGameSetupTimeout','FinishCustomGameSetup',
         'SetCustomGameTeamMaxPlayers','LockCustomGameSetupTeamAssignment','SetHeroSelectionTime','SetPreGameTime'}) do
         if not method(GameRules,name) then error('required GameRules API missing: '..name) end

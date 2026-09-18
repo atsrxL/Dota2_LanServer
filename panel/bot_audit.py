@@ -131,6 +131,8 @@ local __lanlab_probe_130 = (function()
             local n = counts[callback]
             if n == 1 or n == 64 or n == 1024 or n %% 8192 == 0 then
                 emit("BOT_CALLBACK", callback .. ":" .. tostring(n))
+                local bot = type(GetBot)=="function" and GetBot() or nil
+                if bot then emit("BOT_ACTOR", tostring(bot:GetPlayerID()) .. ":" .. bot:GetUnitName() .. ":" .. callback .. ":" .. tostring(n)) end
             end
         end)
     end

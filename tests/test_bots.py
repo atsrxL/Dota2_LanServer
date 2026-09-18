@@ -369,7 +369,10 @@ def test_entry_probe_is_runtime_output_not_install_claim(manager):
     token=manager.game.bot_spec['probe_token']
     manager.game.console({'command':'say','text':'DOTA_PANEL_BOT_ENTRY:'+token+':hero_selection'})
     time.sleep(.2);assert not manager.game.bot_entry_seen  # not an exact standalone log line
-    manager.game.console({'command':'bots'})
+    with pytest.raises(Fault,match='Bot 控制功能已停用'):
+        manager.game.console({'command':'bots'})
+    # Drive the synthetic child directly; the product console no longer exposes population.
+    manager.game.child.sendline('dota_bot_populate')
     end=time.monotonic()+3
     while not manager.game.bot_entry_seen and time.monotonic()<end:time.sleep(.03)
     assert manager.game.bot_entry_seen

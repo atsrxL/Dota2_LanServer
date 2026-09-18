@@ -44,7 +44,6 @@ function renderStatus(s){
   $('progressLine').hidden=!j;
   $('pendingInput').hidden=!(j&&j.waiting_for);
   if(j&&j.waiting_for){$('inputTitle').textContent=j.waiting_for==='guard'?'Steam Guard 验证码':'Steam 登录密码';$('inputMessage').textContent=j.message;}
-  if(window.BotPanel)window.BotPanel.renderRuntime(s);
   $('cancelTask').disabled=!(j&&['login','install','update','validate','bot_download','bot_check'].includes(j.action));
   document.querySelectorAll('.action,.steam-action').forEach(b=>{const a=b.dataset.action; b.disabled=!!j||(a==='start'&&(s.running||!s.installed||!!s.maintenance_block))||(a==='addon_deploy'&&s.running)||(a==='stop'&&!s.running)||(a==='restart'&&(!s.installed||!!s.maintenance_block));});
 }
@@ -65,7 +64,6 @@ function renderJobs(){
 async function refreshExtra(){
   if(!csrf)return;
   if(currentPage==='addon'&&window.AddonPanel)await window.AddonPanel.refresh();
-  if(currentPage==='bots'&&window.BotPanel)await window.BotPanel.refresh();
   if(currentPage==='backups')await loadBackups();
   if(currentPage==='logs'){const data=await api('/api/logs?name='+encodeURIComponent($('logChoice').value));$('mainLog').textContent=data.text;}
   if(currentPage==='steam'&&jobs.length){const data=await api('/api/logs?name='+encodeURIComponent(status?.active_job?.id||jobs[0].id));$('steamLog').textContent=data.text;}

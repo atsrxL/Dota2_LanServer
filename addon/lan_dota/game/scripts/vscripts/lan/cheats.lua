@@ -1,5 +1,35 @@
 -- Personal LAN chat cheats. This does not change the GC lobby cheat flag.
 local M={}
+M.abilities={death_prophet_witchcraft=true,winter_wyvern_eldwurms_edda=true,silencer_brain_drain=true,tinker_eureka=true,beastmaster_inner_beast=true,razor_unstable_current=true,bloodseeker_thirst=true,faceless_void_distortion_field=true}
+function M.hero_tool(e,pid,action)
+ local h=PlayerResource:GetSelectedHeroEntity(pid)
+ if not h then return false,'尚未选择英雄' end
+ local name=action:match('^self_ability_(.+)$')
+ if name then
+  if not M.abilities[name] then return false,'不允许添加该技能' end
+  if h:FindAbilityByName(name) then return false,'已拥有该技能' end
+  local free=false
+  for i=0,23 do if not h:GetAbilityByIndex(i) then free=true;break end end
+  if not free then return false,'英雄技能栏已满' end
+  local a=h:AddAbility(name)
+  if not a then return false,'当前游戏版本无法添加该技能：'..name end
+  a:SetLevel(math.max(1,a:GetMaxLevel()))
+  e:emit('MENU_ABILITY',{pid=pid,ability=name,level=a:GetLevel()})
+  return true,'已添加：'..name
+ end
+ if action=='self_bat_down' or action=='self_bat_up' or action=='self_bat_reset' then
+  if not h.lan_initial_bat then h.lan_initial_bat=h:GetBaseAttackTime(false) end
+  local value=h.lan_initial_bat
+  if action~='self_bat_reset' then
+   value=math.floor((h:GetBaseAttackTime(false)+(action=='self_bat_up' and 0.1 or -0.1))*100+0.5)/100
+   if value<0.1 or value>10 then return false,'基础攻击间隔范围为 0.1～10 秒' end
+  end
+  h:SetBaseAttackTime(value)
+  e:emit('MENU_BAT',{pid=pid,value=h:GetBaseAttackTime(false),initial=h.lan_initial_bat})
+  return true,string.format('基础攻击间隔 %.2f 秒（初始 %.2f）',h:GetBaseAttackTime(false),h.lan_initial_bat)
+ end
+ return false,'未知操作'
+end
 function M.handle(e,k)
  if type(k)~='table' or type(k.text)~='string' then return end
  local cmd,arg=k.text:match('^%s*(%-%a+)%s*(.-)%s*$')
@@ -42,11 +72,18 @@ function M.handle(e,k)
 end
 function M.button(e,pid,action)
  local actions={self_respawn=true,self_refresh=true,self_gold=true,ally_gold=true,enemy_gold=true,ally_level=true,enemy_level=true}
- if not actions[action] then return false,'未知操作' end
+ local ability=type(action)=='string' and action:match('^self_ability_(.+)$')
+ local hero_tool=(ability and M.abilities[ability]) or action=='self_bat_down' or action=='self_bat_up' or action=='self_bat_reset'
+ if not actions[action] and not hero_tool then return false,'未知操作' end
  if e.room.phase~='pregame' and e.room.phase~='playing' then return false,'进入比赛后才能操作' end
  local p=e.room.players[pid]
  if not p or not p.connected or not p.hello then return false,'ui_handshake_required' end
  if not Convars:GetBool('sv_cheats') then return false,'作弊开关未开启' end
+ if hero_tool then
+  local ok,success,message=pcall(M.hero_tool,e,pid,action)
+  if not ok then e:emit('MENU_TOOL_ERROR',{pid=pid,action=action,error=tostring(success)});return false,'操作失败，已记录日志' end
+  return success,message
+ end
  local team=PlayerResource:GetTeam(pid)
  local count=0
  for target=0,63 do

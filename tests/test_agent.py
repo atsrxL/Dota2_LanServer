@@ -121,3 +121,13 @@ def test_diagnostics_does_not_export_game_password(manager):
     (manager.paths.game/'game/dota.sh').write_text('#!/bin/bash\n')
     manager.save_config(DEFAULT_CONFIG | {'game_password':'game-secret'})
     assert 'game-secret' not in json.dumps(manager.diagnostics())
+
+
+def test_fixed_tiandixing_policy_rejects_bot_management_and_other_selection(manager):
+    policy={'item_id':'1573671599','version':'a'*64}
+    atomic_json(manager.paths.state/'bot-library/fixed-policy.json',policy)
+    for action in ('bot_download','bot_check','bot_select','bot_default','bot_rollback','bot_remove'):
+        with pytest.raises(Fault,match='固定使用天地星'):
+            manager.submit({'action':action})
+    with pytest.raises(Fault,match='固定版本'):
+        manager._start_game()

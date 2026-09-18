@@ -40,3 +40,8 @@ assert(all.get('LANRoot').classes.InMatch && all.get('LANRoot').classes.Compact)
 all.get('EnemyGold').events.onactivate();assert(sent.at(-1).action==='match_tool' && sent.at(-1).tool==='enemy_gold');
 all.get('Toggle').events.onactivate();assert(!all.get('LANRoot').classes.Compact);
 console.log('Panorama MOCK: adapted dynamic options, solo request, pending/reply, compact toggle PASS');
+all.get('SelfRespawn').events.onactivate();assert(sent.at(-1).tool==='self_respawn');
+all.get('BatDown').events.onactivate();assert(sent.at(-1).tool==='self_bat_down');
+all.get('BatUp').events.onactivate();assert(sent.at(-1).tool==='self_bat_up');
+all.get('BatReset').events.onactivate();assert(sent.at(-1).tool==='self_bat_reset');
+for(const id of all.keys())if(id.startsWith('Add_')){all.get(id).events.onactivate();assert(sent.at(-1).tool==='self_ability_'+id.slice(4));}

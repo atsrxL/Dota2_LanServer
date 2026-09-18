@@ -41,7 +41,7 @@ class WebApp:
             if method not in {"GET", "POST"}:
                 raise Fault("只支持 GET 和 POST", 405)
             # Only fixed assets, no arbitrary filesystem serving or directory listing.
-            assets = {"/": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/help": "help.html", "/metrics.js": "metrics.js", "/bots.js": "bots.js", "/addon.js": "addon.js"}
+            assets = {"/": "index.html", "/app.js": "app.js", "/style.css": "style.css", "/help": "help.html", "/metrics.js": "metrics.js", "/addon.js": "addon.js"}
             if method == "GET" and path in assets:
                 name = assets[path]
                 content_type = {".html": "text/html; charset=utf-8", ".js": "application/javascript; charset=utf-8", ".css": "text/css; charset=utf-8"}[Path(name).suffix]

@@ -152,3 +152,38 @@ assert(chats.button(tutorial,0,'ally_gold'));assert(amounts[1]==1600 and amounts
 assert(chats.button(tutorial,0,'enemy_gold'));assert(amounts[2]==1600 and amounts[3]==600)
 assert(not chats.button(tutorial,0,'arbitrary_command'))
 tutorial.room.phase='setup';assert(not chats.button(tutorial,0,'self_gold'))
+
+-- Self-only ability allowlist, duplicate/full/failure handling and reversible BAT.
+tutorial.room.phase='playing'
+local abilities={};local bat=1.7
+local ownHero={GetBaseAttackTime=function(_,ignoreModifiers)assert(ignoreModifiers==false);return bat end,SetBaseAttackTime=function(_,v)bat=v end,
+ FindAbilityByName=function(_,name)return abilities[name] end,GetAbilityByIndex=function()return nil end,
+ AddAbility=function(_,name)
+  local a={GetMaxLevel=function()return 4 end,SetLevel=function(self,n)self.level=n end,GetLevel=function(self)return self.level end}
+  abilities[name]=a;return a
+ end}
+PlayerResource.GetSelectedHeroEntity=function(_,pid)assert(pid==0);return ownHero end
+assert(chats.button(tutorial,0,'self_bat_down'));assert(math.abs(bat-1.6)<0.0001)
+assert(chats.button(tutorial,0,'self_bat_up'));assert(math.abs(bat-1.7)<0.0001)
+assert(chats.button(tutorial,0,'self_bat_down'));assert(chats.button(tutorial,0,'self_bat_reset'));assert(bat==1.7)
+for name in pairs(chats.abilities) do
+ assert(chats.button(tutorial,0,'self_ability_'..name));assert(abilities[name].level==4)
+ assert(not chats.button(tutorial,0,'self_ability_'..name))
+end
+assert(not chats.button(tutorial,0,'self_ability_arbitrary'))
+ownHero.AddAbility=function()error('engine rejected ability')end;abilities={}
+assert(not chats.button(tutorial,0,'self_ability_bloodseeker_thirst'))
+assert(tutorial.room.phase=='playing')
+tutorial.room.players[0].hello=false;assert(not chats.button(tutorial,0,'self_bat_up'))
+tutorial.room.players[0].hello=true
+bat=0.1;assert(not chats.button(tutorial,0,'self_bat_down'));assert(bat==0.1)
+-- River-only spawn filter rejects bounty/xp and unknown spawners.
+local runes=require('lan.runes')
+EntIndexToHScript=function(id)
+ local classes={[1]='dota_item_rune_spawner_powerup',[2]='dota_item_rune_spawner_bounty',[3]='dota_item_rune_spawner_xp'}
+ return classes[id] and {GetClassname=function()return classes[id]end} or nil
+end
+assert(runes.allow({spawner_entindex_const=1}))
+assert(not runes.allow({spawner_entindex_const=2}))
+assert(not runes.allow({spawner_entindex_const=3}))
+assert(not runes.allow({}))

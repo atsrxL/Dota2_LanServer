@@ -6,5 +6,5 @@
     "maps" "dota"
     "IsPlayable" "1"
     "min_players" "1"
-    "max_players" "10"
+    "max_players" "24"
 }

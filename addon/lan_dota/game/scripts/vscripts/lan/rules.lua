@@ -33,6 +33,8 @@ function M.tick(e,phase)
  for _,h in pairs(HeroList:GetAllHeroes()) do
   if h:IsRealHero() and not h:IsIllusion() and not h:IsClone() and not h:IsTempestDouble() and not h.lan_initialized then
    h.lan_initialized=true
+   local bat_ok,bat=pcall(h.GetBaseAttackTime,h,false)
+   if bat_ok then h.lan_initial_bat=bat else e:emit('BAT_INIT_WARNING',tostring(bat)) end
    local side=h:GetTeamNumber()==3 and 'dire' or 'radiant'
    h:SetGold(0,true);h:SetGold(o[side..'_gold_start'],false)
    while h:GetLevel()<math.min(o[side..'_lvl_start'],o.max_level) do h:HeroLevelUp(false) end

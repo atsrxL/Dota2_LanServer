@@ -99,6 +99,8 @@ class Manager:
 
     def submit(self, data: dict) -> dict:
         action = data.get("action")
+        if str(action).startswith('bot_') and (self.paths.state / 'bot-library/fixed-policy.json').exists():
+            raise Fault("本服务器固定使用天地星；Bot 管理功能已存档停用", 403)
         if action not in ACTIONS:
             raise Fault("不支持此操作")
         for flag in ("stop_server", "restart_after", "select_after", "entry_probe"):
@@ -277,6 +279,13 @@ class Manager:
             raise Cancelled()
 
     def _start_game(self, reuse_running=False):
+        policy = read_json(self.paths.state / 'bot-library/fixed-policy.json')
+        if policy:
+            selected = self.bots._selection().get('selected') or {}
+            if any(selected.get(k) != policy.get(k) for k in ('item_id', 'version')):
+                raise Fault("天地星固定版本与选择不一致；拒绝启动其他脚本", 409)
+            if not self.addon.config['enabled'] or not self.addon.config['probe_bots']:
+                raise Fault("本服必须启用 LAN 附加模式及天地星", 409)
         if self.game.running():
             raise Fault("服务器已经在运行", 409)
         if (self.paths.state / "maintenance.json").exists():

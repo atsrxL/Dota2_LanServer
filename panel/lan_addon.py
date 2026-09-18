@@ -149,7 +149,11 @@ class LanAddon:
         selected=bots.validate_selection(override if reuse else bots._selection().get('selected')) if c['probe_bots'] else None
         report=self.scan(bots,selected) if selected else None
         session=secrets.token_hex(16)
-        observer=(lambda root,spec:instrument_scripts(root,spec,session,report)) if selected else None
+        def observer(root, spec):
+            from .tiandixing import adapt
+            adapt(root, spec)
+            instrument_scripts(root, spec, session, report)
+        if not selected: observer = None
         spec=bots.prepare_launch(override=selected,use_override=True,observer=observer)
         runtime={'name':ADDON_NAME,'session':session,'config':c,'launch_method':c['launch_method'],
                  'source_sha256':ui['source_sha256'],'client_revision':CLIENT_REVISION,

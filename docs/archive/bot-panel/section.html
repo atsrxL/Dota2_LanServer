@@ -1,0 +1,27 @@
+    <section id="bots" class="page" hidden>
+      <div class="notice subtle">输入 Workshop ID 即可由服务端下载。机器人 Lua 会在游戏进程中执行，请只安装可信条目。原生房间同步尚未接入。</div>
+      <div class="two-columns">
+        <article class="card"><p class="eyebrow">WORKSHOP / APP 570</p><h3>下载机器人脚本</h3>
+          <form id="botDownloadForm" class="form-stack">
+            <label>Workshop 条目 ID<input id="botItemId" inputmode="numeric" pattern="[1-9][0-9]{0,19}" maxlength="20" value="1627071163" placeholder="例如 1627071163" required></label>
+            <p class="footnote">预填：天地星AI · 固定搭配。名称和可用性以实时元数据为准。只接受单个条目，不接受合集或任意网址。</p>
+            <label>下一局机器人难度（控制台值）<select id="botDifficulty"><option value="0">0 · 简单</option><option value="1">1 · 中等</option><option value="2" selected>2 · 困难</option><option value="3">3 · 不公平</option></select></label>
+            <label class="check"><input id="botSelectAfter" type="checkbox" checked>安装成功后设为下一局使用；不改变当前对局</label>
+            <label class="check"><input id="botEntryProbe" type="checkbox" checked>部署副本添加入口日志探针（原始版本不改动）</label>
+            <div class="button-row"><button type="submit" id="botDownload" class="primary bot-action">↓ 下载并安装</button><button type="button" id="botCheck" class="secondary bot-action">核对条目信息</button></div>
+            <div id="botLookup" class="footnote" role="status">首次请在 SteamCMD 页面保存账号名。缓存授权失效时，面板顶部会要求一次性 Steam 密码或验证码。</div>
+          </form>
+        </article>
+        <article class="card"><p class="eyebrow">PINNED VERSION / NEXT MATCH</p><h3>当前与下一局</h3>
+          <dl class="bot-summary"><dt>下一局选择</dt><dd id="botNext">正在读取…</dd><dt>运行中的脚本快照</dt><dd id="botRunning">未运行</dd><dt>实际加载证据</dt><dd id="botEvidence">未验证</dd></dl>
+          <p class="footnote">入口探针只证明 hero_selection 入口执行，不能证明全部 AI、槽位或联机正确。下载成功绝不显示为实机验证通过。</p>
+          <div id="botRecovery" class="notice danger" hidden></div>
+          <div class="button-row"><button id="botDefault" type="button" class="secondary bot-action">下一局停用自定义脚本</button><button id="botRollback" type="button" class="ghost bot-action">恢复上次选择</button></div>
+          <p class="footnote">停用时恢复接管前 bots 目录；原目录也可能是你自己安装的脚本。自动崩溃重启仍使用该局锁定版本。</p>
+          <hr class="bot-divider"><h3>玩家到齐后再补机器人</h3><p class="muted">先启动服务器，玩家 connect 并加入队伍后，再手动填充空位，避免机器人提前占满位置。</p>
+          <button id="botPopulate" type="button" class="secondary">填充当前比赛空位</button><p class="footnote">是否支持与何时生效，以当前游戏日志为准。本按钮不是同步原生房间槽位。</p>
+        </article>
+      </div>
+      <article class="card"><div class="section-head"><div><p class="eyebrow">IMMUTABLE SCRIPT LIBRARY</p><h3>已安装版本</h3></div><button id="botRefresh" type="button" class="ghost">刷新</button></div><div id="botLibrary" class="bot-library">正在读取脚本库…</div><p class="footnote">更新只安装新版本，不自动覆盖旧选择。版本号为脚本内容 SHA-256；保留最多 50 个条目、每条目 12 个版本。被引用的版本禁止删除。</p></article>
+      <article class="card"><div class="section-head"><h3>机器人任务日志</h3><button id="botCancel" type="button" class="danger-button" disabled>取消下载 / 检查</button></div><pre id="botLog" class="console">暂无机器人任务。</pre><p class="footnote">不显示虚假下载百分比；进度以 SteamCMD 输出为准。下载缓存和已部署版本相互独立。</p></article>
+    </section>

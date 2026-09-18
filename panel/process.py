@@ -113,11 +113,11 @@ class GameProcess:
 
     def console(self, raw: dict) -> None:
         name = raw.get("command")
-        if name == "bots" and self.addon_spec:
-            raise Fault("附加模式只能由游戏内准备界面按配置填充 AI，禁止绕过准备状态。", 409)
+        if name == "bots":
+            raise Fault("Bot 控制功能已停用；机器人由游戏内准备界面自动填充。", 409)
         if name in {"lan_status", "lan_release_host"} and not self.addon_spec:
             raise Fault("当前不是 LAN 附加模式", 409)
-        presets = {"status": "status", "bots": "dota_bot_populate", "pause": "dota_pause",
+        presets = {"status": "status", "pause": "dota_pause",
                    "lan_status": "lan_status", "lan_release_host": "lan_release_host"}
         if name == "say":
             text = engine_text(raw.get("text", ""), "聊天内容", 160, False)
@@ -125,7 +125,7 @@ class GameProcess:
         elif name in presets:
             command = presets[name]
         else:
-            raise Fault("只允许固定的 status / bots / pause / say / lan_status / lan_release_host 命令")
+            raise Fault("只允许固定的 status / pause / say / lan_status / lan_release_host 命令")
         with self.lock:
             if not self.running():
                 raise Fault("游戏未运行", 409)
