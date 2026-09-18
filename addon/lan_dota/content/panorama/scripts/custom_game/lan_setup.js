@@ -26,7 +26,27 @@ var context=$.GetContextPanel(), state=null, lastPhase=null, initialized=false, 
 function el(id){return context.FindChildTraverse(id);}
 [
 {id:'Difficulty',label:'AI 难度（0简单 / 3不公平）',options:[0,1,2,3],default_value:2},
-{id:'GoldPercent',label:'金币收入倍率',options:[25,50,75,100,150,200,300,500,1000],default_value:100,percentage:true},
+{"id": "radiant_gold_multiplier", "label": "天辉金钱倍率", "options": [1, 1.5, 2, 2.5, 3, 5, 10, 100, 1000], "default_value": 1},
+{"id": "radiant_xp_multiplier", "label": "天辉经验倍率", "options": [1, 1.5, 2, 3, 5, 10, 100, 1000], "default_value": 1},
+{"id": "radiant_gold_start", "label": "天辉初始金钱", "options": [600, 1000, 1700, 3200, 6000, 10000, 100000], "default_value": 600},
+{"id": "radiant_lvl_start", "label": "天辉初始等级", "options": [1, 2, 3, 5, 10, 15, 20, 25, 30], "default_value": 1},
+{"id": "radiant_player_number", "label": "天辉总人数", "options": [1, 2, 3, 4, 5, 6, 8, 10, 12], "default_value": 5},
+{"id": "dire_gold_multiplier", "label": "夜魇金钱倍率", "options": [1, 1.5, 2, 2.5, 3, 5, 10, 100, 1000], "default_value": 1},
+{"id": "dire_xp_multiplier", "label": "夜魇经验倍率", "options": [1, 1.5, 2, 3, 5, 10, 100, 1000], "default_value": 1},
+{"id": "dire_gold_start", "label": "夜魇初始金钱", "options": [600, 1000, 1700, 3200, 6000, 10000, 100000], "default_value": 600},
+{"id": "dire_lvl_start", "label": "夜魇初始等级", "options": [1, 2, 3, 5, 10, 15, 20, 25, 30], "default_value": 1},
+{"id": "dire_player_number", "label": "夜魇总人数", "options": [1, 2, 3, 4, 5, 6, 8, 10, 12], "default_value": 5},
+{"id": "respawn_time_percentage", "label": "复活时间比例", "options": [0, 10, 25, 50, 75, 100], "default_value": 100},
+{"id": "buyback_cooldown", "label": "买活冷却（秒）", "options": [0, 30, 60, 120, 240, 480], "default_value": 480},
+{"id": "tower_power", "label": "防御塔威力等级", "options": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "default_value": 1},
+{"id": "tower_endure", "label": "建筑耐久等级", "options": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "default_value": 1},
+{"id": "max_level", "label": "最高等级", "options": [30, 50, 100, 200, 400, 800, 1600], "default_value": 30},
+{"id": "universal_shop", "label": "全图商店", "options": [0, 1], "default_value": 0},
+{"id": "fast_courier", "label": "快速信使", "options": [0, 1], "default_value": 0},
+{"id": "bot_protection", "label": "保护反复被击杀的 AI", "options": [0, 1], "default_value": 0},
+{"id": "anti_diving", "label": "反冲泉保护", "options": [0, 1], "default_value": 0},
+{id:'extra_tower',label:'额外防御塔数量',options:[0,1,2,3,4,5,6,7,8,9,10],default_value:0},
+{id:'extra_tower_phased',label:'额外防御塔相位状态',options:[0,1],default_value:1},
 {id:'SelectionSeconds',label:'选人时间（秒）',options:[30,45,60,90,120],default_value:60},
 {id:'PregameSeconds',label:'出兵前时间（秒）',options:[10,15,30,45,60],default_value:30}
 ].forEach(function(o){AddDropDown(o,el('GameOptionSubpanelContainerInner'));});
@@ -41,14 +61,34 @@ function render(s){
  el('LANRoot').SetHasClass('Compact',collapsed);
  var phases={setup:'调整参数后开始',waiting_engine:'等待服务器',starting:'正在开始',hero_selection:'英雄选择',pregame:'准备出兵',playing:'比赛中',postgame:'比赛结束',error:'运行异常'};
  el('Phase').text=phases[s.phase]||s.phase;
- if(!initialized && s.options){initialized=true;el('Difficulty').SetSelected(String(s.options.difficulty));el('GoldPercent').SetSelected(String(s.options.gold_percent));el('SelectionSeconds').SetSelected(String(s.options.selection_seconds));el('PregameSeconds').SetSelected(String(s.options.pregame_seconds));el('AllowPause').checked=yes(s.options.allow_pause);}
- el('BotInfo').text=yes(s.bot_available)?'天地星 AI 已加载 · 开始时自动补齐 9 名 AI':'AI 未加载，请在管理面板启用机器人脚本。';
+ if(!initialized && s.options){initialized=true;el('Difficulty').SetSelected(String(s.options.difficulty));el('SelectionSeconds').SetSelected(String(s.options.selection_seconds));el('PregameSeconds').SetSelected(String(s.options.pregame_seconds));el('AllowPause').checked=yes(s.options.allow_pause);}
+ el('BotInfo').text=yes(s.bot_available)?'天地星 AI 已加载 · 按双方人数自动补位':'AI 未加载，请在管理面板启用机器人脚本。';
  el('Start').enabled=s.phase==='setup' && Number(s.host)===Game.GetLocalPlayerID() && yes(s.bot_available) && !pending;
  if(s.error)msg(s.error);
 }
 el('Start').SetPanelEvent('onactivate',function(){
  try{var d=el('Difficulty').GetSelected();pending=true;render(state);msg('正在应用设置并开始…');
- send('solo_start',{options:{difficulty:value('Difficulty'),gold_percent:value('GoldPercent'),selection_seconds:value('SelectionSeconds'),pregame_seconds:value('PregameSeconds'),allow_pause:el('AllowPause').checked?1:0}});
+ var options={difficulty:value('Difficulty'),selection_seconds:value('SelectionSeconds'),pregame_seconds:value('PregameSeconds'),allow_pause:el('AllowPause').checked?1:0};
+options.radiant_gold_multiplier=value('radiant_gold_multiplier');
+options.radiant_xp_multiplier=value('radiant_xp_multiplier');
+options.radiant_gold_start=value('radiant_gold_start');
+options.radiant_lvl_start=value('radiant_lvl_start');
+options.radiant_player_number=value('radiant_player_number');
+options.dire_gold_multiplier=value('dire_gold_multiplier');
+options.dire_xp_multiplier=value('dire_xp_multiplier');
+options.dire_gold_start=value('dire_gold_start');
+options.dire_lvl_start=value('dire_lvl_start');
+options.dire_player_number=value('dire_player_number');
+options.respawn_time_percentage=value('respawn_time_percentage');
+options.buyback_cooldown=value('buyback_cooldown');
+options.tower_power=value('tower_power');
+options.tower_endure=value('tower_endure');
+options.max_level=value('max_level');
+options.universal_shop=value('universal_shop');
+options.fast_courier=value('fast_courier');
+options.bot_protection=value('bot_protection');
+options.anti_diving=value('anti_diving');
+options.extra_tower=value('extra_tower');options.extra_tower_phased=value('extra_tower_phased');send('solo_start',{options:options});
  $.Schedule(5,function(){if(pending){pending=false;msg('尚未收到确认，请检查连接后重试。');render(state);}});
  }catch(e){pending=false;msg('操作失败：'+String(e));render(state);}
 });

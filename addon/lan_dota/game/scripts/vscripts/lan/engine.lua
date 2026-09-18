@@ -87,21 +87,21 @@ function Engine:dispatch(source,keys)
         if ok then
             local raw=keys.options
             local value={bot_mode='tiandixing_native_lab',fill_bots=true,ack_unverified=true}
-            local allowed={difficulty=true,gold_percent=true,selection_seconds=true,pregame_seconds=true,allow_pause=true}
+            local allowed={extra_tower=true,extra_tower_phased=true,radiant_gold_multiplier=true,radiant_xp_multiplier=true,radiant_gold_start=true,radiant_lvl_start=true,radiant_player_number=true,dire_gold_multiplier=true,dire_xp_multiplier=true,dire_gold_start=true,dire_lvl_start=true,dire_player_number=true,respawn_time_percentage=true,buyback_cooldown=true,tower_power=true,tower_endure=true,max_level=true,universal_shop=true,fast_courier=true,bot_protection=true,anti_diving=true,difficulty=true,gold_percent=true,selection_seconds=true,pregame_seconds=true,allow_pause=true}
             if type(raw)~='table' then ok=false else
                 for k,v in pairs(raw) do
                     if not allowed[k] then ok=false
                     elseif k=='allow_pause' then
                         if v~=0 and v~=1 then ok=false else value[k]=v==1 end
-                    else value[k]=numeric(v);if value[k]==nil then ok=false end end
+                    else value[k]=numeric(v);if (k=='radiant_gold_multiplier' or k=='dire_gold_multiplier' or k=='radiant_xp_multiplier' or k=='dire_xp_multiplier') and (type(v)=='number' or type(v)=='string') then value[k]=tonumber(v) end;if value[k]==nil then ok=false end end
                 end
             end
             if not ok then err='invalid_options'
             else ok,err=self.room:set_options(pid,rev,value) end
         end
         if ok then
-            self.room.cheats=GameRules:IsCheatMode()
-            if not self.room.cheats then ok=false;err='bot_populate_requires_explicit_cheats' end
+            self.room.cheats=(method(Convars,'GetBool') and Convars:GetBool('sv_cheats')) or GameRules:IsCheatMode()
+            if not self.room.cheats and not self.room.caps.tutorial_bots then ok=false;err='bot_populate_requires_explicit_cheats' end
         end
         if ok then
             PlayerResource:SetCustomTeamAssignment(pid,2)
@@ -146,7 +146,7 @@ function Engine:dispatch(source,keys)
         else err='invalid_boolean' end
     elseif action=='transfer' then ok,err=self.room:transfer(pid,rev,numeric(keys.target))
     elseif action=='start' then
-        self.room.cheats=GameRules:IsCheatMode()
+        self.room.cheats=(method(Convars,'GetBool') and Convars:GetBool('sv_cheats')) or GameRules:IsCheatMode()
         ok,err=self.room:can_start(pid,rev)
         if ok then self:start_match() end
     end
@@ -162,12 +162,14 @@ function Engine:start_match()
         if method(self.mode,'SetFilterMoreGold') then self.mode:SetFilterMoreGold(true) end
         self.mode:SetModifyGoldFilter(function(_,event)
             if type(event.gold)=='number' and event.gold>0 then
-                event.gold=math.floor(event.gold*o.gold_percent/100)
+                local side=method(PlayerResource,'GetTeam') and PlayerResource:GetTeam(event.player_id_const)==3 and 'dire' or 'radiant'
+                event.gold=math.floor(event.gold*o.gold_percent/100*o[side..'_gold_multiplier'])
             end
             return true
         end,self)
         self:emit('GOLD_RULE',{percent=o.gold_percent,scope='positive_gold_filter_events'})
     end
+    require('lan.rules').start(self)
     r:begin() -- latch before any engine side effect / duplicate event
     GameRules:SetHeroSelectionTime(o.selection_seconds)
     GameRules:SetPreGameTime(o.pregame_seconds)
@@ -199,6 +201,8 @@ function Engine:tick()
         if Time()-self.last_heartbeat>=2 then self.last_heartbeat=Time(); self:emit('STATE',self:publish()) end
         return 2
     end
+    if not self.cheats_initialized and method(Convars,'SetBool') then Convars:SetBool('sv_cheats',true);self.cheats_initialized=true end
+    self.room.cheats=(method(Convars,'GetBool') and Convars:GetBool('sv_cheats')) or GameRules:IsCheatMode()
     self:refresh_players()
     local state=GameRules:State_Get(); local phase
     if state==DOTA_GAMERULES_STATE_INIT and not self.init_setup_requested then
@@ -224,20 +228,27 @@ function Engine:tick()
     if self.room.phase~=phase then self.room.phase=phase; self.room:changed(false) end
     if self.transition_deadline and phase~='starting' then self.transition_deadline=nil end
     if self.transition_deadline and Time()>self.transition_deadline then self:error('setup_finish_did_not_advance');return 2 end
-    if self.room.started and self.room.options.fill_bots and not self.filled and phase=='hero_selection' then
+    if self.room.started and self.room.options.fill_bots and not self.filled and ((self.room.caps.tutorial_bots and state==DOTA_GAMERULES_STATE_STRATEGY_TIME) or (not self.room.caps.tutorial_bots and phase=='hero_selection')) then
         self.filled=true -- one-shot; retries must never create duplicate players
         self.bot_count_before=self:bot_count()
         local humans=0
         for _,p in pairs(self.room.players) do if p.team==2 or p.team==3 then humans=humans+1 end end
-        self.bot_count_expected=math.max(self.bot_count_before,10-humans)
+        self.bot_count_expected=math.max(self.bot_count_before,self.room.options.radiant_player_number+self.room.options.dire_player_number-humans)
         if self.bot_count_before>=self.bot_count_expected then
             self:emit('FILL','no_empty_slots')
         else
-            GameRules:BotPopulate()
+            if self.room.caps.tutorial_bots then
+                for team=2,3 do
+                    local desired=team==2 and self.room.options.radiant_player_number or self.room.options.dire_player_number
+                    local count=PlayerResource:GetPlayerCountForTeam(team)
+                    for i=1,math.max(0,desired-count) do Tutorial:AddBot('npc_dota_hero_luna','','',team==2) end
+                end
+            else GameRules:BotPopulate() end
             self.bot_fill_deadline=Time()+15
             self:emit('FILL','BotPopulate_requested; expected_total='..self.bot_count_expected)
         end
     end
+    if self.room.started then require('lan.rules').tick(self,phase) end
     if self.bot_fill_deadline then
         local after=self:bot_count()
         if after>=self.bot_count_expected then
@@ -252,15 +263,16 @@ function Engine:tick()
     return 0.5
 end
 function Engine:init()
+    if method(Convars,'SetBool') then Convars:SetBool('sv_cheats',true) end
     self.mode=GameRules:GetGameModeEntity()
     for _,name in ipairs({'EnableCustomGameSetupAutoLaunch','SetCustomGameSetupTimeout','FinishCustomGameSetup',
         'SetCustomGameTeamMaxPlayers','LockCustomGameSetupTeamAssignment','SetHeroSelectionTime','SetPreGameTime'}) do
         if not method(GameRules,name) then error('required GameRules API missing: '..name) end
     end
     if not method(self.mode,'SetPauseEnabled') then error('SetPauseEnabled missing') end
-    self.room.caps={bot_thinking=method(self.mode,'SetBotThinkingEnabled'),bot_populate=method(GameRules,'BotPopulate')}
+    self.room.caps={bot_thinking=method(self.mode,'SetBotThinkingEnabled'),bot_populate=method(GameRules,'BotPopulate') or method(Tutorial,'AddBot'),tutorial_bots=method(Tutorial,'AddBot')}
     self.room.bot_available=self.config.bot_available==true
-    self.room.cheats=GameRules:IsCheatMode()
+    self.room.cheats=(method(Convars,'GetBool') and Convars:GetBool('sv_cheats')) or GameRules:IsCheatMode()
     GameRules:EnableCustomGameSetupAutoLaunch(false)
     GameRules:SetCustomGameSetupTimeout(-1)
     GameRules:SetCustomGameTeamMaxPlayers(DOTA_TEAM_GOODGUYS,5)
@@ -290,7 +302,7 @@ function Engine:init()
         if not ok then self:error('tick_exception:'..tostring(delay));return 2 end
         return delay
     end,0.5)
-    self:emit('BOOT',{client_revision=self.config.client_revision,source_sha256=self.config.source_sha256})
+    self:emit('BOOT',{client_revision=self.config.client_revision,source_sha256=self.config.source_sha256,sv_cheats=method(Convars,'GetBool') and Convars:GetBool('sv_cheats') or false,game_rules_cheats=GameRules:IsCheatMode()})
     self:publish()
 end
 return Engine

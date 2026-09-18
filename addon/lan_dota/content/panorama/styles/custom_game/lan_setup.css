@@ -37,3 +37,7 @@ Button:disabled { opacity:0.35; }
 .GameOptionsSubPanel_DropDown Label { width:fill-parent-flow(1); }
 .GameOptionsSubPanel_DropDown .GameOptionsDropdown { width:155px; flow-children:none; }
 .GameOptionsDropdown Label { width:100%; }
+
+#LANWindow { max-height:94%; margin-top:20px; }
+#LANBody { max-height:780px; overflow:squish scroll; }
+.GameOptionsSubPanel_DropDown { min-height:38px; margin-top:7px; }

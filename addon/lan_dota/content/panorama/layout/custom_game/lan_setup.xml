@@ -5,8 +5,8 @@
 <Panel class="Header"><Label class="Title" text="游戏选项" /><Button id="Toggle"><Label hittest="false" text="收起 / 展开" /></Button></Panel>
 <Label id="Phase" text="连接服务器中…" />
 <Panel id="LANBody">
-<Label class="Subtitle" text="单人 AI 对战 · 标准 5 对 5" />
-<Label class="Hint" text="你加入天辉，4 名 AI 队友对战 5 名 AI。" />
+<Label class="Subtitle" text="单人 AI 对战" />
+<Label class="Hint" text="你自动加入天辉，其余位置由 AI 补齐。" />
 <Panel id="GameOptionSubpanelContainerInner" />
 <Panel class="Row"><Label class="FieldName" text="允许暂停" /><ToggleButton id="AllowPause" /></Panel>
 <Label id="BotInfo" class="Hint" text="检查 AI 脚本…" />
