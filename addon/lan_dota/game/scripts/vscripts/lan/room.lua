@@ -3,8 +3,8 @@ local Room = {}; Room.__index = Room
 local function copy(t) local out={} for k,v in pairs(t) do out[k]=v end return out end
 local function integer(v,lo,hi) return type(v)=='number' and v==math.floor(v) and v>=lo and v<=hi end
 local function default_options()
-    return {bot_mode='none', fill_bots=false, ack_unverified=false, radiant_difficulty=2, dire_difficulty=2,
-            selection_seconds=60, pregame_seconds=30, gold_percent=100,radiant_gold_multiplier=1,radiant_xp_multiplier=1,radiant_gold_start=600,radiant_player_number=5,dire_gold_multiplier=1,dire_xp_multiplier=1,dire_gold_start=600,dire_player_number=5,respawn_time_percentage=100,buyback_cooldown=480,tower_power=1,tower_endure=1,max_level=30,}
+    return {bot_mode='none', fill_bots=false, ack_unverified=false, radiant_difficulty=1, dire_difficulty=4,
+            selection_seconds=60, pregame_seconds=30, gold_percent=100,radiant_gold_multiplier=1,radiant_xp_multiplier=1,radiant_gold_start=600,radiant_player_number=5,dire_gold_multiplier=1,dire_xp_multiplier=1,dire_gold_start=600,dire_player_number=5,respawn_time_percentage=30,buyback_cooldown=60,tower_power=1,tower_endure=1,max_level=50,}
 end
 function Room.new(clock, revision)
     return setmetatable({clock=clock, client_revision=revision, revision=1, phase='waiting_engine',
@@ -102,7 +102,7 @@ function Room:set_options(pid,expected,raw)
     if not ({[1]=true,[1.15]=true,[1.25]=true,[1.35]=true,[1.5]=true,[1.75]=true,[2]=true,[2.5]=true,[3]=true,[4]=true,[5]=true})[value.dire_xp_multiplier] then return false,'invalid_number' end
     if not ({[600]=true,[1000]=true,[1700]=true,[3200]=true,[6000]=true,[10000]=true,[100000]=true})[value.dire_gold_start] then return false,'invalid_number' end
     if not ({[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true,[11]=true,[12]=true})[value.dire_player_number] then return false,'invalid_number' end
-    if not ({[0]=true,[10]=true,[25]=true,[50]=true,[75]=true,[100]=true})[value.respawn_time_percentage] then return false,'invalid_number' end
+    if not ({[0]=true,[10]=true,[25]=true,[30]=true,[50]=true,[75]=true,[100]=true})[value.respawn_time_percentage] then return false,'invalid_number' end
     if not ({[0]=true,[30]=true,[60]=true,[120]=true,[240]=true,[480]=true})[value.buyback_cooldown] then return false,'invalid_number' end
     if not ({[1]=true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true})[value.tower_power] then return false,'invalid_number' end
     if not ({[1]=true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true})[value.tower_endure] then return false,'invalid_number' end

@@ -86,3 +86,8 @@ do
  for i=1,23 do assert(not seen[a[i]] and a[i]~='hero_1');seen[a[i]]=true end
  assert(not pcall(draft,nil,used,function()return 1 end))
 end
+
+local defaults=Room.new(function()return 0 end,'defaults').options
+assert(defaults.radiant_difficulty==1 and defaults.dire_difficulty==4)
+assert(defaults.respawn_time_percentage==30 and defaults.buyback_cooldown==60)
+assert(defaults.max_level==50 and defaults.selection_seconds==60 and defaults.pregame_seconds==30)

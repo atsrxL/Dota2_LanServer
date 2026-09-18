@@ -50,3 +50,11 @@ assert(!all.has('Difficulty') && !all.has('bot_protection') && !all.has('radiant
 assert(sent.find(x=>x.action==='solo_start').options.dire_difficulty===4);
 
 assert(!all.has('AllowPause'));
+
+assert(!all.has('SelectionSeconds') && !all.has('buyback_cooldown'));
+assert(all.get('respawn_time_percentage').selected==='30');
+assert(all.get('max_level').selected==='50');
+const rows=all.get('GameOptionSubpanelContainerInner').children.map(p=>p.id);
+for(const setting of ['difficulty','gold_multiplier','xp_multiplier','gold_start','player_number']){
+ assert(rows.indexOf('dire_'+setting+'_Container')===rows.indexOf('radiant_'+setting+'_Container')+1);
+}

@@ -105,3 +105,16 @@ Replaced sequential hero allocation with a Fisher–Yates shuffle using engine R
 Only addon source staged to CT270 /opt/dota2-lan-kit/addon. The user's ongoing match continues with its original deployment/session; next manual server start/restart applies r19. No current-match hero replacement, no agent restart, no UI changes or recompilation. Source SHA294a6d5ae2e0cafe9508e75794e6fc1d4f7a6cee69e193c8973a6a3ca9c59157; staged source and compiled manifest report ready. Backup /root/agent.backup/dota-r19-source-20260918/before-r19.tar.gz. Existing crash-retry source-lock behavior remains: manual restart is the transition to the new source.
 
 Client ZIP r19 SHA3953966aa3e77af633e724f8aeba507a4d1539fd588dfd388819fceac5fb8b31 is packaged for future installations; current clients do not need a UI update for server-side Bot selection. Public push not performed.
+
+
+## r20 — personal-match lifetime and setup defaults (2026-09-18)
+
+- Group Radiant/Dire controls by setting: difficulty, gold multiplier, XP multiplier, starting gold, team size.
+- Defaults: Radiant Easy (1), Dire Unfair (4), respawn 30%, maximum level 50, pregame 30 seconds. Hidden selection/buyback controls use server defaults of 60 seconds each. Add 30% to the server respawn allowlist.
+- `lan.lifecycle` disables native disconnect surrender and empty-server hibernation; keeps native pause enabled. The pause-force, pause-limit and all-disconnected timers use 2147483647 seconds (about 68 years). This is a practical timeout bypass, **not a verified native unlimited sentinel**; undocumented 0/-1 semantics are deliberately not assumed. Normal Ancient victory remains unmodified; there is no addon unpause or disconnect-end call.
+- Real Windows Workshop Tools compilation: changed JS 1 compiled / 0 failed; remaining 3 resources unchanged/skipped. Both .98 QGA and .180 SSH installed and SHA-verified 19 client files.
+- Client package `lanlab-client-r20.zip` SHA256 `e13357264f778c0ab5de0b7cc47ed28c60da384d8a84a36193beb1df3861cd04`; UI SHA256 `5eadc20d4a1f1327be7fcc75e8eca3fb1a3141e55d0a38e3c4f2b2922ab293d5`; addon source SHA256 `0edaf2cc692ee8980aaef048a67247ca24f4ac2fdfd893669e3e5530f663e980`.
+- Server restarted, session `978014dfc8fbb170632708b801a668c9`. Real LIFECYCLE log reads back both booleans false, pause allowed true, all 3 timers `2.1474836e+09`; server woke from hibernation. Runtime defaults match requested values; no addon errors. Waiting for a client connection. r19 random drafting is included.
+- Backup: `/root/agent.backup/dota-r20-source-20260918/before-r20.tar.gz`; client backups .98 `20260918-215742`, .180 `20260918-215726`.
+- Validation boundaries: automated tests exercise defaults, neighboring controls, hidden controls, and disconnect/postgame transitions using mocks. Actual >5 minute pause, human disconnect during a running bot match, Ancient destruction, and refreshed in-game UI remain user/client acceptance checks; startup settings alone do not prove those behaviors.
+- Final validation: `bash scripts/test.sh` passed **212 tests** (28 existing fixture/runtime warnings); package CRC and every source-file SHA256 passed. Client backup rotation retains the two most recent agent snapshots on each PC.

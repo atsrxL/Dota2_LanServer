@@ -302,6 +302,7 @@ function Engine:tick()
 end
 function Engine:init()
     if method(Convars,'SetBool') then Convars:SetBool('sv_cheats',true) end
+    require('lan.lifecycle').init(self)
     self.mode=GameRules:GetGameModeEntity()
     if method(self.mode,'SetFreeCourierModeEnabled') then self.mode:SetFreeCourierModeEnabled(true) end
     require('lan.cheats').init(self)

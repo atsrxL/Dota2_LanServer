@@ -205,3 +205,17 @@ rules.apply_bot_difficulty(tutorial,botHero(1,2))
 rules.apply_bot_difficulty(tutorial,botHero(2,3))
 rules.apply_bot_difficulty(tutorial,botHero(0,2))
 assert(assigned[1]==1 and assigned[2]==4 and assigned[0]==nil)
+
+-- Disconnects and pauses do not become our own game-end/unpause actions.
+local lifecycle_values={}
+Convars.SetBool=function(_,k,v)lifecycle_values[k]=v end
+Convars.SetInt=function(_,k,v)lifecycle_values[k]=v end
+require('lan.lifecycle').init(tutorial)
+assert(lifecycle_values.dota_surrender_on_disconnect==false)
+assert(lifecycle_values.sv_hibernate_when_empty==false)
+assert(lifecycle_values.dota_pause_force_unpause_time==2147483647)
+assert(lifecycle_values.dota_auto_surrender_all_disconnected_timeout==2147483647)
+PlayerResource.GetSelectedHeroEntity=function()return nil end
+state=7;players[0].conn=3;tutorial:tick()
+assert(tutorial.room.phase=='playing' and tutorial.room.started)
+state=8;tutorial:tick();assert(tutorial.room.phase=='postgame')
