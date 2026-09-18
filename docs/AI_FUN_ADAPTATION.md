@@ -95,3 +95,13 @@ User clarified the remaining >5 AI concern was different names/display. Session 
 46 addon/adapter tests pass (Lua and Panorama mocks included). Real Windows compilation completed with0 failures. r18 source SHA3ded55f0a258f565afbf5ac34422dba083a29a592a2c7d1198f996581712a7d7. Client ZIP SHA8475b0018cc91e5345286a406df1f27e7c715f53d86690bb768eaff46861184c, both .98 and .180 installed17 files and verified every hash. CT270 session ceaba2d6b7869b2dada37d46d677bd22 boots errors[]. Native setter effects, new name display and exact icon placement await a new match; AddAbility effects still need actual button validation after removing the precheck. Old slot counter error was application logic, not a proven native engine limit.
 
 Snapshot rotation keeps server r17b and r18 snapshots; r17/pre-r17.tar.gz was rotated after checking both newer archives. Original removed UI remains under docs/archive/bot-panel and full pre-change source ZIP outside Git. Client snapshots likewise retain the newest two known agent-created backups for this addon. No public push.
+
+## r19 random Bot draft (staged for next match)
+
+Replaced sequential hero allocation with a Fisher–Yates shuffle using engine RandomInt, applied once to a private copy of the verified Tiandixing hero pool at strategy-time fill. Excludes every already-selected hero and deduplicates the input; both teams draw from the same shuffled pool without replacement. Missing verified pool now fails explicitly instead of using the old unsupported static fallback. Preflight capacity check occurs before AddBot; BOT_DRAFT logs each actual team/hero selection. Repeated fill ticks cannot redraw or add duplicates.
+
+46 related tests pass, including alternate RNG outcomes, unchanged source pool, player hero exclusion, unique23-bot draw from53 supported heroes and once-only8-bot population. These are mock tests; the next live match's randomized draft is not yet observed.
+
+Only addon source staged to CT270 /opt/dota2-lan-kit/addon. The user's ongoing match continues with its original deployment/session; next manual server start/restart applies r19. No current-match hero replacement, no agent restart, no UI changes or recompilation. Source SHA294a6d5ae2e0cafe9508e75794e6fc1d4f7a6cee69e193c8973a6a3ca9c59157; staged source and compiled manifest report ready. Backup /root/agent.backup/dota-r19-source-20260918/before-r19.tar.gz. Existing crash-retry source-lock behavior remains: manual restart is the transition to the new source.
+
+Client ZIP r19 SHA3953966aa3e77af633e724f8aeba507a4d1539fd588dfd388819fceac5fb8b31 is packaged for future installations; current clients do not need a UI update for server-side Bot selection. Public push not performed.

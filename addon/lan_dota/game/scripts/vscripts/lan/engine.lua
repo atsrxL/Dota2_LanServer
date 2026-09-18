@@ -237,20 +237,22 @@ function Engine:tick()
             self:emit('FILL','no_empty_slots')
         else
             if self.room.caps.tutorial_bots then
-                local pool=(self.config.bot and self.config.bot.hero_pool) or {'axe','bane','bloodseeker','crystal_maiden','drow_ranger','earthshaker','juggernaut','mirana','nevermore','phantom_lancer','puck','pudge','razor','sand_king','storm_spirit','sven','tiny','vengefulspirit','windrunner','zuus','kunkka','lina','lich','lion'}
+
                 local used={}
                 if method(PlayerResource,'GetSelectedHeroName') then
                     for id=0,63 do if PlayerResource:IsValidPlayerID(id) then used[PlayerResource:GetSelectedHeroName(id) or '']=true end end
                 end
+                local pool=require('lan.bot_selection').draft(self.config.bot and self.config.bot.hero_pool,used,RandomInt)
+                if #pool<self.bot_count_expected-self.bot_count_before then error('bot_hero_pool_exhausted') end
                 local nextHero=1
                 for team=2,3 do
                     local desired=team==2 and self.room.options.radiant_player_number or self.room.options.dire_player_number
                     local count=PlayerResource:GetPlayerCountForTeam(team)
                     for i=1,math.max(0,desired-count) do
-                        while pool[nextHero] and used['npc_dota_hero_'..pool[nextHero]] do nextHero=nextHero+1 end
                         if not pool[nextHero] then error('bot_hero_pool_exhausted') end
                         local hero='npc_dota_hero_'..pool[nextHero];used[hero]=true;nextHero=nextHero+1
                         Tutorial:AddBot(hero,'','',team==2)
+                        self:emit('BOT_DRAFT',{team=team,hero=hero,selection='random_without_replacement'})
                     end
                 end
             else GameRules:BotPopulate() end

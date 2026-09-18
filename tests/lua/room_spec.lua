@@ -71,3 +71,18 @@ do
  for n=4,12 do assert(r:set_options(0,r.revision,{radiant_player_number=n,dire_player_number=n})) end
  for _,n in ipairs({1,2,3,13}) do assert(not r:set_options(0,r.revision,{radiant_player_number=n})) end
 end
+
+-- Random drafts exclude selected heroes, never mutate the source, and support 12v12.
+do
+ local draft=require('lan.bot_selection').draft
+ local supported={}
+ for i=1,53 do supported[i]='hero_'..i end
+ supported[54]='hero_2' -- duplicates in input cannot produce duplicate bots
+ local used={npc_dota_hero_hero_1=true}
+ local a=draft(supported,used,function(lo,hi)return lo end)
+ local b=draft(supported,used,function(lo,hi)return hi end)
+ assert(#a==52 and #b==52 and a[1]~=b[1] and supported[1]=='hero_1')
+ local seen={}
+ for i=1,23 do assert(not seen[a[i]] and a[i]~='hero_1');seen[a[i]]=true end
+ assert(not pcall(draft,nil,used,function()return 1 end))
+end

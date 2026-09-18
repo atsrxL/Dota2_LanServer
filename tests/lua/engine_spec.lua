@@ -104,15 +104,19 @@ assert(emitted.finish==before+1)
 -- Tutorial fill uses configured team sizes, once, at strategy time.
 players={[0]={team=2,conn=2,name='Solo'}};state=2
 local adds=0;local picked={}
+local random_calls=0
+RandomInt=function(lo,hi)assert(lo==1 and hi>=2);random_calls=random_calls+1;return 1 end
+PlayerResource.GetSelectedHeroName=function(_,pid)return pid==0 and 'npc_dota_hero_axe' or '' end
+local hero_pool={'axe','bane','bloodseeker','crystal_maiden','drow_ranger','juggernaut','mirana','nevermore','razor','sven'}
 Tutorial={AddBot=function(_,hero,a,b,radiant) assert(not picked[hero]);picked[hero]=true;adds=adds+1;players[adds]={team=radiant and 2 or 3,conn=1,name='bot'} end}
 PlayerResource.GetPlayerCountForTeam=function(_,team)local n=0;for _,p in pairs(players)do if p.team==team then n=n+1 end end;return n end
-local tutorial=Engine.new({client_revision='v1',session=string.rep('d',32),source_sha256='fixture',bot_available=true})
+local tutorial=Engine.new({client_revision='v1',session=string.rep('d',32),source_sha256='fixture',bot_available=true,bot={hero_pool=hero_pool}})
 tutorial:init();tutorial:tick()
 local function tutorialact(action,opts)emitted.listener(100,{action=action,revision=tutorial.room.revision,client_revision='v1',options=opts})end
 tutorialact('hello');tutorialact('solo_start',{radiant_player_number=4,dire_player_number=5,radiant_gold_multiplier=1.5})
 assert(tutorial.room.started and tutorial.room.options.radiant_gold_multiplier==1.5)
 state=4;tutorial:tick();assert(adds==8 and tutorial.bot_fill_deadline==nil)
-tutorial:tick();assert(adds==8)
+tutorial:tick();assert(adds==8 and random_calls==8 and not picked.npc_dota_hero_axe and hero_pool[1]=='axe')
 
 -- Tutorial fake clients can report CONNECTED instead of BOT.
 PlayerResource.IsFakeClient=function(_,pid)return pid~=0 end
