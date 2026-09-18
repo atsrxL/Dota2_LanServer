@@ -246,11 +246,31 @@ function Engine:tick()
                     for i=1,math.max(0,desired-count) do Tutorial:AddBot('npc_dota_hero_luna','','',team==2) end
                 end
             else GameRules:BotPopulate() end
+            self.mode:SetBotThinkingEnabled(true)
             self.bot_fill_deadline=Time()+15
             self:emit('FILL',{method=self.room.caps.tutorial_bots and 'Tutorial:AddBot' or 'BotPopulate',expected=self.bot_count_expected,observed=self:bot_count()})
         end
     end
+    if self.room.started and self.room.options.fill_bots and (phase=='pregame' or phase=='playing') and not self.tutorial_started then
+        self.tutorial_started=true
+        if self.room.caps.tutorial_bots and method(Tutorial,'StartTutorialMode') then Tutorial:StartTutorialMode() end
+        self.mode:SetBotThinkingEnabled(true)
+        self:emit('AI_ACTIVATE',{tutorial=self.room.caps.tutorial_bots,phase=phase})
+    end
     if self.room.started then require('lan.rules').tick(self,phase) end
+    if phase=='playing' and (not self.last_bot_sample or Time()-self.last_bot_sample>=10) then
+        self.last_bot_sample=Time()
+        if method(PlayerResource,'GetSelectedHeroEntity') then
+            local samples={}
+            for pid=0,63 do
+                if PlayerResource:IsValidPlayerID(pid) and method(PlayerResource,'IsFakeClient') and PlayerResource:IsFakeClient(pid) then
+                    local h=PlayerResource:GetSelectedHeroEntity(pid)
+                    if h then local v=h:GetAbsOrigin();samples[#samples+1]={pid=pid,hero=h:GetUnitName(),x=math.floor(v.x),y=math.floor(v.y),alive=h:IsAlive()} end
+                end
+            end
+            self:emit('AI_POSITIONS',samples)
+        end
+    end
     if self.bot_fill_deadline then
         local after=self:bot_count()
         if after>=self.bot_count_expected then

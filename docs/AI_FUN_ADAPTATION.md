@@ -27,3 +27,7 @@ r11 replaces the r10 multiplier grid per user: 1, 1.15, 1.25, 1.35, 1.5, 1.75, 2
 ## r12 false bot-count failure
 
 User reported automatic pause and stationary bots after purchases. Live status proved 1 human + 10 bots for configured Radiant 5 / Dire 6, while addon had raised BotPopulate_incomplete_bot_count and deliberately disabled thinking/paused. bot_count only checked connection-state BOT whereas refresh_players already checked IsFakeClient; aligned both classifiers. Added regression for Tutorial fake clients reporting CONNECTED, plus actual fill method/expected/observed telemetry. 42 addon tests pass. New server session deployed; in-match movement still requires reconnection and new start. No UI change or client restart needed for this fix.
+
+## r13 Tutorial activation parity
+
+r12 live match reached playing with expected=12/observed=12 and no pause/error; user reports AI stationary. Original AI Fun calls SetBotThinkingEnabled again after AddBot and Tutorial:StartTutorialMode at pregame. These were missing in adaptation. Restored both, guarded once per match, with 10-second bot hero position samples for observed movement rather than assuming entry/purchases prove AI behavior. 42 tests pass, including Tutorial activation once. Default sv_cheats remains enabled per repeated user authorization; GameRules cheat-mode flag is distinct and not falsely reported as enabled.

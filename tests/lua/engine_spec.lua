@@ -119,3 +119,9 @@ PlayerResource.IsFakeClient=function(_,pid)return pid~=0 end
 for pid,p in pairs(players) do p.conn=2 end
 assert(tutorial:bot_count()==6)
 tutorial:refresh_players();assert(tutorial.room.players[1]==nil)
+
+local tutorialStarts=0
+Tutorial.StartTutorialMode=function()tutorialStarts=tutorialStarts+1 end
+state=6;emitted.thinking=false;tutorial:tick()
+assert(tutorialStarts==1 and emitted.thinking)
+tutorial:tick();assert(tutorialStarts==1)
