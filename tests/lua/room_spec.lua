@@ -40,3 +40,14 @@ assert(not r:can_start(0,r.revision));assert(not r:check_team(0,r.revision,3,3))
 local snapshot=r:snapshot();assert(snapshot.players[1].identity==nil)
 r:fail('test');assert(r.phase=='error' and r.started)
 print('room_spec: authority, revisions, ready, host, slots and cheat gates PASS')
+-- Trimmed personal-match options: native difficulty and bounded 0.15 grid.
+do
+ local r=Room.new(function()return 0 end,'v1')
+ r:sync({{pid=0,identity='solo',connected=true,team=2,name='Solo'}})
+ r:hello(0,'v1');r.phase='setup'
+ assert(r:set_options(0,r.revision,{difficulty=4,radiant_gold_multiplier=4.95,dire_xp_multiplier=0.15}))
+ assert(r:set_options(0,r.revision,{radiant_gold_multiplier=5}))
+ assert(not r:set_options(0,r.revision,{radiant_gold_multiplier=5.1}))
+ assert(not r:set_options(0,r.revision,{radiant_gold_multiplier=1.1}))
+ assert(not r:set_options(0,r.revision,{universal_shop=1}))
+end

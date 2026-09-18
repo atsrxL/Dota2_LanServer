@@ -87,7 +87,7 @@ function Engine:dispatch(source,keys)
         if ok then
             local raw=keys.options
             local value={bot_mode='tiandixing_native_lab',fill_bots=true,ack_unverified=true}
-            local allowed={extra_tower=true,extra_tower_phased=true,radiant_gold_multiplier=true,radiant_xp_multiplier=true,radiant_gold_start=true,radiant_lvl_start=true,radiant_player_number=true,dire_gold_multiplier=true,dire_xp_multiplier=true,dire_gold_start=true,dire_lvl_start=true,dire_player_number=true,respawn_time_percentage=true,buyback_cooldown=true,tower_power=true,tower_endure=true,max_level=true,universal_shop=true,fast_courier=true,bot_protection=true,anti_diving=true,difficulty=true,gold_percent=true,selection_seconds=true,pregame_seconds=true,allow_pause=true}
+            local allowed={radiant_gold_multiplier=true,radiant_xp_multiplier=true,radiant_gold_start=true,radiant_lvl_start=true,radiant_player_number=true,dire_gold_multiplier=true,dire_xp_multiplier=true,dire_gold_start=true,dire_lvl_start=true,dire_player_number=true,respawn_time_percentage=true,buyback_cooldown=true,tower_power=true,tower_endure=true,max_level=true,bot_protection=true,difficulty=true,gold_percent=true,selection_seconds=true,pregame_seconds=true,allow_pause=true}
             if type(raw)~='table' then ok=false else
                 for k,v in pairs(raw) do
                     if not allowed[k] then ok=false

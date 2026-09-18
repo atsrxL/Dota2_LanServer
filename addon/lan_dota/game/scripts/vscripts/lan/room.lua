@@ -4,7 +4,7 @@ local function copy(t) local out={} for k,v in pairs(t) do out[k]=v end return o
 local function integer(v,lo,hi) return type(v)=='number' and v==math.floor(v) and v>=lo and v<=hi end
 local function default_options()
     return {bot_mode='none', fill_bots=false, ack_unverified=false, difficulty=2,
-            selection_seconds=60, pregame_seconds=30, allow_pause=true, gold_percent=100,radiant_gold_multiplier=1,radiant_xp_multiplier=1,radiant_gold_start=600,radiant_lvl_start=1,radiant_player_number=5,dire_gold_multiplier=1,dire_xp_multiplier=1,dire_gold_start=600,dire_lvl_start=1,dire_player_number=5,respawn_time_percentage=100,buyback_cooldown=480,extra_tower=0,extra_tower_phased=1,tower_power=1,tower_endure=1,max_level=30,universal_shop=0,fast_courier=0,bot_protection=0,anti_diving=0}
+            selection_seconds=60, pregame_seconds=30, allow_pause=true, gold_percent=100,radiant_gold_multiplier=1,radiant_xp_multiplier=1,radiant_gold_start=600,radiant_lvl_start=1,radiant_player_number=5,dire_gold_multiplier=1,dire_xp_multiplier=1,dire_gold_start=600,dire_lvl_start=1,dire_player_number=5,respawn_time_percentage=100,buyback_cooldown=480,tower_power=1,tower_endure=1,max_level=30,bot_protection=0,}
 end
 function Room.new(clock, revision)
     return setmetatable({clock=clock, client_revision=revision, revision=1, phase='waiting_engine',
@@ -92,15 +92,15 @@ function Room:set_options(pid,expected,raw)
     for _,key in ipairs({'fill_bots','ack_unverified','allow_pause'}) do
         if type(value[key])~='boolean' then return false,'invalid_boolean' end
     end
-    if not integer(value.difficulty,0,3) or not integer(value.selection_seconds,30,120)
+    if not integer(value.difficulty,0,4) or not integer(value.selection_seconds,30,120)
         or not integer(value.pregame_seconds,10,60) or not integer(value.gold_percent,25,1000) then return false,'invalid_number' end
-    if not ({[1]=true,[1.5]=true,[2]=true,[2.5]=true,[3]=true,[5]=true,[10]=true,[100]=true,[1000]=true})[value.radiant_gold_multiplier] then return false,'invalid_number' end
-    if not ({[1]=true,[1.5]=true,[2]=true,[3]=true,[5]=true,[10]=true,[100]=true,[1000]=true})[value.radiant_xp_multiplier] then return false,'invalid_number' end
+    if not ({[0.15]=true,[0.3]=true,[0.45]=true,[0.6]=true,[0.75]=true,[0.9]=true,[1]=true,[1.05]=true,[1.2]=true,[1.35]=true,[1.5]=true,[1.65]=true,[1.8]=true,[1.95]=true,[2.1]=true,[2.25]=true,[2.4]=true,[2.55]=true,[2.7]=true,[2.85]=true,[3.0]=true,[3.15]=true,[3.3]=true,[3.45]=true,[3.6]=true,[3.75]=true,[3.9]=true,[4.05]=true,[4.2]=true,[4.35]=true,[4.5]=true,[4.65]=true,[4.8]=true,[4.95]=true,[5]=true})[value.radiant_gold_multiplier] then return false,'invalid_number' end
+    if not ({[0.15]=true,[0.3]=true,[0.45]=true,[0.6]=true,[0.75]=true,[0.9]=true,[1]=true,[1.05]=true,[1.2]=true,[1.35]=true,[1.5]=true,[1.65]=true,[1.8]=true,[1.95]=true,[2.1]=true,[2.25]=true,[2.4]=true,[2.55]=true,[2.7]=true,[2.85]=true,[3.0]=true,[3.15]=true,[3.3]=true,[3.45]=true,[3.6]=true,[3.75]=true,[3.9]=true,[4.05]=true,[4.2]=true,[4.35]=true,[4.5]=true,[4.65]=true,[4.8]=true,[4.95]=true,[5]=true})[value.radiant_xp_multiplier] then return false,'invalid_number' end
     if not ({[600]=true,[1000]=true,[1700]=true,[3200]=true,[6000]=true,[10000]=true,[100000]=true})[value.radiant_gold_start] then return false,'invalid_number' end
     if not ({[1]=true,[2]=true,[3]=true,[5]=true,[10]=true,[15]=true,[20]=true,[25]=true,[30]=true})[value.radiant_lvl_start] then return false,'invalid_number' end
     if not ({[1]=true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[8]=true,[10]=true,[12]=true})[value.radiant_player_number] then return false,'invalid_number' end
-    if not ({[1]=true,[1.5]=true,[2]=true,[2.5]=true,[3]=true,[5]=true,[10]=true,[100]=true,[1000]=true})[value.dire_gold_multiplier] then return false,'invalid_number' end
-    if not ({[1]=true,[1.5]=true,[2]=true,[3]=true,[5]=true,[10]=true,[100]=true,[1000]=true})[value.dire_xp_multiplier] then return false,'invalid_number' end
+    if not ({[0.15]=true,[0.3]=true,[0.45]=true,[0.6]=true,[0.75]=true,[0.9]=true,[1]=true,[1.05]=true,[1.2]=true,[1.35]=true,[1.5]=true,[1.65]=true,[1.8]=true,[1.95]=true,[2.1]=true,[2.25]=true,[2.4]=true,[2.55]=true,[2.7]=true,[2.85]=true,[3.0]=true,[3.15]=true,[3.3]=true,[3.45]=true,[3.6]=true,[3.75]=true,[3.9]=true,[4.05]=true,[4.2]=true,[4.35]=true,[4.5]=true,[4.65]=true,[4.8]=true,[4.95]=true,[5]=true})[value.dire_gold_multiplier] then return false,'invalid_number' end
+    if not ({[0.15]=true,[0.3]=true,[0.45]=true,[0.6]=true,[0.75]=true,[0.9]=true,[1]=true,[1.05]=true,[1.2]=true,[1.35]=true,[1.5]=true,[1.65]=true,[1.8]=true,[1.95]=true,[2.1]=true,[2.25]=true,[2.4]=true,[2.55]=true,[2.7]=true,[2.85]=true,[3.0]=true,[3.15]=true,[3.3]=true,[3.45]=true,[3.6]=true,[3.75]=true,[3.9]=true,[4.05]=true,[4.2]=true,[4.35]=true,[4.5]=true,[4.65]=true,[4.8]=true,[4.95]=true,[5]=true})[value.dire_xp_multiplier] then return false,'invalid_number' end
     if not ({[600]=true,[1000]=true,[1700]=true,[3200]=true,[6000]=true,[10000]=true,[100000]=true})[value.dire_gold_start] then return false,'invalid_number' end
     if not ({[1]=true,[2]=true,[3]=true,[5]=true,[10]=true,[15]=true,[20]=true,[25]=true,[30]=true})[value.dire_lvl_start] then return false,'invalid_number' end
     if not ({[1]=true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[8]=true,[10]=true,[12]=true})[value.dire_player_number] then return false,'invalid_number' end
@@ -109,11 +109,7 @@ function Room:set_options(pid,expected,raw)
     if not ({[1]=true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true})[value.tower_power] then return false,'invalid_number' end
     if not ({[1]=true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true})[value.tower_endure] then return false,'invalid_number' end
     if not ({[30]=true,[50]=true,[100]=true,[200]=true,[400]=true,[800]=true,[1600]=true})[value.max_level] then return false,'invalid_number' end
-    if not ({[0]=true,[1]=true})[value.universal_shop] then return false,'invalid_number' end
-    if not ({[0]=true,[1]=true})[value.fast_courier] then return false,'invalid_number' end
     if not ({[0]=true,[1]=true})[value.bot_protection] then return false,'invalid_number' end
-    if not ({[0]=true,[1]=true})[value.anti_diving] then return false,'invalid_number' end
-    if not integer(value.extra_tower,0,10) or not integer(value.extra_tower_phased,0,1) then return false,'invalid_number' end
     if value.bot_mode=='none' and value.fill_bots then return false,'fill_requires_bot_mode' end
     if value.bot_mode~='none' and not self.bot_available then return false,'bot_snapshot_missing' end
     self.options=value; self:changed(true); return true

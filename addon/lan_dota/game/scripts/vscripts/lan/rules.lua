@@ -4,7 +4,6 @@ function M.start(e)
  local o=e.room.options;local mode=e.mode
  GameRules:SetCustomGameTeamMaxPlayers(2,o.radiant_player_number)
  GameRules:SetCustomGameTeamMaxPlayers(3,o.dire_player_number)
- if GameRules.SetUseUniversalShopMode then GameRules:SetUseUniversalShopMode(o.universal_shop==1) end
  if mode.SetModifyExperienceFilter then mode:SetModifyExperienceFilter(function(_,v)
   local side=PlayerResource:GetTeam(v.player_id_const)==3 and 'dire' or 'radiant'
   if v.experience and v.experience>0 then v.experience=math.floor(v.experience*o[side..'_xp_multiplier']) end
@@ -17,7 +16,7 @@ function M.start(e)
   mode:SetCustomHeroMaxLevel(o.max_level);mode:SetCustomXPRequiredToReachNextLevel(xp)
  end
  if LinkLuaModifier then
-  for _,name in ipairs({'modifier_tower_invulnerable_watcher','modifier_tower_power','modifier_tower_endure','modifier_fast_courier','modifier_bot_protection','modifier_anti_diving'}) do LinkLuaModifier(name,'lan/original_modifiers',LUA_MODIFIER_MOTION_NONE) end
+  for _,name in ipairs({'modifier_tower_power','modifier_tower_endure','modifier_bot_protection'}) do LinkLuaModifier(name,'lan/original_modifiers',LUA_MODIFIER_MOTION_NONE) end
  end
  if ListenToGameEvent then ListenToGameEvent('entity_killed',function(k)
   local h=EntIndexToHScript(k.entindex_killed)
@@ -37,16 +36,11 @@ function M.tick(e,phase)
    local side=h:GetTeamNumber()==3 and 'dire' or 'radiant'
    h:SetGold(0,true);h:SetGold(o[side..'_gold_start'],false)
    while h:GetLevel()<math.min(o[side..'_lvl_start'],o.max_level) do h:HeroLevelUp(false) end
-   if o.anti_diving==1 then h:AddNewModifier(h,nil,'modifier_anti_diving',{}) end
    if o.bot_protection==1 and PlayerResource:IsFakeClient(h:GetPlayerOwnerID()) then h:AddNewModifier(h,nil,'modifier_bot_protection',{}) end
   end
  end
- if o.fast_courier==1 then for _,c in pairs(Entities:FindAllByClassname('npc_dota_courier')) do
-  if not c:HasModifier('modifier_fast_courier') then c:AddNewModifier(c,nil,'modifier_fast_courier',{}) end
- end end
  if not e.buildings_applied then
   e.buildings_applied=true
-  if o.extra_tower>0 then require("lan.extra_towers").create({iExtraTower=o.extra_tower,iExtraTowerPhased=o.extra_tower_phased}) end
   for _,class in ipairs({'npc_dota_tower','npc_dota_barracks','npc_dota_fort','npc_dota_filler'}) do
    for _,b in pairs(Entities:FindAllByClassname(class)) do
     if class=='npc_dota_tower' and o.tower_power>1 then b:AddNewModifier(b,nil,'modifier_tower_power',{}):SetStackCount(o.tower_power) end

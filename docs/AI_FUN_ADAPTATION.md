@@ -15,3 +15,9 @@ Restored per-team gold/XP multipliers, starting gold/level, team size (1–12), 
 Uses original Tutorial:AddBot strategy-time fill with configured counts and one-shot verification, while retaining BotPopulate fallback for engines without Tutorial API. Actual new BOOT reports sv_cheats=true and GameRules:IsCheatMode=false: these are distinct on this dedicated build. User authorized default cheats; addon initializes sv_cheats=true and checks actual Convars value. Do not treat GameRules false as proof sv_cheats is off.
 
 Real r9 compilation passed; 42 addon tests include asymmetric 3v4 Tutorial fill, decimal multiplier, no duplicate population. Live cheat convar verified true. Individual rule effects and actual Tutorial AI behavior require gameplay verification.
+
+## r10 user-accepted AI entry and reduced options
+
+User confirmed r9 entered gameplay and AI appeared (not full behavior validation). Removed universal shop, fast courier, extra towers/phased setting and anti-diving from UI, server allowlists, defaults and effects. Retained building endurance/power and bot protection. Native difficulty now 0 passive / 1 easy / 2 medium / 3 hard / 4 unfair. This changes the engine difficulty setting, not the selected Tiandixing script.
+
+All four gold/XP multipliers share 0.15 increments from 0.15 to 4.95, plus explicit 1.00 default and 5.00 upper endpoint. Server accepts only those values. 42 addon tests pass, including upper limit, grid rejection, removed option rejection and native difficulty 4; real Workshop Tools compilation passed.
