@@ -23,3 +23,7 @@ User confirmed r9 entered gameplay and AI appeared (not full behavior validation
 All four gold/XP multipliers share 0.15 increments from 0.15 to 4.95, plus explicit 1.00 default and 5.00 upper endpoint. Server accepts only those values. 42 addon tests pass, including upper limit, grid rejection, removed option rejection and native difficulty 4; real Workshop Tools compilation passed.
 
 r11 replaces the r10 multiplier grid per user: 1, 1.15, 1.25, 1.35, 1.5, 1.75, 2, 2.5, 3, 4, 5. All four selectors and server allowlists match; 42 addon tests and real compilation passed.
+
+## r12 false bot-count failure
+
+User reported automatic pause and stationary bots after purchases. Live status proved 1 human + 10 bots for configured Radiant 5 / Dire 6, while addon had raised BotPopulate_incomplete_bot_count and deliberately disabled thinking/paused. bot_count only checked connection-state BOT whereas refresh_players already checked IsFakeClient; aligned both classifiers. Added regression for Tutorial fake clients reporting CONNECTED, plus actual fill method/expected/observed telemetry. 42 addon tests pass. New server session deployed; in-match movement still requires reconnection and new start. No UI change or client restart needed for this fix.

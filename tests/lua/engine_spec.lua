@@ -113,3 +113,9 @@ tutorialact('hello');tutorialact('solo_start',{radiant_player_number=3,dire_play
 assert(tutorial.room.started and tutorial.room.options.radiant_gold_multiplier==1.5)
 state=4;tutorial:tick();assert(adds==6 and tutorial.bot_fill_deadline==nil)
 tutorial:tick();assert(adds==6)
+
+-- Tutorial fake clients can report CONNECTED instead of BOT.
+PlayerResource.IsFakeClient=function(_,pid)return pid~=0 end
+for pid,p in pairs(players) do p.conn=2 end
+assert(tutorial:bot_count()==6)
+tutorial:refresh_players();assert(tutorial.room.players[1]==nil)

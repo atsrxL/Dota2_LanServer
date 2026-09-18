@@ -191,7 +191,9 @@ function Engine:bot_count()
     for pid=0,63 do
         if PlayerResource:IsValidPlayerID(pid) then
             local c=PlayerResource:GetConnectionState(pid)
-            if c==DOTA_CONNECTION_STATE_BOT then n=n+1 end
+            local isbot=DOTA_CONNECTION_STATE_BOT~=nil and c==DOTA_CONNECTION_STATE_BOT
+            if method(PlayerResource,'IsFakeClient') then isbot=isbot or PlayerResource:IsFakeClient(pid) end
+            if isbot then n=n+1 end
         end
     end
     return n
@@ -245,7 +247,7 @@ function Engine:tick()
                 end
             else GameRules:BotPopulate() end
             self.bot_fill_deadline=Time()+15
-            self:emit('FILL','BotPopulate_requested; expected_total='..self.bot_count_expected)
+            self:emit('FILL',{method=self.room.caps.tutorial_bots and 'Tutorial:AddBot' or 'BotPopulate',expected=self.bot_count_expected,observed=self:bot_count()})
         end
     end
     if self.room.started then require('lan.rules').tick(self,phase) end
@@ -254,7 +256,7 @@ function Engine:tick()
         if after>=self.bot_count_expected then
             self.bot_fill_deadline=nil; self:emit('FILL','bot_players_observed:'..after)
         elseif Time()>self.bot_fill_deadline then
-            self.bot_fill_deadline=nil; self:error('BotPopulate_incomplete_bot_count; stop_and_inspect');return 2
+            self.bot_fill_deadline=nil; self:error('bot_fill_incomplete; expected='..self.bot_count_expected..'; observed='..after);return 2
         end
     end
     if Time()-self.last_heartbeat>=2 then
