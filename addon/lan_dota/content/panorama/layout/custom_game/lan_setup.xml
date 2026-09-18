@@ -27,7 +27,7 @@
                     <Panel class="Row"><Label class="FieldName" text="选人 / 出兵前秒数" /><TextEntry id="SelectionSeconds" text="60" maxchars="3" /><TextEntry id="PregameSeconds" text="30" maxchars="2" /><Label class="Footnote" text="选人 30–120 / 赛前 10–60" /></Panel>
                     <Panel class="Row"><Label class="FieldName" text="金币收入倍率（%）" /><TextEntry id="GoldPercent" text="100" maxchars="4" /><Label class="Footnote" text="25–1000；100 为原倍率，仅正向金币事件，实机验证中" /></Panel>
                     <ToggleButton id="AckUnverified" text="我了解天地星兼容性未完成实机验收；本局用于验证" />
-                    <Label id="BotInfo" class="Footnote" text="未读取脚本快照" />
+                    <Label id="SavedAI" class="Footnote" text="正在读取已保存的 AI 设置…" /><Label id="BotInfo" class="Footnote" text="未读取脚本快照" />
                     <Panel class="Row"><Button id="SaveOptions"><Label hittest="false" text="保存参数（清除准备）" /></Button><DropDown id="TransferTarget" /><Button id="Transfer"><Label hittest="false" text="转交配置权" /></Button></Panel>
                 </Panel>
                 <Panel class="Row Footer"><Button id="Ready" class="Primary"><Label hittest="false" text="准备 / 取消准备" /></Button><Button id="Start" class="Primary"><Label hittest="false" text="锁定并开始" /></Button><Label id="Owner" text="配置者：等待玩家" /></Panel>

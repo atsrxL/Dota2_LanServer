@@ -70,3 +70,11 @@ r5 完整源码回归：204 passed / 28 warnings（70.30s），既有 forkpty �
 ## r6 选队提交诊断
 
 用户确认 r5 排版正常，但选单切换后点击“选择队伍与位置”没有加入列表。原日志仅有 hello、team=5/role=0，没有选队 action；尚不能证明是服务端拒绝。按钮 Label 增加 hittest=false，使点击落在按钮；回调增加提交提示和异常提示，服务端增加非 hello ACTION 结果日志，展示本机 PID 便于定位禁用状态。Windows 真实编译通过、39 项 addon mock 测试通过，已同步双端并重启。修复是否奏效与完整准备→开始流程仍待实机复测。
+
+## r7 比赛中面板与天地星接入
+
+现场确认 r6 已完成无 AI 的 setup→playing，玩家已分配天辉2号位并准备。START 实际为 mode=none/fill=false，不能认定 BotPopulate 执行失败。用户授权个人 LAN 测试服保持 sv_cheats 开启（已保存配置为 true）。
+
+新增 1573671599 到固定天地星扫描许可，与原 1627071163 共用原生探针，不宣称任意脚本兼容。两种 ID 参数化测试：42 项 addon 测试通过。启用 probe_bots 并重开，真实扫描 76 个 Lua 文件且出现 hero_selection.lua BOT_ENTRY；补位与思考仍待玩家开局验证。
+
+删除自定义 DropDown Label visibility 覆盖，交由原生样式显示选中项。比赛阶段自动折叠为右上角 260px、最高110px 状态条，隐藏大标题和消息，支持手动展开。准备页新增已保存 AI 模式/补位状态。Windows 实际编译、资源校验、双端部署均完成；视觉效果待用户复核。

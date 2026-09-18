@@ -49,8 +49,8 @@ class LanAddon:
 
     def scan(self, bots, selected=None):
         selected = bots.validate_selection(selected if selected is not None else bots._selection().get('selected'))
-        if not selected: raise Fault('先下载并选择 1627071163 的一个固定版本',409)
-        if selected['item_id'] != '1627071163': raise Fault('本实验适配目标固定为天地星 1627071163；不冒称兼容任意脚本',409)
+        if not selected: raise Fault('先下载并选择天地星 1627071163 或 1573671599 的固定版本',409)
+        if selected['item_id'] not in ('1627071163', '1573671599'): raise Fault('本实验仅接受天地星 1627071163 / 1573671599；实际兼容性仍需验证',409)
         report = audit_scripts(bots._version_path(selected['item_id'],selected['version'])/'scripts',selected)
         atomic_json(self.root/'audit.json',report)
         return report

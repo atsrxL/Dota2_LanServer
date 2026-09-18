@@ -1,7 +1,7 @@
 /* Panorama JavaScript, not browser DOM. Compile with Valve Workshop Tools. */
 (function () {
     'use strict';
-    var CLIENT_REVISION = 'lanlab-130.1', state = null, lastOptions = '', lastRoster = '', collapsed = false;
+    var CLIENT_REVISION = 'lanlab-130.1', state = null, lastOptions = '', lastRoster = '', collapsed = false, lastPhase = null;
     var context = $.GetContextPanel();
     function el(id) { return context.FindChildTraverse(id); }
     function truth(v) { return v === true || v === 1 || v === '1'; }
@@ -40,7 +40,13 @@
         var phases = {waiting_engine:'等待引擎进入准备阶段',setup:'等待玩家配置与准备',starting:'开局初始化中',hero_selection:'选人阶段',pregame:'赛前阶段',playing:'比赛中',postgame:'比赛结束，请在面板重开',error:'运行异常，请保留日志并停服检查'};
         el('Phase').text = phases[state.phase] || state.phase;
         el('Owner').text = '本机：' + pid() + ' / 配置者：' + (Number(state.host) >= 0 ? 'Player ' + state.host : '等待有效玩家');
-        el('LANRoot').SetHasClass('Compact', collapsed || (state.phase !== 'setup' && state.phase !== 'waiting_engine' && state.phase !== 'starting' && state.phase !== 'error'));
+        if (state.phase !== lastPhase) {
+            lastPhase = state.phase;
+            collapsed = ['hero_selection','pregame','playing','postgame'].indexOf(state.phase) >= 0;
+        }
+        el('LANRoot').SetHasClass('Compact', collapsed);
+        el('SavedAI').text = '已保存：' + (state.options.bot_mode === 'none' ? '无机器人' : '天地星实验') +
+            ' / 自动补位' + (truth(state.options.fill_bots) ? '开启' : '关闭');
         ['RadiantRows','DireRows'].forEach(function(id,i) {
             var root = el(id), team = i+2; root.RemoveAndDeleteChildren();
             for (var role=1;role<=5;role++) {

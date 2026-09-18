@@ -42,11 +42,17 @@ ToggleButton Label { font-size:16px; color:#d7e3e9; }
 /* Base controls require dotastyles.css: selection visibility, popup lifecycle,
    dropdown arrow and checkbox children are engine-managed. Scope our overrides. */
 #LANWindow DropDown { padding:0px 30px 0px 10px; border:1px solid #587483; }
-#LANWindow DropDown Label { visibility:collapse; width:100%; margin:0px; padding:0px; text-overflow:ellipsis; }
-#LANWindow DropDown Label:selected { visibility:visible; }
+#LANWindow DropDown Label { width:100%; margin:0px; padding:0px; text-overflow:ellipsis; }
+/* Native DropDown controls selected-label visibility. */
 DropDownMenu { flow-children:down; max-height:360px; overflow:squish scroll; padding:4px; }
 DropDownMenu Label { width:100%; min-height:38px; margin:0px; padding:8px 12px; }
 DropDownMenu Label:hover { background-color:#365463; }
 #LANWindow ToggleButton { flow-children:right; }
 #LANWindow ToggleButton Label { vertical-align:center; margin-left:8px; }
 #LANWindow TextEntry { padding:6px 8px; }
+
+#LANRoot.Compact #LANWindow { width:260px; padding:8px; margin:70px 12px 0px 0px; max-height:110px; }
+#LANRoot.Compact .Title, #LANRoot.Compact .Eyebrow, #LANRoot.Compact #Message { visibility:collapse; }
+#LANRoot.Compact #Phase { font-size:15px; margin:4px 0px 0px 0px; }
+#LANRoot.Compact #Toggle { padding:4px 8px; }
+#LANRoot.Compact #Toggle Label { font-size:14px; }

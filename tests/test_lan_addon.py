@@ -37,15 +37,15 @@ def fake_compiled(source):
     atomic_json(out/'asset_manifest.json',{'schema':1,'client_revision':CLIENT_REVISION,
       'ui_source_sha256':source_identity(source)['ui_source_sha256'],'files':files})
 
-@pytest.fixture
-def bot(paths,tmp_path):
+@pytest.fixture(params=['1627071163', '1573671599'])
+def bot(paths,tmp_path,request):
     library=BotLibrary(paths)
     raw=tmp_path/'bot_fixture';raw.mkdir()
     (raw/'hero_selection.lua').write_text('function Think() local b=GetBot() end\n')
     (raw/'bot_generic.lua').write_text('function Think() return GetBot() end\n')
-    metadata={'item_id':'1627071163','title':'TEST NOT DOWNLOADED'}
+    metadata={'item_id':request.param,'title':'TEST NOT DOWNLOADED'}
     info=library.install(raw,metadata)
-    selection=library.select({'item_id':'1627071163','version':info['version']})
+    selection=library.select({'item_id':request.param,'version':info['version']})
     return library,selection,raw
 
 @pytest.mark.parametrize('raw',[[],{'unknown':1},{'enabled':1},{'probe_bots':'yes'},
