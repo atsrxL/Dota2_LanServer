@@ -125,3 +125,17 @@ Tutorial.StartTutorialMode=function()tutorialStarts=tutorialStarts+1 end
 state=6;emitted.thinking=false;tutorial:tick()
 assert(tutorialStarts==1 and emitted.thinking)
 tutorial:tick();assert(tutorialStarts==1)
+
+-- Engine chat events, exact gold changes and level bounds.
+local balance=600;local level=1
+local hero={SetGold=function(_,n,reliable)if not reliable then balance=n end end,GetLevel=function()return level end,HeroLevelUp=function()level=level+1 end}
+PlayerResource.GetSelectedHeroEntity=function()return hero end
+PlayerResource.GetGold=function()return balance end
+PlayerResource.GetUnreliableGold=function()return balance end
+PlayerResource.GetReliableGold=function()return 0 end
+Convars.GetBool=function()return true end
+local chats=require('lan.cheats')
+chats.handle(tutorial,{playerid=0,text='-gold 100'});assert(balance==700)
+chats.handle(tutorial,{playerid=0,text='-lvlup 2'});assert(level==3)
+chats.handle(tutorial,{playerid=0,text='-gold 100;quit'});assert(balance==700)
+chats.handle(tutorial,{playerid=1,text='-gold 100'});assert(balance==700)

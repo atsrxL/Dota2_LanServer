@@ -287,6 +287,7 @@ end
 function Engine:init()
     if method(Convars,'SetBool') then Convars:SetBool('sv_cheats',true) end
     self.mode=GameRules:GetGameModeEntity()
+    require('lan.cheats').init(self)
     for _,name in ipairs({'EnableCustomGameSetupAutoLaunch','SetCustomGameSetupTimeout','FinishCustomGameSetup',
         'SetCustomGameTeamMaxPlayers','LockCustomGameSetupTeamAssignment','SetHeroSelectionTime','SetPreGameTime'}) do
         if not method(GameRules,name) then error('required GameRules API missing: '..name) end

@@ -31,3 +31,7 @@ User reported automatic pause and stationary bots after purchases. Live status p
 ## r13 Tutorial activation parity
 
 r12 live match reached playing with expected=12/observed=12 and no pause/error; user reports AI stationary. Original AI Fun calls SetBotThinkingEnabled again after AddBot and Tutorial:StartTutorialMode at pregame. These were missing in adaptation. Restored both, guarded once per match, with 10-second bot hero position samples for observed movement rather than assuming entry/purchases prove AI behavior. 42 tests pass, including Tutorial activation once. Default sv_cheats remains enabled per repeated user authorization; GameRules cheat-mode flag is distinct and not falsely reported as enabled.
+
+## r14 chat cheats (explicit compatibility bridge)
+
+User verified native -gold 100 had no effect with sv_cheats true. No verified setter for GC lobby allow_cheats was found. Added explicitly scoped addon player_chat handlers for -gold, -lvlup, -refresh, -respawn, default enabled via sv_cheats. Does NOT claim full native cheat mode or change GameRules:IsCheatMode. Uses engine player_chat identity, fixed command parsing, no arbitrary console execution, exact gold changes independent of income multiplier, bounded level gain. Records CHAT_CHEAT before/after. 42 addon tests pass; actual client chat effects require verification after reconnection.
