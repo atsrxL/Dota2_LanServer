@@ -51,3 +51,13 @@ Button:disabled { opacity:0.35; }
 .ToolSection { color:#e6a152; font-size:18px; margin:12px 0px 5px 0px; }
 .ToolButton { width:100%; margin-top:5px; padding:8px; }
 .ToolButton Label { font-size:17px; }
+
+/* Match tools sit to the right of the top scoreboard; a small launcher by default. */
+#LANRoot.InMatch #LANWindow { horizontal-align:center; vertical-align:top; margin:8px 0px 0px 1050px; width:245px; padding:8px; }
+#LANRoot.InMatch.Compact #LANWindow { width:60px; padding:2px; }
+#LANRoot.InMatch.Compact #Phase { visibility:collapse; }
+#LANRoot.InMatch .Title { font-size:18px; }
+#LANRoot.InMatch .Header { margin-bottom:2px; }
+#LANRoot.InMatch .ToolSection { font-size:15px; margin:7px 0px 3px 0px; }
+#LANRoot.InMatch .ToolButton { padding:4px 6px; margin-top:3px; }
+#LANRoot.InMatch .ToolButton Label { font-size:14px; }

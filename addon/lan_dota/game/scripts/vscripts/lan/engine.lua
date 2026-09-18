@@ -242,10 +242,21 @@ function Engine:tick()
             self:emit('FILL','no_empty_slots')
         else
             if self.room.caps.tutorial_bots then
+                local pool={'axe','bane','bloodseeker','crystal_maiden','drow_ranger','earthshaker','juggernaut','mirana','nevermore','phantom_lancer','puck','pudge','razor','sand_king','storm_spirit','sven','tiny','vengefulspirit','windrunner','zuus','kunkka','lina','lich','lion'}
+                local used={}
+                if method(PlayerResource,'GetSelectedHeroName') then
+                    for id=0,63 do if PlayerResource:IsValidPlayerID(id) then used[PlayerResource:GetSelectedHeroName(id) or '']=true end end
+                end
+                local nextHero=1
                 for team=2,3 do
                     local desired=team==2 and self.room.options.radiant_player_number or self.room.options.dire_player_number
                     local count=PlayerResource:GetPlayerCountForTeam(team)
-                    for i=1,math.max(0,desired-count) do Tutorial:AddBot('npc_dota_hero_luna','','',team==2) end
+                    for i=1,math.max(0,desired-count) do
+                        while pool[nextHero] and used['npc_dota_hero_'..pool[nextHero]] do nextHero=nextHero+1 end
+                        if not pool[nextHero] then error('bot_hero_pool_exhausted') end
+                        local hero='npc_dota_hero_'..pool[nextHero];used[hero]=true;nextHero=nextHero+1
+                        Tutorial:AddBot(hero,'','',team==2)
+                    end
                 end
             else GameRules:BotPopulate() end
             self.mode:SetBotThinkingEnabled(true)
@@ -260,6 +271,12 @@ function Engine:tick()
         self:emit('AI_ACTIVATE',{tutorial=self.room.caps.tutorial_bots,phase=phase})
     end
     if self.room.started then require('lan.rules').tick(self,phase) end
+    if self.bot_hero_deadline and (phase=='pregame' or phase=='playing') and method(PlayerResource,'GetSelectedHeroEntity') then
+        local heroes=0
+        for id=0,63 do if PlayerResource:IsValidPlayerID(id) and method(PlayerResource,'IsFakeClient') and PlayerResource:IsFakeClient(id) and PlayerResource:GetSelectedHeroEntity(id) then heroes=heroes+1 end end
+        if heroes>=self.bot_count_expected then self.bot_hero_deadline=nil;self:emit('BOT_HEROES',{expected=self.bot_count_expected,observed=heroes})
+        elseif Time()>self.bot_hero_deadline then self.bot_hero_deadline=nil;self:emit('BOT_HERO_WARNING',{expected=self.bot_count_expected,observed=heroes}) end
+    end
     if phase=='playing' and (not self.last_bot_sample or Time()-self.last_bot_sample>=10) then
         self.last_bot_sample=Time()
         if method(PlayerResource,'GetSelectedHeroEntity') then
@@ -276,7 +293,7 @@ function Engine:tick()
     if self.bot_fill_deadline then
         local after=self:bot_count()
         if after>=self.bot_count_expected then
-            self.bot_fill_deadline=nil; self:emit('FILL','bot_players_observed:'..after)
+            self.bot_fill_deadline=nil; self.bot_hero_deadline=Time()+45; self:emit('FILL','bot_players_observed:'..after)
         elseif Time()>self.bot_fill_deadline then
             self.bot_fill_deadline=nil; self:error('bot_fill_incomplete; expected='..self.bot_count_expected..'; observed='..after);return 2
         end

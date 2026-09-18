@@ -52,11 +52,12 @@ function msg(s){el('Message').text=String(s);el('ToolMessage').text=String(s);}
 function send(action,extra){var d=extra||{};d.action=action;d.revision=state?Number(state.revision):0;d.client_revision='lanlab-130.1';GameEvents.SendCustomGameEventToServer('lan_action',d);}
 function render(s){
  if(!s)return;state=s;
- if(lastPhase!==s.phase){lastPhase=s.phase;collapsed=['hero_selection','postgame'].indexOf(s.phase)>=0;}
+ if(lastPhase!==s.phase){lastPhase=s.phase;collapsed=['hero_selection','pregame','playing','postgame'].indexOf(s.phase)>=0;}
  el('LANRoot').SetHasClass('Compact',collapsed);
  var inMatch=['pregame','playing','postgame'].indexOf(s.phase)>=0;
  el('LANRoot').SetHasClass('InMatch',inMatch);
  el('MenuTitle').text=inMatch?'对局操作':'游戏选项';
+ el('Toggle').GetChild(0).text=inMatch?(collapsed?'工具':'收起'):'收起 / 展开';
  var phases={setup:'调整参数后开始',waiting_engine:'等待服务器',starting:'正在开始',hero_selection:'英雄选择',pregame:'准备出兵',playing:'比赛中',postgame:'比赛结束',error:'运行异常'};
  el('Phase').text=phases[s.phase]||s.phase;
  if(!initialized && s.options){initialized=true;el('Difficulty').SetSelected(String(s.options.difficulty));el('SelectionSeconds').SetSelected(String(s.options.selection_seconds));el('PregameSeconds').SetSelected(String(s.options.pregame_seconds));el('AllowPause').checked=yes(s.options.allow_pause);}

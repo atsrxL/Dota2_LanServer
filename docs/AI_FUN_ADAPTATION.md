@@ -41,3 +41,9 @@ User verified native -gold 100 had no effect with sv_cheats true. No verified se
 At pregame/playing, the same left panel replaces setup controls with Player (reset/refresh/self +1000), Gold (all allied/enemy bots +1000 each), Levels (all allied/enemy bots +1 each). Setup controls stay hidden even when expanded. Team is resolved server-side from event-source player; bot operations filter IsFakeClient and exclude other humans. Fixed action allowlist, phase/handshake checks; gold bypasses income scaling; levels capped. MENU_CHEAT logs target counts. Reset revives and refreshes, and returns to fountain if GetTeamFountain is available. This remains an addon API implementation, not native lobby cheat mode.
 
 42 addon tests passed with team targeting, excluded humans, invalid action/phase, and menu transition payload checks; real Windows compilation passed. r15 deployed; actual visual/button effects await user gameplay validation.
+
+## r16 compact launcher and bot hero allocation
+
+Live r15 showed expected/observed 9 bot player slots, but repeated AI_POSITIONS only listed one Luna. That hero moved and native Tiandixing callbacks reached 1024. All AddBot calls previously requested the same Luna; changed allocation to distinct standard heroes excluding already-selected player heroes. Added hero-entity count verification in addition to fake-client slot counts. This targets the observed missing-hero issue; new-match hero-count verification remains necessary. Hero allocation is now this addon's fixed pool rather than claiming Tiandixing chose every hero.
+
+In-match menu defaults to a 60px Tools launcher to the right of the top scoreboard; expanded width245px with smaller buttons. Position uses Panorama reference coordinates and awaits visual confirmation at client's resolution. Real compilation and 42 addon tests passed, including unique hero allocation. r16 deployed.

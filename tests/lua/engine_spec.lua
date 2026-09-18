@@ -103,8 +103,8 @@ soloact('solo_start',{})
 assert(emitted.finish==before+1)
 -- Tutorial fill uses configured team sizes, once, at strategy time.
 players={[0]={team=2,conn=2,name='Solo'}};state=2
-local adds=0
-Tutorial={AddBot=function(_,hero,a,b,radiant) adds=adds+1;players[adds]={team=radiant and 2 or 3,conn=1,name='bot'} end}
+local adds=0;local picked={}
+Tutorial={AddBot=function(_,hero,a,b,radiant) assert(not picked[hero]);picked[hero]=true;adds=adds+1;players[adds]={team=radiant and 2 or 3,conn=1,name='bot'} end}
 PlayerResource.GetPlayerCountForTeam=function(_,team)local n=0;for _,p in pairs(players)do if p.team==team then n=n+1 end end;return n end
 local tutorial=Engine.new({client_revision='v1',session=string.rep('d',32),source_sha256='fixture',bot_available=true})
 tutorial:init();tutorial:tick()
