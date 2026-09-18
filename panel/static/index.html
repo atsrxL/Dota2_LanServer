@@ -81,7 +81,7 @@
         <form id="addonForm" class="form-stack">
           <label class="check"><input id="addonEnabled" type="checkbox">启用 LAN 附加模式（固定标准 dota 地图）</label>
           <label class="check"><input id="addonProbe" type="checkbox">将选中的天地星 1627071163 固定版本用于原生 Bot 实验</label>
-          <label>实验启动策略<select id="addonLaunch"><option value="custom_command">dota_launch_custom_game（优先验证）</option><option value="addon_flag">-addon + map（备用，需单独验收）</option></select></label>
+          <label>实验启动策略<select id="addonLaunch"><option value="custom_command">dota_launch_custom_game（旧候选，当前 Linux 不支持）</option><option value="addon_flag">map customgamemode（当前 Linux 已挂载验证）</option></select></label>
           <div class="button-row"><button class="primary" type="submit">停服后保存设置</button><button id="addonReload" type="button" class="ghost">重新读取</button></div>
         </form>
         <p class="footnote">普通模式的 map / game_mode 不应用到附加模式。首次关闭 Bot 探针，只验证连接与准备阶段。机器人实验不会偷偷开启作弊。</p>

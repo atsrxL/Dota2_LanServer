@@ -38,3 +38,11 @@ Windows 当前没有完整 Workshop Tools：无 content 目录、无独立 resou
 ## 回退证据
 
 CT 升级前代码、配置与状态备份位于 /root/agent.backup/dota130-preupgrade-20260918/state-code-config.tar.gz，0600，tar 读回验证通过。包含敏感 Steam 缓存，不可公开。游戏数据未整包备份且未进行游戏版本更新。宿主防火墙另有专用备份。回退须先正常停服和代理，恢复备份的代码/配置并 daemon-reload；不要删除整个 CT。
+
+## Workshop Tools 后续现场验证
+
+用户安装 Tools 后，真实 resourcecompiler.exe 已成功编译四个 Panorama 文件，Windows 客户端与 CT 均已部署。修复根 Panel 禁止 id 的真实编译错误，保留内部 LANRoot 供 JS 使用；测试 fixture 排除本地 compiled 产物，避免已编译开发环境污染缺资源测试。
+
+Linux 当前不支持 dota_launch_custom_game；-addon 参数也未挂载 addon。按引擎 map 帮助实测，实际 argv 应为 +dota_force_gamemode 15 +map dota customgamemode lan_dota；等号形式被解析成单个 KV key 而失败。现已记录 Mounting addon 与 addon=lan_dota，但无 Lua BOOT/STATE，不能认定准备阶段通过。
+
+用户正在真实客户端尝试连接；客户端初次报告出错，服务器未见握手。已要求开启 con_logfile lanlab-client.log 后重试，以读取具体错误。

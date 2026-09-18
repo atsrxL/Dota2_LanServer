@@ -1,6 +1,7 @@
 <root>
     <styles><include src="file://{resources}/styles/custom_game/lan_setup.css" /></styles>
     <scripts><include src="file://{resources}/scripts/custom_game/lan_setup.js" /></scripts>
+    <Panel class="LANRoot" hittest="false">
     <Panel id="LANRoot" hittest="false">
         <Panel id="LANWindow" hittest="true">
             <Panel class="TitleRow"><Label class="Eyebrow" text="LAN DOTA / COMPATIBILITY LAB" /><Button id="Toggle"><Label text="收起 / 展开" /></Button></Panel>
@@ -31,5 +32,6 @@
                 <Panel class="Row Footer"><Button id="Ready" class="Primary"><Label text="准备 / 取消准备" /></Button><Button id="Start" class="Primary"><Label text="锁定并开始" /></Button><Label id="Owner" text="配置者：等待玩家" /></Panel>
             </Panel>
         </Panel>
+    </Panel>
     </Panel>
 </root>

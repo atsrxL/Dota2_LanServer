@@ -175,7 +175,7 @@ def build_command(paths: Paths, config: dict, bot: dict | None = None, addon: di
         if addon["launch_method"] == "custom_command":
             cmd += ["+dota_launch_custom_game", "lan_dota", "dota"]
         else:
-            cmd += ["-addon", "lan_dota", "+map", "dota"]
+            cmd += ["+dota_force_gamemode", "15", "+map", "dota", "customgamemode", "lan_dota"]
     else:
         cmd += ["+map", c["map"]]
     env = os.environ.copy()
