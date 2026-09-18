@@ -1,5 +1,5 @@
 [Unit]
-Description=Dota 2 LAN HTTP panel backend (trusted LAN, loopback backend)
+Description=Dota 2 LAN HTTP no-login panel backend (loopback only)
 After=network.target dota-agent.service
 Wants=dota-agent.service
 
@@ -10,7 +10,7 @@ Group=dotapanel
 SupplementaryGroups=dota-control
 WorkingDirectory=/opt/dota2-lan-kit
 Environment=LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
-ExecStart=/usr/bin/python3 -m panel.web --http --no-auth
+ExecStart=/usr/bin/python3 -m panel.web
 Restart=on-failure
 RestartSec=3
 UMask=0077

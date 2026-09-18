@@ -1,0 +1,10 @@
+Python AST / Bash syntax: PASS
+........................................................................ [ 83%]
+..............                                                           [100%]
+=============================== warnings summary ===============================
+tests/test_agent.py: 12 warnings
+  /usr/lib/python3.13/pty.py:95: DeprecationWarning: This process (pid=1912) is multi-threaded, use of forkpty() may lead to deadlocks in the child.
+    pid, fd = os.forkpty()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+86 passed, 12 warnings in 18.23s

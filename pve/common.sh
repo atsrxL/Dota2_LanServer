@@ -10,7 +10,7 @@ load_config() {
   source "$file"
   : "${CTID:?}" "${CT_HOSTNAME:?}" "${ROOTFS_STORAGE:?}" "${TEMPLATE_STORAGE:?}" "${BRIDGE:?}"
   TEMPLATE=${TEMPLATE:-auto}; IPV4=${IPV4:-dhcp}; GATEWAY=${GATEWAY:-}; DNS=${DNS:-}
-  VLAN_TAG=${VLAN_TAG:-}; LAN_CIDRS=${LAN_CIDRS:-auto}; PANEL_PORT=${PANEL_PORT:-8443}
+  VLAN_TAG=${VLAN_TAG:-}; LAN_CIDRS=${LAN_CIDRS:-auto}; PANEL_PORT=${PANEL_PORT:-8080}
   GAME_PORT=${GAME_PORT:-27015}; TIMEZONE=${TIMEZONE:-Asia/Tokyo}; SWAP_MIB=${SWAP_MIB:-1024}
   SSH_PUBLIC_KEY_FILE=${SSH_PUBLIC_KEY_FILE:-}; STEAMCMD_ARCHIVE_SHA256=${STEAMCMD_ARCHIVE_SHA256:-}
   [[ "$CTID" =~ ^[1-9][0-9]{2,8}$ ]] || fail "CTID 必须为 >=100 的数字"
@@ -81,7 +81,21 @@ with open(path,'w') as f: json.dump(data,f,indent=2)
 PY
   log "只为 CT $CTID 写入 LAN 防火墙规则；不改变数据中心或宿主全局防火墙开关"
   if [[ -f "/etc/pve/firewall/$CTID.fw" ]]; then
-    cp "/etc/pve/firewall/$CTID.fw" "$REPO/pve/ct-$CTID.firewall.backup-$(date +%s)"
+    install -d -m 0700 /root/agent.backup
+    python3 - "$CTID" <<'PYBACKUP'
+import pathlib, shutil, sys, time
+ctid = sys.argv[1]
+root = pathlib.Path("/root/agent.backup")
+prefix = "dota-kit-agent-ct-" + ctid + ".firewall-"
+target = root / (prefix + str(time.time_ns()))
+shutil.copy2("/etc/pve/firewall/" + ctid + ".fw", target)
+target.chmod(0o600)
+owned = sorted((p for p in root.glob(prefix + "*")
+                if p.is_file() and not p.is_symlink() and p.name[len(prefix):].isdigit()),
+               key=lambda p: int(p.name[len(prefix):]), reverse=True)
+for old in owned[2:]:
+    old.unlink()
+PYBACKUP
   fi
   python3 "$REPO/install/render.py" firewall "$cfg" "/etc/pve/firewall/$CTID.fw"
   log "上传源码并配置 LXC 环境（不自动下载 Dota 2）"
@@ -94,8 +108,7 @@ PY
   pct exec "$CTID" -- bash /root/dota2-lan-kit-src/install/bootstrap.sh --config /root/dota2-bootstrap.json
   rm -rf -- "$tmp"
   log "环境安装完成"
-  printf '面板：https://%s:%s\n' "${IP_CIDR%/*}" "$PANEL_PORT"
-  printf '获取初始凭据：pct exec %s -- cat /root/dota-panel-credentials.txt\n' "$CTID"
+  printf '面板：http://%s:%s\n' "${IP_CIDR%/*}" "$PANEL_PORT"
   printf '进入 LXC：pct enter %s\n游戏连接命令：connect %s:%s\n' "$CTID" "${IP_CIDR%/*}" "$GAME_PORT"
   echo '若数据中心/节点的 PVE 防火墙未启用，CT 规则未必生效。不要将端口转发到公网。'
 }

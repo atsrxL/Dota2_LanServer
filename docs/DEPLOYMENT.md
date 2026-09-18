@@ -12,7 +12,7 @@ pct list
 
 确认 x86_64、目标 CTID 未使用、存储支持 rootdir、模板存储支持 vztmpl、池有足够实际空间、网桥存在且连接目标 LAN。脚本固定 6C/6144MiB/250G；PVE 的 thin provision 不等于池里已准备好同等物理空闲空间，保留更新及快照余量。[S3]
 
-设置 `pve/lxc.env`。它是会以 PVE root source 的 Bash 文件，只使用可信本地内容。不要把 Steam 密码、API token、管理员密码写入此文件，也不要执行陌生人提供的 env。
+设置 `pve/lxc.env`。它是会以 PVE root source 的 Bash 文件，只使用可信本地内容。不要把 Steam 密码、API token写入此文件，也不要执行陌生人提供的 env。
 
 LAN_CIDRS=auto 仅取 CT eth0 地址对应的 IPv4 子网，不会自动放行其他 VLAN 或 VPN。需要跨网段时明确逗号分隔。管理与游戏共用这组白名单，接口不负责编辑宿主规则。
 
@@ -24,15 +24,21 @@ LAN_CIDRS=auto 仅取 CT eth0 地址对应的 IPv4 子网，不会自动放行�
 
 等待 CT 的 eth0 IPv4；生成 `/etc/pve/firewall/<CTID>.fw`，只允许列明 LAN 来源的面板 TCP 与游戏 UDP、ICMP，出站允许。不会改变 `/etc/pve/firewall/cluster.fw` 或宿主全局防火墙开关。
 
-源码上传 `/root/dota2-lan-kit-src`，执行 bootstrap。bootstrap 拒绝直接在 PVE 宿主运行；只接受 Ubuntu 24.04 x86_64，安装 Ubuntu 仓库依赖、官方 SteamCMD 种子、受限用户、服务和 Nginx HTTP。已有游戏配置/数据保留；运行中代理有游戏/任务时拒绝覆盖。
+源码上传 `/root/dota2-lan-kit-src`，执行 bootstrap。bootstrap 拒绝直接在 PVE 宿主运行；只接受 Ubuntu 24.04 x86_64，安装 Ubuntu 仓库依赖、官方 SteamCMD 种子、受限用户、服务、Nginx HTTP。已有游戏配置/Steam 缓存/数据保留；删除本项目旧的面板密码与证书文件；运行中代理有游戏/任务时拒绝覆盖。
 
-Nginx 默认 welcome site 被移除，新面板仅监听 HTTP 8443；没有新增 HTTP 80、SSH、远程 RCON 服务。第一次安装只部署环境，不运行 SteamCMD 安装游戏。
+Nginx 默认 welcome site 被移除，新面板默认仅监听 HTTP 8080；没有新增 HTTP 80、SSH、远程 RCON 服务。第一次安装只部署环境，不运行 SteamCMD 安装游戏。
 
-## 3. 面板地址
+## 3. HTTP 地址与免登录迁移
 
-使用 `http://CT地址:8443` 打开面板，无需网页账号或密码。HTTP 不提供传输加密，因此只应在受信任 LAN 使用，禁止公网端口转发。
+直接打开 `http://LXC的IP:8080`。没有面板密码，不生成 TLS 证书，不进行 HTTPS 重定向。自定义 PANEL_PORT 会保留；端口数字即使为 8443，也使用 HTTP。
 
-IP/域名变化需要同步 `/etc/dota-panel/web.json` 的 allowed_hosts 与访问入口。LAN 网段变化还需 Nginx allow 与该 CT 的 PVE 防火墙来源规则。重新 provision 会更新 allowed_hosts 与 Nginx 规则。最简单的是从开始使用 DHCP 保留或静态 IP。
+IP/域名变化需要同步 `/etc/dota-panel/web.json` 的 allowed_hosts 与访问入口。LAN 网段变化还需 Nginx allow 与该 CT 的 PVE 防火墙来源规则。生产后端没有 allowed_hosts 时拒绝启动。建议静态 IP 或 DHCP 保留。
+
+从原始 1.0.0 升级：先结束任务、停服并备份，然后使用 `provision-existing.sh`（见 README）。安装脚本删除固定的旧 auth.json、初始面板密码文件及本项目证书/密钥，替换 Nginx 站点为 HTTP，不碰其他站点。不得通过批量删除 /etc/nginx 或 Steam 数据目录升级。
+
+旧浏览器若缓存了强制 HTTPS，请明确输入完整 http 地址，检查浏览器 HTTPS-only 设置或使用新 HTTP 端口。项目本身不会要求恢复 TLS。现场执行 `nginx -t` 并检查 `ss -lntp`，确认管理站点只有所配置的 HTTP 监听。
+
+HTTP 会明文传输 Steam 凭据；只在可信 LAN 输入，或按下一节在 LXC 控制台完成 Steam 首次授权后复用缓存。不要向开发者发送凭据。
 
 ## 4. 真实 SteamCMD 登录退路
 
@@ -71,7 +77,7 @@ systemctl start dota-agent.service
 
 ## 6. 备份与完整恢复
 
-配置备份：位于 `/var/lib/dota2/backups`，最多 20 份；只包含 server.json（可能含游戏连接密码和账号名），不含 Steam 登录缓存、管理员密码或游戏资源。停服才能通过面板恢复。
+配置备份：位于 `/var/lib/dota2/backups`，最多 20 份；只包含 server.json（可能含游戏连接密码和账号名），不含 Steam 登录缓存或游戏资源。停服才能通过面板恢复。
 
 完整恢复：使用 PVE 现有备份体系备份整个 CT。推荐停止游戏和任务后执行 stop-mode 备份，以便获得一致的应用状态：
 
@@ -97,7 +103,7 @@ vzdump 270 --mode stop --compress zstd --storage BACKUP_STORAGE
 
 ## 8. 常见排查
 
-- 网页不能打开：确认访问的是 CT 地址与 HTTP 8443，不是 PVE 8006；检查 LAN 白名单、VLAN 路由与 Nginx；后端 8765 只监听回环，外部不能直接访问属正常。
+- 网页不能打开：确认访问的是 CT 地址与 HTTP 8080，不是 PVE 8006；检查 LAN 白名单、VLAN 路由、Nginx；后端 8765 只监听回环，外部不能直接访问属正常。
 - 面板代理断开：`systemctl status dota-agent`；检查 `/run/dota-agent/control.sock` 与 dota-control 组，而不是 chmod 777。
 - 游戏启动后退出：导出诊断；看 `ldd` 缺失库、Valve wrapper、依赖/CPU 指令与 memory.events。没有真实报错前不改 privileged/nesting 或禁用沙箱。
 - 安装成功但不能连接：确认客户端与服务端已更新，检查 UDP、客户端控制台报错、`sv_lan` 的跨网段限制、无线 AP 隔离、防火墙；进程状态不是完整游戏就绪检查。

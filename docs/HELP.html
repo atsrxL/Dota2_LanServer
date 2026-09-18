@@ -3,20 +3,65 @@
 @media(max-width:1150px){.shell{grid-template-columns:205px minmax(0,1fr)}.sidebar{padding:26px 14px}main{padding:28px 24px}.hero{flex-direction:column}.hero-side{text-align:left;align-items:flex-start}.hero-side p{margin-top:12px}.metric-grid{grid-template-columns:repeat(2,1fr)}.two-columns{grid-template-columns:1fr}.input-notice{flex-direction:column;align-items:flex-start}}
 @media(max-width:680px){.shell{display:block}.sidebar{position:static;height:auto;padding:18px;border-right:0;border-bottom:1px solid var(--line)}.brand{margin-bottom:18px}.nav-caption,.sidebar-bottom{display:none}nav{display:flex;overflow-x:auto;gap:5px}.nav{width:auto;padding:9px 12px;font-size:12px}.nav span{display:none}main{padding:22px 16px}.topbar{margin-bottom:22px;align-items:flex-start}.topbar h1{font-size:23px}.top-actions{gap:4px;flex-direction:column;align-items:flex-end}.top-actions button{font-size:11px;padding:5px}.card,.hero{padding:20px}.hero h2{font-size:28px}.metric-grid{gap:12px}.metric{padding:17px}.metric strong{font-size:21px}.form-grid{grid-template-columns:1fr;gap:14px}.input-notice form{min-width:0;width:100%}.input-notice input{min-width:0}.section-head{flex-wrap:wrap}.login-card{padding:28px}.help-shell{padding:30px 18px}.eyebrow{letter-spacing:1px;font-size:9px}.backup-item{flex-wrap:wrap}.hero-side{min-width:0}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-</style></head><body><main class="help-shell"><p class="eyebrow">DOTA 2 LAN KIT / DOCUMENTATION / V1.0.0</p><p class="muted">离线帮助 · 完整部署步骤见同目录 DEPLOYMENT.md</p><h1 id="section-0">使用帮助</h1>
-<p>这是管理你自己的 Dota 2 LAN 实例的面板，不是 Steam 客户端，也不是 Valve 官方匹配服务。默认只向指定 LAN 提供 HTTP 8443，且不校验面板管理员密码；游戏默认 UDP 27015。</p>
-<h2 id="section-2">1. 面板与 Steam 账号</h2>
-<p>面板无需账号或密码，打开后会自动建立管理会话。SteamCMD 页面使用的是 Steam 登录账号名，不是个人昵称或邮箱。面板不要求你公开或发送给开发者任何账号密码。</p>
-<p>通过 <code>http://CT地址:8443</code> 访问。HTTP 不提供传输加密，只应在受信任 LAN 内使用，禁止公网端口转发；IP 建议静态或 DHCP 保留。</p>
-<h2 id="section-5">2. 首次开服</h2>
+
+/* Live resources: native progress and SVG attributes work with the strict CSP. */
+.resource-monitor{margin:22px 0}.resource-grid{display:grid;grid-template-columns:1fr 1fr;gap:30px}.resource-section{min-width:0}.resource-section h4{font-size:13px;font-weight:600;color:var(--muted);margin:12px 0}.resource-value{display:block;font-size:36px;font-variant-numeric:tabular-nums;line-height:1.3;margin:8px 0}.resource-monitor progress{display:block;appearance:none;width:100%;height:7px;border:0;border-radius:8px;overflow:hidden;background:var(--panel2);accent-color:var(--accent)}.resource-monitor progress[hidden]{display:none}.resource-monitor progress::-webkit-progress-bar{background:var(--panel2);border-radius:8px}.resource-monitor progress::-webkit-progress-value{background:var(--accent);border-radius:8px}.resource-monitor progress::-moz-progress-bar{background:var(--accent);border-radius:8px}.resource-chart{display:block;width:100%;height:110px;margin-top:18px;overflow:hidden}.chart-grid{stroke:var(--line);stroke-width:1;fill:none}.chart-line{stroke:var(--accent);stroke-width:2.5;fill:none;stroke-linejoin:round}.memory-line{stroke:#6fcaaf}.chart-caption{display:flex;justify-content:space-between;color:var(--muted);font-size:10px}.cpu-cores{display:grid;gap:10px;margin:18px 0}.cpu-core{display:grid;grid-template-columns:65px minmax(25px,1fr) 55px;gap:12px;align-items:center;font-size:12px}.cpu-core strong{text-align:right;font-size:12px;font-variant-numeric:tabular-nums}.resource-details{display:grid;grid-template-columns:minmax(100px,1fr) auto;gap:14px;font-size:12px;margin:18px 0}.resource-details dt{color:var(--muted)}.resource-details dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}.resource-monitor .footnote{overflow-wrap:anywhere}.resource-monitor .notice{margin-bottom:0}
+@media(max-width:900px){.resource-grid{grid-template-columns:1fr;gap:20px}.resource-section+.resource-section{border-top:1px solid var(--line);padding-top:15px}}
+/* Workshop manager shares the existing HTTP/no-auth dashboard theme. */
+.bot-summary{display:grid;grid-template-columns:125px minmax(0,1fr);gap:14px 18px}.bot-summary dt{color:var(--muted)}.bot-summary dd{margin:0;white-space:pre-line;overflow-wrap:anywhere}.bot-divider{border:0;border-top:1px solid var(--line);margin:24px 0}.bot-library{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:16px}.bot-library-item{padding:18px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);min-width:0}.bot-library-item h4{margin:0 0 8px;overflow-wrap:anywhere}.bot-library-item .button-row{margin-top:15px;flex-wrap:wrap}#botLookup{white-space:pre-line}#botLog{max-height:360px}@media(max-width:600px){.bot-summary{grid-template-columns:1fr;gap:4px}.bot-summary dd{margin-bottom:14px}#botDownloadForm .button-row{flex-wrap:wrap}}
+
+.hash-wrap{display:block;overflow-wrap:anywhere;font-size:.8rem}.audit-output{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.84rem;line-height:1.7;color:#c5d5df;background:#101c28;border-radius:8px;padding:16px;min-height:130px}
+</style></head><body><main class="help-shell"><p class="eyebrow">DOTA 2 LAN KIT / DOCUMENTATION / V1.3.0</p><p class="muted">离线帮助 · 完整部署步骤见同目录 DEPLOYMENT.md</p><h1 id="section-0">LAN 附加模式 · 1.3.0 新功能</h1>
+<h1 id="section-1">LAN 附加模式使用帮助 · 1.3.0</h1>
+<h2 id="section-2">这版提供什么</h2>
+<p>完整 HTTP 免登录面板（沿用 SteamCMD/机器人版本库/CPU/每核/内存监控），加一个 <code>lan_dota</code> 附加模式。比赛由 LXC 进程承载；玩家连接后在 Dota 内的自制 Panorama 页面配置，不再读取官方大厅。</p>
+<p>代码包需要本地 Workshop Tools 编译 UI，并在每台客户端安装同版资源；不是上传 ZIP 立即可玩的已编译地图。标准 <code>dota</code> 地图和默认英雄是本轮唯一目标。天地星兼容性由验证模块收集证据，尚无真实对局结论。</p>
+<h2 id="section-5">第一次使用：交给本地 Codex</h2>
+<p>先按根目录 CODEX_LAN_HANDOFF.md 合并真实仓库、编译/导入 UI、升级已有 LXC、安装客户端包。保持6 vCPU/6 GiB/250 G，HTTP无密码。缺少 compiled 时面板显示资源不足，启动被阻止；“停服部署模块”可先部署纯源码做检查，但不会绕过启动检查。</p>
+<h2 id="section-7">先测试连接和准备，不加 AI</h2>
+<p>停服进入 LAN 附加模式页。勾选启用、关闭天地星实验，保存，确认资源状态，点击启动。客户端控制台执行面板上的 connect 命令。连接失败需看原始引擎日志，网页不能替代 Steam/Source2 的连接握手。</p>
+<p>首位完成有效 UI 握手的玩家成为配置者。每人选择天辉/夜魇以及一个空闲意向位置，然后准备。配置者可设置选人时间30–120秒、赛前时间10–60秒、是否允许暂停；更改设置、成员或队伍会清空准备，避免旧配置误开局。配置者可以转移权限；断线后等待30秒重新选举，也可在网页准备阶段发出受限的重新选举指令。</p>
+<p>只有所有连接中玩家完成握手、选边和准备，配置者才能开始。准备阶段无自动开局倒计时。非法身份、旧配置版本、占用位置、越界值、重复开局均在服务端拒绝，不只是隐藏按钮。</p>
+<h2 id="section-11">再测试天地星</h2>
+<p>在机器人页输入1627071163下载并选择一个固定版本。在 addon 页扫描，然后停服开启“天地星原生 Bot 实验”。下一次开服锁定脚本版本，生成当前 session 的原生 Bot 探针。</p>
+<p>进游戏选择实验模式，设置难度（0–3整数，实际效果需验证），选择是否开始时补齐空位，勾选实验确认并保存。需要自动填充时当前实现使用 GameRules:BotPopulate：必须事先在面板主配置明确开启训练作弊并重启，引擎报告 cheats=true才会开局。本版不会偷偷开启作弊，不能承诺不公平难度或每侧难度都按脚本实现。</p>
+<p>人类玩家全部准备后开始；Bot填充在选人阶段一次性调用，15秒内核对数量。未足额或引擎提前开局会报告异常，尝试关闭思考/暂停；不要把该局当成可继续正常游玩的成功局。保留日志后面板停止即可。</p>
+<p>“意向位置”目前是待适配输入，不等于天地星原生房间槽位。当前未提供双边不同脚本、自动位置映射、不同地形或完整官方模式复刻。</p>
+<h2 id="section-16">页面里的证据如何读</h2>
+<table>
+<tr><th>显示</th><th>能说明什么</th></tr>
+<tr><td>编译资源文件已核对</td><td>文件、来源 UI hash、资源头/清单相符，不证明引擎能渲染</td></tr>
+<tr><td>已部署模块</td><td>受管文件复制完成，不证明地图或附加模式已启动</td></tr>
+<tr><td>游戏进程运行中</td><td>只有进程存活，连接仍需验收</td></tr>
+<tr><td>新鲜 setup 心跳</td><td>当前进程中的 addon 服务端脚本报告正等待配置</td></tr>
+<tr><td>UI_HELLO</td><td>引擎事件来源已识别，客户端 revision匹配</td></tr>
+<tr><td>BOT_ENTRY</td><td>当前会话某个原生 Bot 入口执行</td></tr>
+<tr><td>BOT_API / BOT_CONTEXT</td><td>候选全局 API 存在性 / GetBot 此时是否有句柄</td></tr>
+<tr><td>BOT_CALLBACK</td><td>被注入的回调体确实开始执行，非完整行为正确</td></tr>
+<tr><td>完整 AI / 槽位 / 对局</td><td>始终需要现场验收，不自动填写通过</td></tr>
+</table>
+<p>心跳15秒过期后不再显示为新鲜玩家状态。旧日志 token不进入新会话统计。回调计数是同入口/回调的最大观测值，不是各机器人调用总和；日志不是防伪认证，第三方Lua可输出任意内容。探针有额外负担，性能对比需要随后关闭探针再重测。</p>
+<h2 id="section-30">下一局、停用与恢复</h2>
+<p>比赛结束先在面板停止/重启进程，重新回到准备阶段；首版不使用 map 内热重开，避免残留玩家/监听器/探针。每局的游戏内配置当前不持久化，重启恢复安全默认值；网页的 addon启用、启动策略、Bot实验开关持续保存。</p>
+<p>下载新机器人版本不改变当前局。自动崩溃重试仍使用原局版本/配置；更改 addon源码会使自动重试失败，需显式重新启动。停止后取消启用 addon可以回到原普通服流程，不需要删除CT。</p>
+<p>配置文件在 <code>/var/lib/dota2/lan-addon/</code>，游戏模块在 <code>/srv/dota2/game/dota_addons/lan_dota/</code>。源码与编译资源由安装脚本以root-owned部署，运行代理仅写游戏目录/状态。不要直接编辑受管文件；开发改源码、重新编译和部署，哈希冲突先保存用户改动。</p>
+<p>---</p>
+<h1 id="section-35">使用帮助</h1>
+<p>这是管理你自己的 Dota 2 LAN 实例的面板，不是 Steam 客户端，也不是 Valve 官方匹配服务。默认只向指定 LAN 提供 HTTP 8080；游戏默认 UDP 27015。</p>
+<h2 id="section-37">1. HTTP 免登录与 Steam 授权</h2>
+<p>本面板无需管理员账号或密码，直接访问 <code>http://LXC的IP:8080</code>。不启用 HTTPS，不生成证书，也不会跳转到登录页。IP 建议静态或 DHCP 保留。</p>
+<p>SteamCMD 的授权不同于面板登录：Steam 登录账号、Steam Guard 或手机批准仍按 Valve 要求完成。HTTP 会明文传输你输入的 Steam 凭据，只能在信任的 LAN 使用；不要把密码发给开发接手者。</p>
+<p>LAN 白名单内任何人都可管理服务器并读取配置/日志。白名单、Host、Origin、JSON 与自动 CSRF 令牌检查继续保留；浏览器自动取得令牌，不需要用户登录或输入任何令牌。</p>
+<h2 id="section-41">2. 首次开服</h2>
 <p>打开面板 → SteamCMD → 输入 Steam 登录名/密码 → 测试登录/授权 → 完成 Steam Guard 或手机批准 → 安装 Dota 2（含校验） → 等待任务成功 → 检查服务器配置 → 启动服务器 → 在另一台设备的 Dota 2 控制台 connect 到 CT 的 IP:游戏端口。</p>
 <p>安装会从 Valve 下载 App 570 Linux 内容，ZIP 不含游戏。不要依赖匿名下载可用。初始环境安装不下载完整游戏，也不自动开服。客户端安装/更新、Steam 授权与 LAN 建服是不同步骤，不能据此保证完全断网可玩。</p>
 <pre><code>connect 192.168.1.70:27015</code></pre>
 <p>这是示例 IP；使用概览页提供的连接命令。如果设置了游戏连接密码，按客户端提示输入或在客户端控制台先设置对应 password。先验证地图、选人和实际对局，再把它当作可用服务器。</p>
-<h2 id="section-10">3. 页面说明</h2>
+<h2 id="section-46">3. 页面说明</h2>
 <table>
 <tr><th>页面</th><th>用途</th></tr>
 <tr><td>运行概览</td><td>启动/停服/重启，连接命令，进程与本地资源状态</td></tr>
+<tr><td>机器人脚本</td><td>输入 Workshop ID、下载安装、固定版本/下一局启用、停用/回滚、入口日志</td></tr>
 <tr><td>SteamCMD</td><td>授权、安装、更新、校验、一次性密码/Guard 补交、任务取消</td></tr>
 <tr><td>任务记录</td><td>查看实际完成/失败/取消/中断；点击任务名看日志</td></tr>
 <tr><td>日志与控制台</td><td>游戏/代理/历史任务日志；受限 status/bots/pause/say</td></tr>
@@ -24,25 +69,25 @@
 <tr><td>备份与诊断</td><td>配置快照、停服恢复、下载快照、脱敏诊断</td></tr>
 </table>
 <p>“代理在线”仅表示管理链路可达；“进程运行中”不代表建图完毕；“发现 UDP 监听”不是客户端联机测试。面板没有伪造的玩家数或下载百分比。</p>
-<h2 id="section-21">4. Steam Guard 怎么提交</h2>
-<p>已经有验证码时可随登录提交。SteamCMD 运行中要求验证码/密码时，顶部出现一次性输入框，输入后点击安全提交。页面刷新不会结束等待任务；等待输入最多 5 分钟，超时后重新发起。手机批准需在你的 Steam 手机客户端确认，面板不会替你批准，也不绕过 Steam Guard。</p>
+<h2 id="section-58">4. Steam Guard 怎么提交</h2>
+<p>已经有验证码时可随登录提交。SteamCMD 运行中要求验证码/密码时，顶部出现一次性输入框，输入后点击提交一次性输入。页面刷新不会结束等待任务；等待输入最多 5 分钟，超时后重新发起。手机批准需在你的 Steam 手机客户端确认，面板不会替你批准，也不绕过 Steam Guard。</p>
 <p>应用不保存 Steam 密码/验证码，不放进进程命令行或应用日志。Valve 自己可能写登录缓存，后续更新有时可留空密码复用，有时需要重新验证。输入从页面清除不等于可证明的浏览器/系统内存擦除。</p>
 <p>当日 SteamCMD 提示发生变化、网页不能识别时，按 DEPLOYMENT.md 的控制台首次授权流程处理；不要关闭 Steam Guard。先停服/结束任务，不能网页和控制台同时运行两个 SteamCMD。</p>
-<h2 id="section-25">5. 正常更新</h2>
+<h2 id="section-62">5. 正常更新</h2>
 <p>比赛结束后停止服务器，等停止任务成功，再点击更新。或明确勾选“允许本次维护先停止正在运行的服务器”。“成功后恢复原先运行中的服务器”仅恢复任务开始时已在线的实例；原本没开服不会因此被自动开服。</p>
 <p>一次只能运行一个变更任务。正在更新时不能启动游戏或再次更新。失败后检查任务日志；失败/取消保留维护保护标记，成功更新或校验后才解除。不要手工删除标记规避检查。</p>
 <p>validate 校验/修复可能覆盖 Valve 管理文件的手动改动。你在面板保存的配置位于独立 JSON，正常更新不会改掉它。没有自动定时停服更新，避免比赛期间中断。</p>
-<h2 id="section-29">6. 启停与自动恢复</h2>
-<p>点击停止会先发送 quit，超时后终止本代理创建的进程组。点击重启会中断当前对局。页面关闭或只重启网页后端都不停止服务器；重启运行代理或整个 LXC 会停止游戏与 SteamCMD。</p>
+<h2 id="section-66">6. 启停与自动恢复</h2>
+<p>点击停止会先发送 quit，超时后终止本代理创建的进程组。点击重启会中断当前对局。页面关闭、只重启网页后端都不停止服务器；重启运行代理或整个 LXC 会停止游戏与 SteamCMD。</p>
 <p>自动开服默认关，可在配置中启用；要求安装入口存在且无未完成维护。崩溃自动重试默认开，10 分钟最多 3 次，超过后停下让你排错。它不是无限循环守护。</p>
-<h2 id="section-32">7. 配置与局域网</h2>
+<h2 id="section-69">7. 配置与局域网</h2>
 <p>sv_lan 固定 1。不提供任意 Shell、可执行文件路径或 RCON 输入。改端口须同步 PVE 防火墙，配置保存本身不改宿主规则。默认 map=dota，game_mode=1；0 表示不强制模式。模式编号、机器人和暂停命令是否适配当前版本要以游戏日志为准。</p>
 <p>-insecure 和作弊开关默认关。-insecure 是关闭服务器 VAC 的选项，不是绕过 Steam 登录或免费许可的方法。不要为排查连接问题无差别开启所有选项。</p>
 <p>跨 VLAN 时需要网络可达、明确的白名单以及游戏本身允许连接；Wi-Fi AP 隔离也可能阻止设备互通。面板能打开并不证明游戏 UDP 路径正常。</p>
-<h2 id="section-36">8. 配置备份和恢复</h2>
-<p>修改配置、维护前自动保存快照，也可手动备份；最多保留 20 份。恢复前须停服，会再备份当前配置。下载文件可能含游戏连接密码和 Steam 账号名；不含 Steam 密码、登录缓存、面板管理员密码或游戏资源。</p>
-<p>配置恢复不回滚 Dota 2 版本，不恢复正在进行的比赛。需要全量恢复时使用 PVE 备份，且应保护其中的 Steam 登录缓存等敏感数据。</p>
-<h2 id="section-39">9. 常用恢复命令</h2>
+<h2 id="section-73">8. 配置备份和恢复</h2>
+<p>修改配置、维护前自动保存快照，也可手动备份；最多保留 20 份。恢复前须停服，会再备份当前配置。下载文件可能含游戏连接密码和 Steam 账号名；不含 Steam 密码、登录缓存或游戏资源。</p>
+<p>配置恢复不回滚 Dota 2 版本，不恢复正在进行的比赛。需要全量恢复时使用 PVE 备份，且应保护其中的 Steam 缓存等敏感数据。</p>
+<h2 id="section-76">9. 常用恢复命令</h2>
 <pre><code># PVE：270 应换成自己的 CTID
 pct enter 270
 
@@ -53,7 +98,18 @@ dota-cli logs --name server
 dota-cli stop
 systemctl status dota-agent dota-panel nginx --no-pager
 journalctl -u dota-agent -u dota-panel -n 150 --no-pager</code></pre>
-<h2 id="section-41">10. 资源和支持边界</h2>
+<h2 id="section-78">10. 资源和支持边界</h2>
 <p>配置固定 6 vCPU / 6 GiB / 250 G，另有默认 1 GiB swap 额度；不能保证所有模式和人数在 6 GiB 内稳定运行。通过 cgroup/PVE 检查 OOM，而不是只凭平均占用判断。</p>
 <p>初装空闲磁盘阈值 100 GiB、后续更新 20 GiB，是保护性下限，不是对未来 Steam 内容大小的保证。日志有限轮转，不会主动删除游戏下载目录来省空间。</p>
-<p>需要接手排查时，导出“诊断 JSON”，自己检查无秘密再交给接手者。不要发送整个 Steam home 或完整 PVE 备份。完整的现场验收标准在 ACCEPTANCE.md。</p><footer>本地自托管 · 真实联机能力按现场验收确认</footer></main></body></html>
+<p>需要接手排查时，导出“诊断 JSON”，自己检查无秘密再交给接手者。不要发送 Steam 密码/验证码、整个 Steam home 或完整 PVE 备份。完整的现场验收标准在 ACCEPTANCE.md。</p>
+<h2 id="section-82">11. CPU / 内存实时监控</h2>
+<p>概览页每约 2 秒刷新总 CPU、有效配额、每个可见核心占用、内存总量/上限/占用率、工作集、缓存、Swap 与累计 OOM。趋势显示当前页面最近 2 分钟，刷新页面清空；后台标签页暂停，返回恢复。</p>
+<p>6 核总 CPU 为 100% 的满量程；单核满载约占总量 16.7%。内存主要比例包含 cgroup 已计费缓存，工作集另外显示，不要把工作集当作全部物理占用。</p>
+<p>总量优先读取可见 cgroup 挂载根，每核取 /proc/stat 可见视图。LXCFS 或宿主视图的来源在图下标明；每核不保证是仅 Dota 2 或仅本容器任务的精确逐核归属。未检测到 LXCFS 会提示，不会伪造六个核心或 6 GiB 上限。</p>
+<p>首次 CPU 采样、计数重置、数据不可读时显示 —。断线会清除实时数值并自动重试；相同样本超过 6 秒不变化会提示过期。没有有效数据时不显示 0% 冒充正常空闲。监控是只读，不修改 CT 资源，也不会运行特权宿主命令。</p>
+<p>详细公式、API 与现场对照步骤见 MONITORING.md；在 LXC 可执行 dota-cli metrics 查看同一数据。</p>
+<h2 id="section-88">12. 网页自动下载机器人（1.2.0）</h2>
+<p>打开“机器人脚本”，预填 ID 为 1627071163。先在 SteamCMD 页保存账号并完成授权，再点“下载并安装”；需要验证码时在顶部任务输入框补交。保持“安装成功后设为下一局”，等待文件安装成功，然后在比赛结束后手动重启。</p>
+<p>下一局版本与当前进程独立显示，更新不会覆盖正在玩的脚本。玩家 connect 并选边后，再点“填充当前比赛空位”；不会在进程刚启动时自动把槽位填满。入口日志只表示 hero_selection 的入口运行，不表示完整 AI、难度或位置正确。没有日志不要默认为成功。</p>
+<p>“下一局停用”恢复接管前 bots 目录，它原本也可能是自定义脚本；“恢复上次选择”只切换下次启动用的版本。自动崩溃重试继续用原局脚本，手动启动才应用新选择。配置备份不包含机器人库。</p>
+<p>支持受限的 Lua/ZIP/VPK1/2，拒绝路径穿越、链接和异常体积。当前没有 ZIP 上传 UI、Lua 在线编辑、双方不同机器人或原生房间配置同步。选择/下载/部署的代码已实现，但真实 1627071163 和当前 Linux Dedicated 加载尚须实机验证。详细步骤、日志、路径与恢复说明见随包 WORKSHOP_BOTS.md；Codex 接手见 CODEX_WORKSHOP_HANDOFF.md。</p><footer>本地自托管 · 真实联机能力按现场验收确认</footer></main></body></html>

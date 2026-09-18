@@ -1,0 +1,35 @@
+<root>
+    <styles><include src="file://{resources}/styles/custom_game/lan_setup.css" /></styles>
+    <scripts><include src="file://{resources}/scripts/custom_game/lan_setup.js" /></scripts>
+    <Panel id="LANRoot" hittest="false">
+        <Panel id="LANWindow" hittest="true">
+            <Panel class="TitleRow"><Label class="Eyebrow" text="LAN DOTA / COMPATIBILITY LAB" /><Button id="Toggle"><Label text="收起 / 展开" /></Button></Panel>
+            <Label class="Title" text="局域网对战准备" />
+            <Label id="Phase" text="等待服务端准备状态…" />
+            <Label id="Message" class="Message" text="请先连接到 LXC。界面出现并不代表天地星已运行。" />
+            <Panel id="LANBody">
+                <Label class="Warning" text="实验版：标准 dota 地图。天地星位置仍待验证，不是官方房间；不会用默认 AI 冒充。" />
+                <Panel class="Teams">
+                    <Panel class="TeamColumn"><Label class="TeamTitle" text="天辉" /><Panel id="RadiantRows" /></Panel>
+                    <Panel class="TeamColumn"><Label class="TeamTitle" text="夜魇" /><Panel id="DireRows" /></Panel>
+                </Panel>
+                <Panel class="Row"><Label class="FieldName" text="我的队伍 / 意向位置" />
+                    <DropDown id="MyTeam"><Label id="team2" text="天辉" /><Label id="team3" text="夜魇" /></DropDown>
+                    <DropDown id="MyRole"><Label id="role1" text="1号位 / 优势路" /><Label id="role2" text="2号位 / 中路" /><Label id="role3" text="3号位 / 劣势路" /><Label id="role4" text="4号位 / 辅助" /><Label id="role5" text="5号位 / 辅助" /></DropDown>
+                    <Button id="Assign"><Label text="选择队伍与位置" /></Button>
+                </Panel>
+                <Label class="Footnote" text="意向位置用于玩家准备与验收记录，尚未强制映射天地星内部槽位。" />
+                <Panel id="HostOptions">
+                    <Label class="TeamTitle" text="房主参数" />
+                    <Panel class="Row"><Label class="FieldName" text="AI 运行方式" /><DropDown id="BotMode"><Label id="none" text="无机器人 / 连接验证" /><Label id="tiandixing_native_lab" text="天地星原生 Bot 实验" /></DropDown><ToggleButton id="FillBots" text="开始时自动补空位" /></Panel>
+                    <Panel class="Row"><Label class="FieldName" text="AI 难度（待实测）" /><DropDown id="Difficulty"><Label id="diff0" text="0 简单" /><Label id="diff1" text="1 中等" /><Label id="diff2" text="2 困难" /><Label id="diff3" text="3 不公平" /></DropDown><ToggleButton id="AllowPause" text="允许暂停" /></Panel>
+                    <Panel class="Row"><Label class="FieldName" text="选人 / 出兵前秒数" /><TextEntry id="SelectionSeconds" text="60" maxchars="3" /><TextEntry id="PregameSeconds" text="30" maxchars="2" /><Label class="Footnote" text="选人 30–120 / 赛前 10–60" /></Panel>
+                    <ToggleButton id="AckUnverified" text="我了解天地星兼容性未完成实机验收；本局用于验证" />
+                    <Label id="BotInfo" class="Footnote" text="未读取脚本快照" />
+                    <Panel class="Row"><Button id="SaveOptions"><Label text="保存参数（清除准备）" /></Button><DropDown id="TransferTarget" /><Button id="Transfer"><Label text="转交配置权" /></Button></Panel>
+                </Panel>
+                <Panel class="Row Footer"><Button id="Ready" class="Primary"><Label text="准备 / 取消准备" /></Button><Button id="Start" class="Primary"><Label text="锁定并开始" /></Button><Label id="Owner" text="配置者：等待玩家" /></Panel>
+            </Panel>
+        </Panel>
+    </Panel>
+</root>

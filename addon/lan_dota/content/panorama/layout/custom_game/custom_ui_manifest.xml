@@ -1,0 +1,6 @@
+<root>
+    <Panel>
+        <CustomUIElement type="GameSetup" layoutfile="file://{resources}/layout/custom_game/lan_setup.xml" />
+        <CustomUIElement type="Hud" layoutfile="file://{resources}/layout/custom_game/lan_setup.xml" />
+    </Panel>
+</root>

@@ -10,13 +10,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-VERSION = "1.0.0"
+VERSION = "1.3.0"
 DEFAULT_CONFIG = {
     "schema": 1, "hostname": "Dota 2 LAN", "port": 27015, "map": "dota",
     "game_mode": 1, "game_password": "", "insecure": False, "cheats": False,
     "auto_start": False, "auto_restart": True, "steam_username": "",
 }
-ACTIONS = {"login", "install", "update", "validate", "start", "stop", "restart", "backup", "restore"}
+ACTIONS = {"login", "install", "update", "validate", "start", "stop", "restart", "backup", "restore", "bot_download", "bot_check", "bot_select", "bot_default", "bot_rollback", "bot_remove", "addon_deploy", "addon_scan"}
 ANSI = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 
 class Fault(Exception):
@@ -132,7 +132,7 @@ def credentials(raw: dict) -> dict:
     return {"username": username, "password": password, "guard": guard}
 
 
-def build_command(paths: Paths, config: dict) -> tuple[list[str], dict[str, str]]:
+def build_command(paths: Paths, config: dict, bot: dict | None = None, addon: dict | None = None) -> tuple[list[str], dict[str, str]]:
     c = validate_config(config)
     wrapper = paths.game / "game/dota.sh"
     root_wrapper = paths.game / "dota.sh"
@@ -148,15 +148,36 @@ def build_command(paths: Paths, config: dict) -> tuple[list[str], dict[str, str]
         cmd = ["/bin/bash", str(root_wrapper)]
     else:
         raise Fault("没有找到 Valve 的 dota.sh / Linux dota2 可执行文件。请先安装或校验。", 409)
-    cmd += ["-dedicated", "-console", "-game", "dota", "-port", str(c["port"])]
+    cmd += ["-dedicated", "-console", "-allow_no_lobby_connect", "-game", "dota", "-port", str(c["port"])]
     if c["insecure"]:
         cmd.append("-insecure")
     cmd += ["+sv_lan", "1", "+hostname", c["hostname"], "+sv_cheats", "1" if c["cheats"] else "0"]
     if c["game_password"]:
         cmd += ["+sv_password", c["game_password"]]
-    if c["game_mode"]:
+    if c["game_mode"] and not addon:
         cmd += ["+dota_force_gamemode", str(c["game_mode"])]
-    cmd += ["+map", c["map"]]
+    if bot:
+        # The normalized version is deployed in the local developer bots path.
+        # 0 selects the local/default script path, not a remote Workshop lookup.
+        # Dedicated runtime behavior remains a target-host acceptance item.
+        difficulty = bot.get("difficulty", 2)
+        if type(difficulty) is not int or not 0 <= difficulty <= 3:
+            raise Fault("机器人难度必须在 0～3 之间")
+        cmd += ["+dota_bot_practice_script", "0", "+dota_bot_practice_difficulty", str(difficulty),
+                "+dota_bot_set_difficulty", str(difficulty)]
+        if not addon:
+            cmd += ["+dota_wait_for_players_to_load", "1", "+dota_wait_for_players_to_load_timeout", "180"]
+        # Never fill ten slots at process startup before human players connect.
+    if addon:
+        if addon.get("name") != "lan_dota" or addon.get("launch_method") not in {"custom_command", "addon_flag"}:
+            raise Fault("非法附加模式启动配置")
+        # Mutually exclusive candidates, never launch a normal dota map first.
+        if addon["launch_method"] == "custom_command":
+            cmd += ["+dota_launch_custom_game", "lan_dota", "dota"]
+        else:
+            cmd += ["-addon", "lan_dota", "+map", "dota"]
+    else:
+        cmd += ["+map", c["map"]]
     env = os.environ.copy()
     env.update(HOME=str(paths.state), USER="steam", LOGNAME="steam", LANG="C.UTF-8",
                SteamAppId="570", SteamGameId="570", TERM="xterm")

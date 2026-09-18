@@ -34,7 +34,7 @@ if [[ -n "$SSH_PUBLIC_KEY_FILE" ]]; then
 fi
 log "创建计划：6 vCPU / 6144 MiB 内存 / $ROOTFS_STORAGE:250 / 非特权 / 不启用 nesting"
 printf '%q ' "${CREATE[@]}"; printf '\n'
-printf '模板存储：%s\nLAN 白名单：%s\nHTTPS：%s/TCP；游戏：%s/UDP\n' "$TEMPLATE_STORAGE" "$LAN_CIDRS" "$PANEL_PORT" "$GAME_PORT"
+printf '模板存储：%s\nLAN 白名单：%s\nHTTP（免登录）：%s/TCP；游戏：%s/UDP\n' "$TEMPLATE_STORAGE" "$LAN_CIDRS" "$PANEL_PORT" "$GAME_PORT"
 if ((!APPLY)); then
   echo '以上只读检查；没有创建容器。确认配置后加 --apply。'
   exit 0

@@ -1,0 +1,235 @@
+local Room=require('lan.room')
+local JSON=require('lan.json')
+local Identity=require('lan.identity')
+local Engine={}; Engine.__index=Engine
+local function method(obj,key) return obj~=nil and type(obj[key])=='function' end
+local function bool(v) return v==true or v==1 end
+local function numeric(v)
+    if type(v)~='number' and type(v)~='string' then return nil end
+    local n=tonumber(v); if n and n==n and n~=math.huge and n~=-math.huge and n==math.floor(n) then return n end
+    return nil
+end
+function Engine.new(config)
+    local self=setmetatable({config=config,listeners={},last_heartbeat=-100,last_reject=-100,
+        filled=false,rate={},bot_fill_deadline=nil},Engine)
+    self.room=Room.new(function() return Time() end,config.client_revision)
+    return self
+end
+function Engine:emit(kind,detail)
+    local line=type(detail)=='table' and JSON.encode(detail) or tostring(detail)
+    line=line:gsub('[\r\n]',' ')
+    print('LANLAB|'..self.config.session..'|'..kind..'|'..line)
+end
+function Engine:error(message)
+    self.room:fail(message); self:emit('ERROR',message)
+    -- Best effort only: report the failure even if pausing is not supported.
+    if self.mode and method(self.mode,'SetBotThinkingEnabled') then pcall(function() self.mode:SetBotThinkingEnabled(false) end) end
+    if type(PauseGame)=='function' then pcall(function() PauseGame(true) end) end
+    pcall(function() self:publish() end)
+end
+function Engine:publish()
+    local state=self.room:snapshot()
+    state.source_sha256=self.config.source_sha256
+    state.bot_version=self.config.bot and self.config.bot.version or ''
+    -- NetTable values use 0/1 for booleans at protocol boundaries.
+    for k,v in pairs(state.options) do if type(v)=='boolean' then state.options[k]=v and 1 or 0 end end
+    for k,v in pairs(state.capabilities) do if type(v)=='boolean' then state.capabilities[k]=v and 1 or 0 end end
+    local stored=CustomNetTables:SetTableValue('lan_room','state',state)
+    if stored==false then error('lan_room_nettable_rejected; verify scripts/custom_net_tables.txt') end
+    return state
+end
+function Engine:refresh_players()
+    local rows={}
+    for pid=0,63 do
+        if PlayerResource:IsValidPlayerID(pid) then
+            local c=PlayerResource:GetConnectionState(pid)
+            local isbot=DOTA_CONNECTION_STATE_BOT~=nil and c==DOTA_CONNECTION_STATE_BOT
+            if method(PlayerResource,'IsFakeClient') then isbot=isbot or PlayerResource:IsFakeClient(pid) end
+            if not isbot then
+                local player=PlayerResource:GetPlayer(pid)
+                local connected=c==DOTA_CONNECTION_STATE_CONNECTED and player~=nil
+                local team=PlayerResource:GetCustomTeamAssignment(pid)
+                rows[#rows+1]={pid=pid,identity=tostring(PlayerResource:GetSteamAccountID(pid)),
+                    connected=connected,team=team,name=string.sub(PlayerResource:GetPlayerName(pid) or ('Player '..pid),1,96)}
+            end
+        end
+    end
+    self.room:sync(rows)
+end
+function Engine:reply(pid,ok,message)
+    local player=PlayerResource:GetPlayer(pid)
+    if player then CustomGameEventManager:Send_ServerToPlayer(player,'lan_reply',{ok=ok and 1 or 0,message=message or 'ok'}) end
+    self:publish()
+end
+function Engine:dispatch(source,keys)
+    if type(keys)~='table' then return end
+    local pid=Identity.resolve(source,PlayerResource,EntIndexToHScript)
+    if pid==nil then
+        if Time()-self.last_reject>10 then self.last_reject=Time(); self:emit('ERROR','event_identity_unresolved; source='..tostring(source)) end
+        return
+    end
+    local t=Time(); local rate=self.rate[pid]
+    if not rate or t-rate.time>=1 then rate={time=t,count=0}; self.rate[pid]=rate end
+    rate.count=rate.count+1; if rate.count>12 then return end
+    self:refresh_players()
+    local action=keys.action; local rev=numeric(keys.revision); local ok,err=false,'unknown_action'
+    if action=='hello' then
+        local before=self.room.players[pid] and self.room.players[pid].hello
+        ok,err=self.room:hello(pid,keys.client_revision)
+        if ok and not before then self:emit('UI_HELLO',tostring(pid)) end
+    elseif action=='team' then
+        local team,role=numeric(keys.team),numeric(keys.role)
+        ok,err=self.room:check_team(pid,rev,team,role)
+        if ok then
+            PlayerResource:SetCustomTeamAssignment(pid,team)
+            if PlayerResource:GetCustomTeamAssignment(pid)~=team then ok=false; err='engine_team_assignment_failed'
+            else self.room:assign(pid,team,role) end
+        end
+    elseif action=='options' then
+        local raw=keys.options
+        if type(raw)=='table' then
+            local allowed={bot_mode=true,fill_bots=true,ack_unverified=true,difficulty=true,
+                selection_seconds=true,pregame_seconds=true,allow_pause=true}
+            local value={}; local unknown=false
+            for k,v in pairs(raw) do
+                if not allowed[k] then unknown=true
+                elseif k=='fill_bots' or k=='ack_unverified' or k=='allow_pause' then
+                    if v~=0 and v~=1 and type(v)~='boolean' then unknown=true else value[k]=bool(v) end
+                elseif k=='bot_mode' then
+                    if type(v)~='string' then unknown=true else value[k]=v end
+                else
+                    local number=numeric(v)
+                    if number==nil then unknown=true else value[k]=number end
+                end
+            end
+            if unknown then ok=false;err='invalid_options' else ok,err=self.room:set_options(pid,rev,value) end
+        else err='invalid_options' end
+    elseif action=='ready' then
+        if keys.ready==0 or keys.ready==1 or type(keys.ready)=='boolean' then
+            ok,err=self.room:set_ready(pid,rev,bool(keys.ready))
+        else err='invalid_boolean' end
+    elseif action=='transfer' then ok,err=self.room:transfer(pid,rev,numeric(keys.target))
+    elseif action=='start' then
+        self.room.cheats=GameRules:IsCheatMode()
+        ok,err=self.room:can_start(pid,rev)
+        if ok then self:start_match() end
+    end
+    self:reply(pid,ok,err)
+end
+function Engine:start_match()
+    local r=self.room; local o=r.options
+    r:begin() -- latch before any engine side effect / duplicate event
+    GameRules:SetHeroSelectionTime(o.selection_seconds)
+    GameRules:SetPreGameTime(o.pregame_seconds)
+    self.mode:SetPauseEnabled(o.allow_pause)
+    if o.bot_mode=='tiandixing_native_lab' then
+        self.mode:SetBotThinkingEnabled(true)
+        -- Fixed command names and validated integers only. Unknown convars stay
+        -- visible in logs; these are experimental controls, not proven effects.
+        SendToServerConsole('dota_bot_set_difficulty '..tostring(o.difficulty))
+        SendToServerConsole('dota_bot_practice_difficulty '..tostring(o.difficulty))
+    end
+    GameRules:LockCustomGameSetupTeamAssignment(true)
+    self:emit('START',{mode=o.bot_mode,fill=o.fill_bots,roles='preferences_not_mapped_to_tiandixing_slots'})
+    GameRules:FinishCustomGameSetup()
+    self.transition_deadline=Time()+20
+end
+function Engine:bot_count()
+    local n=0
+    for pid=0,63 do
+        if PlayerResource:IsValidPlayerID(pid) then
+            local c=PlayerResource:GetConnectionState(pid)
+            if c==DOTA_CONNECTION_STATE_BOT then n=n+1 end
+        end
+    end
+    return n
+end
+function Engine:tick()
+    if self.room.phase=='error' then
+        if Time()-self.last_heartbeat>=2 then self.last_heartbeat=Time(); self:emit('STATE',self:publish()) end
+        return 2
+    end
+    self:refresh_players()
+    local state=GameRules:State_Get(); local phase
+    if state==DOTA_GAMERULES_STATE_CUSTOM_GAME_SETUP then phase=self.room.started and 'starting' or 'setup'
+    elseif state==DOTA_GAMERULES_STATE_HERO_SELECTION or state==DOTA_GAMERULES_STATE_STRATEGY_TIME or state==DOTA_GAMERULES_STATE_WAIT_FOR_MAP_TO_LOAD then phase='hero_selection'
+    elseif state==DOTA_GAMERULES_STATE_PRE_GAME then phase='pregame'
+    elseif state==DOTA_GAMERULES_STATE_GAME_IN_PROGRESS then phase='playing'
+    elseif state==DOTA_GAMERULES_STATE_POST_GAME or state==DOTA_GAMERULES_STATE_DISCONNECT then phase='postgame'
+    else phase='waiting_engine' end
+    if not self.room.started and (phase=='hero_selection' or phase=='pregame' or phase=='playing') then
+        self:error('engine_advanced_before_host_start'); return 2
+    end
+    if self.room.phase~=phase then self.room.phase=phase; self.room:changed(false) end
+    if self.transition_deadline and phase~='starting' then self.transition_deadline=nil end
+    if self.transition_deadline and Time()>self.transition_deadline then self:error('setup_finish_did_not_advance');return 2 end
+    if self.room.started and self.room.options.fill_bots and not self.filled and phase=='hero_selection' then
+        self.filled=true -- one-shot; retries must never create duplicate players
+        self.bot_count_before=self:bot_count()
+        local humans=0
+        for _,p in pairs(self.room.players) do if p.team==2 or p.team==3 then humans=humans+1 end end
+        self.bot_count_expected=math.max(self.bot_count_before,10-humans)
+        if self.bot_count_before>=self.bot_count_expected then
+            self:emit('FILL','no_empty_slots')
+        else
+            GameRules:BotPopulate()
+            self.bot_fill_deadline=Time()+15
+            self:emit('FILL','BotPopulate_requested; expected_total='..self.bot_count_expected)
+        end
+    end
+    if self.bot_fill_deadline then
+        local after=self:bot_count()
+        if after>=self.bot_count_expected then
+            self.bot_fill_deadline=nil; self:emit('FILL','bot_players_observed:'..after)
+        elseif Time()>self.bot_fill_deadline then
+            self.bot_fill_deadline=nil; self:error('BotPopulate_incomplete_bot_count; stop_and_inspect');return 2
+        end
+    end
+    if Time()-self.last_heartbeat>=2 then
+        self.last_heartbeat=Time(); self:emit('STATE',self:publish())
+    end
+    return 0.5
+end
+function Engine:init()
+    self.mode=GameRules:GetGameModeEntity()
+    for _,name in ipairs({'EnableCustomGameSetupAutoLaunch','SetCustomGameSetupTimeout','FinishCustomGameSetup',
+        'SetCustomGameTeamMaxPlayers','LockCustomGameSetupTeamAssignment','SetHeroSelectionTime','SetPreGameTime'}) do
+        if not method(GameRules,name) then error('required GameRules API missing: '..name) end
+    end
+    if not method(self.mode,'SetPauseEnabled') then error('SetPauseEnabled missing') end
+    self.room.caps={bot_thinking=method(self.mode,'SetBotThinkingEnabled'),bot_populate=method(GameRules,'BotPopulate')}
+    self.room.bot_available=self.config.bot_available==true
+    self.room.cheats=GameRules:IsCheatMode()
+    GameRules:EnableCustomGameSetupAutoLaunch(false)
+    GameRules:SetCustomGameSetupTimeout(-1)
+    GameRules:SetCustomGameTeamMaxPlayers(DOTA_TEAM_GOODGUYS,5)
+    GameRules:SetCustomGameTeamMaxPlayers(DOTA_TEAM_BADGUYS,5)
+    GameRules:LockCustomGameSetupTeamAssignment(false)
+    if self.room.caps.bot_thinking then self.mode:SetBotThinkingEnabled(false) end
+    local missing={}
+    for _,name in ipairs(self.config.bot_globals or {}) do
+        if type(_G[name])~='function' then missing[#missing+1]=name end
+    end
+    self:emit('CAPS',{vm='addon_server_vm_not_native_bot_vm',missing_bot_globals=missing,
+        note='absence_here_does_not_prove_absence_in_bot_vm'})
+    self.listeners[#self.listeners+1]=CustomGameEventManager:RegisterListener('lan_action',function(source,keys)
+        local ok,err=pcall(function() self:dispatch(source,keys) end)
+        if not ok then self:error('event_exception:'..tostring(err)) end
+    end)
+    Convars:RegisterCommand('lan_status',function()
+        if Convars:GetCommandClient()~=nil then return end
+        self:emit('STATE',self:publish())
+    end,'LAN addon status (server console only)',0)
+    Convars:RegisterCommand('lan_release_host',function()
+        if Convars:GetCommandClient()~=nil then return end
+        if self.room.phase=='setup' then self.room.host=-1; self.room:elect_host(true); self:publish() end
+    end,'Re-elect setup host after disconnect (server console only)',0)
+    self.mode:SetContextThink('LANLabThink',function()
+        local ok,delay=pcall(function() return self:tick() end)
+        if not ok then self:error('tick_exception:'..tostring(delay));return 2 end
+        return delay
+    end,0.5)
+    self:emit('BOOT',{client_revision=self.config.client_revision,source_sha256=self.config.source_sha256})
+    self:publish()
+end
+return Engine

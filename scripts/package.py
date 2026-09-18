@@ -9,16 +9,16 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ROOT_FILES = {'.gitignore', 'AGENTS.md', 'CODEX_HANDOFF.md', 'LICENSE', 'README.md', 'VERSION',
+ROOT_FILES = {'.gitignore', 'AGENTS.md', 'CODEX_HANDOFF.md', 'CODEX_LAN_HANDOFF.md', 'LICENSE', 'README.md', 'VERSION',
               'requirements-dev.txt', 'requirements-ui.txt'}
-DIRECTORIES = {'config', 'docs', 'install', 'panel', 'pve', 'scripts', 'systemd', 'tests', 'tools'}
+DIRECTORIES = {'config', 'docs', 'install', 'panel', 'pve', 'scripts', 'systemd', 'tests', 'tools', 'addon', 'compat'}
 
 
 def allowed(path: Path) -> bool:
     rel = path.relative_to(ROOT)
     if any(part in {'.git', '.venv', '__pycache__', '.pytest_cache', 'node_modules'} for part in rel.parts):
         return False
-    if rel.as_posix() == 'pve/lxc.env' or any('.backup-' in part for part in rel.parts):
+    if rel.as_posix() == 'pve/lxc.env' or any(any(tag in part for tag in ('.backup-', 'source-backup-', 'compiled-backup-')) for part in rel.parts):
         return False
     if path.suffix in {'.pyc', '.pyo', '.zip', '.key', '.pem'} or '.local.' in path.name:
         return False

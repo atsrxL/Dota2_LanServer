@@ -1,0 +1,10 @@
+"AddonInfo"
+{
+    "addonversion" "1"
+    "addon_name" "LAN Dota Lab"
+    "addon_description" "LAN setup and Tiandixing native Bot compatibility lab"
+    "maps" "dota"
+    "IsPlayable" "1"
+    "min_players" "1"
+    "max_players" "10"
+}

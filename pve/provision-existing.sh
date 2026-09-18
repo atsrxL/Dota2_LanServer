@@ -16,7 +16,7 @@ done
 load_config "$CONFIG"; check_pve
 pct config "$CTID" | grep -q '^unprivileged: 1$' || fail "只支持非特权 LXC"
 pct config "$CTID" | grep -q '^ostype: ubuntu$' || fail "目标须为 Ubuntu LXC"
-log "将重新配置指定 CT $CTID 的环境，保留游戏数据/账号缓存/面板密码"
+log "将重新配置指定 CT $CTID 的环境，保留游戏数据与 Steam 账号缓存；移除本项目旧面板密码和 TLS 配置"
 echo '会更新该 CT 的防火墙文件（先备份旧文件），但不会自动扩容/更改现有 CT CPU 与内存。'
 ((APPLY)) || { echo '加 --apply 执行。'; exit 0; }
 pct status "$CTID" | grep -q running || pct start "$CTID"

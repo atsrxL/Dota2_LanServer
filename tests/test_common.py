@@ -62,6 +62,13 @@ def test_log_rotation(tmp_path):
     s.event('first long line');s.event('second long line')
     assert p.with_suffix('.log.1').exists()
 
+def test_engine_generated_secrets_are_redacted_across_chunks(tmp_path):
+    p=tmp_path/'engine.log';s=SafeLog(p)
+    s.write('tv_secret_');s.write('code: 123456789'+chr(10)+'server_key: "fixture-key"'+chr(10))
+    s.finish();text=p.read_text()
+    assert '123456789' not in text and 'fixture-key' not in text
+    assert text.count('[REDACTED]')==2
+
 def renderer():
     p=Path(__file__).parents[1]/'install/render.py'
     spec=importlib.util.spec_from_file_location('render',p);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
@@ -71,8 +78,8 @@ def test_render_firewall_and_nginx():
     m=renderer();c=m.validate(json.loads((Path(__file__).parents[1]/'install/bootstrap.example.json').read_text()))
     fw=m.firewall(c);ng=m.nginx(c)
     assert 'policy_in: DROP' in fw and '-p udp -dport 27015' in fw
-    assert '-source 192.168.1.0/24' in fw and 'listen 8443;' in ng
-    assert 'deny all;' in ng and 'ssl' not in ng and 'listen 80' not in ng
+    assert '-source 192.168.1.0/24' in fw and 'listen 8080;' in ng
+    assert 'deny all;' in ng and ' ssl' not in ng and 'ssl_certificate' not in ng and '/api/login' not in ng
     assert 'proxy_pass http://127.0.0.1:8765;' in ng
 
 def test_render_rejects_config_injection():

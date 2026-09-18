@@ -8,3 +8,9 @@ pve/*.backup-*
 *.key
 auth.json
 credentials*
+
+addon/lan_dota/compiled/
+*.bundle
+*.local.json
+
+addon/*.compiled-backup-*/

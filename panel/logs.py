@@ -1,6 +1,7 @@
 """Bounded logs with redaction before anything is persisted."""
 from __future__ import annotations
 import threading
+import re
 from pathlib import Path
 from .common import ANSI, now
 
@@ -19,6 +20,7 @@ class SafeLog:
 
     def clean(self, text: str) -> str:
         text = ANSI.sub("", text)
+        text = re.sub(r'(?im)^(\s*(?:tv_secret_code|server_key)\s*:\s*)[^\r\n]*', r'\1[REDACTED]', text)
         for s in sorted(self.secrets, key=len, reverse=True):
             text = text.replace(s, "[REDACTED]")
         return "".join(c for c in text if c in "\n\t" or ord(c) >= 32)

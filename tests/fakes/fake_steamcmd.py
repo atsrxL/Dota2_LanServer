@@ -47,6 +47,25 @@ while True:
         (root/'steamapps').mkdir(exist_ok=True)
         (root/'steamapps/appmanifest_570.acf').write_text('"AppState" { "appid" "570" "StateFlags" "4" "buildid" "TEST-4242" }')
         out("Update state validating, progress: 100.0\nSuccess! App '570' fully installed.\n")
+    elif line.startswith('workshop_download_item 570 '):
+        item=line.split()[2]
+        marker=Path(__file__).parent/'workshop_behavior'
+        behavior=marker.read_text().strip() if marker.exists() else ''
+        if behavior=='slow':
+            out('Downloading item '+item+' ...\n');time.sleep(60)
+        if behavior=='error':
+            out('ERROR! Download item failed (Failure).\nSteam>');continue
+        target=Path.cwd()/'steamapps/workshop/content/570'/item
+        if behavior!='missing':
+            target.mkdir(parents=True,exist_ok=True)
+            (target/'hero_selection.lua').write_text('-- TEST FIXTURE ONLY\nfunction Think() end\n'+ ('-- changed version\n' if behavior=='changed' else ''))
+            (target/'bot_generic.lua').write_text('-- TEST FIXTURE ONLY\nfunction Think() end\n')
+            (target/'lib').mkdir(exist_ok=True)
+            (target/'lib/data.json').write_text('{"fixture": true}')
+        if behavior=='no_success':
+            out('Download timed out\nSteam>');continue
+        reported='99999' if behavior=='wrong_id' else item
+        out('Success. Downloaded item '+reported+' to "'+str(target)+'" (123 bytes)\n')
     elif line=='quit':
         out('Bye\n')
         break

@@ -1,0 +1,24 @@
+{
+  "scope": "Loopback development demo with fake SteamCMD and fake Dota only; not PVE or actual multiplayer",
+  "transport": "Offline DOM + real loopback HTTP via Python; browser navigation/TLS NOT TESTED",
+  "checks_passed": 16,
+  "checks": [
+    "HTTP dashboard has no panel login or logout controls",
+    "Passwordless dashboard shows real fake-process status / test Build ID",
+    "Live total CPU, visible per-core bars, memory, sources and quota render",
+    "Two-minute resource history accumulates real samples in the browser",
+    "Metrics outage clears stale live numbers and reconnects automatically",
+    "Synthetic page-visibility event pauses and resumes resource polling",
+    "Steam action submitted; secret cleared and redacted from output",
+    "Task history updates",
+    "Server logs and restricted console preset operate",
+    "Settings form loads stored values",
+    "Configuration backup appears in UI",
+    "Passwordless diagnostics download is valid JSON",
+    "Served help page renders with Steam Guard guidance",
+    "390px mobile viewport has no horizontal page overflow",
+    "State API does not require a password or cookie",
+    "No uncaught JavaScript page errors"
+  ],
+  "page_errors": []
+}

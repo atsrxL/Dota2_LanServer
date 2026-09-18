@@ -1,0 +1,16 @@
+Python AST / Bash syntax: PASS
+........................................................................ [ 44%]
+........................................................................ [ 89%]
+.................                                                        [100%]
+=============================== warnings summary ===============================
+tests/test_agent.py: 12 warnings
+tests/test_bots.py: 16 warnings
+  /usr/lib/python3.13/pty.py:95: DeprecationWarning: This process (pid=2252) is multi-threaded, use of forkpty() may lead to deadlocks in the child.
+    pid, fd = os.forkpty()
+
+tests/test_bots.py::test_bad_zip[duplicate]
+  /usr/lib/python3.13/zipfile/__init__.py:1642: UserWarning: Duplicate name: 'a.lua'
+    return self._open_to_write(zinfo, force_zip64=force_zip64)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+161 passed, 29 warnings in 40.61s

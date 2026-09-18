@@ -2,11 +2,13 @@
 from __future__ import annotations
 import os
 import re
+import shutil
 import time
 import pexpect
 from .common import Fault, Paths, installed, manifest
 from .logs import SafeLog
 from .process import terminate_child
+from .bots import locate_download, workshop_id
 
 class Cancelled(Fault):
     def __init__(self):
@@ -16,12 +18,16 @@ class SteamJob:
     def __init__(self, paths: Paths, log: SafeLog, cancel, ask, stage):
         self.paths, self.log, self.cancel, self.ask, self.stage = paths, log, cancel, ask, stage
         self.child = None
+        self.workshop_active = False
 
     def _expect(self, patterns: list, timeout: float):
         end = time.monotonic() + timeout
         while time.monotonic() < end:
             if self.cancel.is_set():
                 raise Cancelled()
+            if self.workshop_active and not os.environ.get("DOTA_TEST_ROOT"):
+                if min(shutil.disk_usage(p).free for p in (self.paths.steam, self.paths.game, self.paths.state)) < 512 * 1024**2:
+                    raise Fault("Workshop 下载期间空闲磁盘低于 512 MiB；已中止，保留现用脚本。", 409)
             i = self.child.expect(patterns + [pexpect.EOF, pexpect.TIMEOUT], timeout=min(1, max(0.01, end - time.monotonic())))
             if i == len(patterns):
                 raise Fault("SteamCMD 意外退出；请检查任务日志、网络与磁盘。", 409)
@@ -73,7 +79,31 @@ class SteamJob:
                 return
         raise Fault("Steam 登录授权超时", 408)
 
-    def run(self, cred: dict, mode: str) -> None:
+    def _workshop(self, item: str):
+        item = workshop_id(item)
+        self.workshop_active = True
+        self.stage("downloading_workshop")
+        self.log.event(f"下载 Dota 2 Workshop 条目 {item}；不会修改正在运行的脚本。")
+        self.child.sendline(f"workshop_download_item 570 {item} validate")
+        success, output = False, ""
+        deadline = time.monotonic() + 2 * 3600
+        patterns = [r"(?i)Success\.\s+Downloaded item\s+" + re.escape(item) + r"\b[^\r\n]*",
+                    r"(?i)(?:ERROR!|Failure|Download item failed)[^\r\n]*", r"Steam>"]
+        while time.monotonic() < deadline:
+            i = self._expect(patterns, max(1, deadline - time.monotonic()))
+            output = (output + (self.child.before or "") + str(self.child.after or ""))[-16000:]
+            if i == 0:
+                success = True
+            elif i == 1:
+                raise Fault("SteamCMD 报告 Workshop 下载失败；检查账号授权、网络和任务日志。保留现用版本。", 409)
+            else:
+                break
+        if not success:
+            raise Fault("没有收到指定 Workshop ID 的下载成功标记，不能使用磁盘上的旧文件冒充成功。", 409)
+        self.stage("checking_workshop_files")
+        return locate_download(self.paths, item, output)
+
+    def run(self, cred: dict, mode: str, item: str | None = None):
         launcher = self.paths.steam / "steamcmd.sh"
         if not launcher.is_file():
             raise Fault("未找到 SteamCMD；请重新执行 LXC 环境安装脚本。", 409)
@@ -90,6 +120,8 @@ class SteamJob:
             self._command('@sSteamCmdForcePlatformType linux')
             self._command(f'force_install_dir "{self.paths.game}"')
             self._login(dict(cred))
+            if mode == "workshop":
+                return self._workshop(item)
             if mode == "login":
                 self.log.event("登录测试完成。Valve 是否保留可复用登录状态，以其后续行为为准。")
                 return

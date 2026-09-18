@@ -55,7 +55,7 @@ install -d -o root -g root -m 0755 /opt/dota2-lan-kit
 install -d -o root -g dotapanel -m 0750 /etc/dota-panel
 # Game/cache/state are outside the code tree and are NEVER --delete targets.
 rsync -a --delete --exclude='__pycache__' --exclude='*.pyc' "$SOURCE/panel/" /opt/dota2-lan-kit/panel/
-for dir in docs config; do rsync -a --delete "$SOURCE/$dir/" "/opt/dota2-lan-kit/$dir/"; done
+for dir in docs config addon; do rsync -a --delete "$SOURCE/$dir/" "/opt/dota2-lan-kit/$dir/"; done
 cp "$SOURCE/README.md" "$SOURCE/AGENTS.md" "$SOURCE/CODEX_HANDOFF.md" /opt/dota2-lan-kit/
 chown -R root:root /opt/dota2-lan-kit
 find /opt/dota2-lan-kit -type d -exec chmod 0755 {} +
@@ -87,7 +87,7 @@ install -d -o steam -g steam -m 0700 /var/lib/dota2/.steam /var/lib/dota2/.steam
 ln -sfn /srv/steamcmd/linux64/steamclient.so /var/lib/dota2/.steam/sdk64/steamclient.so
 ln -sfn /srv/steamcmd/linux32/steamclient.so /var/lib/dota2/.steam/sdk32/steamclient.so
 chown -h steam:steam /var/lib/dota2/.steam/sdk{32,64}/steamclient.so
-printf '\n==> 初始化游戏配置与受信任 LAN HTTP 面板\n'
+printf '\n==> 初始化 HTTP 免登录面板（保留已有游戏配置与 Steam 缓存）\n'
 cd /opt/dota2-lan-kit
 python3 - "$CONFIG" <<'PY'
 import grp,json,os,pwd,sys
@@ -102,9 +102,9 @@ web=Path('/etc/dota-panel/web.json')
 atomic_json(web,{'allowed_hosts':[c['ip'],c['hostname'],'localhost','127.0.0.1']},0o640)
 os.chown(web,0,grp.getgrnam('dotapanel').gr_gid)
 PY
-# Remove credentials and certificates created by releases before trusted-LAN mode.
-rm -f /root/dota-panel-credentials.txt /etc/dota-panel/auth.json \
-  /etc/dota-panel/tls/server.key /etc/dota-panel/tls/server.crt
+# Remove only obsolete credentials/certificates owned by this kit, not other sites.
+rm -f /etc/dota-panel/auth.json /root/dota-panel-credentials.txt \
+      /etc/dota-panel/tls/server.key /etc/dota-panel/tls/server.crt
 rmdir /etc/dota-panel/tls 2>/dev/null || true
 cat > /etc/nginx/snippets/dota-proxy.conf <<'NGINX'
 proxy_http_version 1.1;
@@ -131,8 +131,7 @@ import json,time,urllib.request
 for i in range(30):
     try:
         with urllib.request.urlopen('http://127.0.0.1:8765/api/session',timeout=2) as r:
-            session=json.load(r)
-            assert session['authenticated'] is True and session['no_auth'] is True
+            assert json.load(r)['auth_required'] is False
         print('面板本机健康检查通过。游戏尚未安装/启动，不代表客户端已能联机。')
         break
     except Exception:
@@ -140,6 +139,7 @@ for i in range(30):
 else:
     raise SystemExit('面板未就绪：检查 systemctl status dota-panel dota-agent 与 journalctl')
 PY
-PANEL_IP=$(python3 "$SOURCE/install/render.py" field "$CONFIG" ip)
+CT_IP=$(python3 "$SOURCE/install/render.py" field "$CONFIG" ip)
 PANEL_PORT=$(python3 "$SOURCE/install/render.py" field "$CONFIG" panel_port)
-printf '\n面板地址：http://%s:%s（无网页密码，仅限受信任 LAN；禁止公网转发）\n' "$PANEL_IP" "$PANEL_PORT"
+printf '\n面板：http://%s:%s（无需面板账号/密码）\n' "$CT_IP" "$PANEL_PORT"
+printf '仅允许可信 LAN；HTTP 不加密 Steam 输入。Steam 授权仍按 Valve 要求完成。\n'

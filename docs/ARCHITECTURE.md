@@ -2,11 +2,11 @@
 
 ## 请求与权限流
 
-浏览器 → Nginx HTTP/LAN allow → Waitress 127.0.0.1:8765 → WebApp 自动会话/CSRF → Unix socket RPC → Manager 固定动作 → SteamCMD/GameProcess 的 PTY。
+浏览器 → Nginx HTTP/LAN allow → Waitress 127.0.0.1:8765 → WebApp Host/Origin/CSRF（免登录） → Unix socket RPC → Manager 固定动作 → SteamCMD/GameProcess 的 PTY。
 
 PVE 脚本只在宿主以 root 创建 CT、上传文件、配置该 CT 防火墙。容器 bootstrap 以 LXC root 安装包/受限账号/配置服务。正常运行时没有 root 控制代理、sudo 白名单或 Docker socket。
 
-`dotapanel` 只读 root-owned 应用与自己的 auth 配置，能访问 dota-control socket，但不能直接读取 `/var/lib/dota2`（0700）。`steam` 可写下载目录和状态；不可改 root-owned 应用、unit 或 Nginx。两个服务都设置 NoNewPrivileges 和空 CapabilityBoundingSet；因为 SteamCMD 是 32 位组件，不能添加 SystemCallArchitectures=native。
+`dotapanel` 只读 root-owned 应用与只读 web.json 配置，能访问 dota-control socket，但不能直接读取 `/var/lib/dota2`（0700）。`steam` 可写下载目录和状态；不可改 root-owned 应用、unit 或 Nginx。两个服务都设置 NoNewPrivileges 和空 CapabilityBoundingSet；因为 SteamCMD 是 32 位组件，不能添加 SystemCallArchitectures=native。
 
 ## 进程与重启
 
@@ -34,8 +34,12 @@ SafeLog 只挂接 logfile_read，不记录发送内容；逐行缓冲后替换�
 
 ## 网页、安全与就绪
 
-单进程 Waitress 多线程，Auth 共享带锁的服务端内存会话。PBKDF2-SHA256 600000 轮，随机盐；随机会话令牌 + CSRF。Cookie 使用 Secure、HttpOnly、SameSite=Strict；POST 要求 JSON、同源 Origin、登录态与 CSRF（登录依靠同源与 JSON 限制）。按 IP 登录限速；会话 30 分钟无请求过期、最长 8 小时，最多 64 个。
+单进程 Waitress 多线程，HTTP 免登录。不保存管理员密码或会话、不发登录 Cookie。网页从 /api/session 自动取得防跨站令牌；所有 POST 检查精确 HTTP 同源 Origin、JSON 与令牌。后端重启后令牌变化，网页自动重新获取，不自动重放失败的变更请求。生产设置非空 allowed_hosts，Nginx 提供 LAN 白名单。
 
 资源只有固定 HTML/JS/CSS 路径；API 没有文件浏览、Shell 或任意 RPC 转发。日志用 textContent，禁止执行插入的 HTML。CSP 禁止第三方/内联脚本、嵌入与 frame，Nginx 限制 LAN 来源、大小和时间。HTTP 不提供传输加密。
 
 状态展示 PID、进程存活、本地 build、磁盘、cgroup 内存和 UDP 监听。UDP 检查仅在容器网络命名空间中寻找端口，并不保证该端口属于正确游戏、更不等于 A2S 或客户端连接成功。未实现玩家数统计/完整游戏就绪探测，不伪造在线玩家或百分比。
+
+## 只读资源采样
+
+Manager 持有一个 ResourceMonitor，共享缓存、不额外创建采样线程；/api/metrics 不拿游戏操作锁。总量读取 cgroup 挂载根，每核心读取可见 /proc/stat 并标注来源，详细字段与限制见 MONITORING.md。浏览器独立低频轮询，不新增 Python 第三方依赖、外部 JS/CDN 或后台数据库。

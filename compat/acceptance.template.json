@@ -1,0 +1,109 @@
+{
+  "schema": 1,
+  "scope": "REAL_ENVIRONMENT_ONLY",
+  "run_id": "",
+  "tested_at": "",
+  "operator": "",
+  "environment": {
+    "ctid": "",
+    "resources": "6 vCPU / 6144 MiB / 250 G",
+    "server_buildid": "",
+    "client_buildids": [],
+    "addon_source_sha256": "",
+    "ui_source_sha256": "",
+    "client_revision": "lanlab-130.1",
+    "workshop_id": "1627071163",
+    "workshop_content_sha256": "",
+    "session": "",
+    "launch_method": "",
+    "cheats": null
+  },
+  "steps": {
+    "compiled_ui_engine_load": {
+      "status": "NOT_RUN",
+      "observation": "",
+      "evidence_files": []
+    },
+    "two_clients_connect": {
+      "status": "NOT_RUN",
+      "observation": "",
+      "evidence_files": []
+    },
+    "indefinite_setup": {
+      "status": "NOT_RUN",
+      "observation": "",
+      "evidence_files": []
+    },
+    "host_authority": {
+      "status": "NOT_RUN",
+      "observation": "",
+      "evidence_files": []
+    },
+    "ready_revision_reset": {
+      "status": "NOT_RUN",
+      "observation": "",
+      "evidence_files": []
+    },
+    "single_start": {
+      "status": "NOT_RUN",
+      "observation": "",
+      "evidence_files": []
+    },
+    "real_workshop_download": {
+      "status": "NOT_RUN",
+      "observation": "",
+      "evidence_files": []
+    },
+    "native_bot_entry": {
+      "status": "NOT_RUN",
+      "observation": "",
+      "evidence_files": []
+    },
+    "native_bot_callbacks": {
+      "status": "NOT_RUN",
+      "observation": "",
+      "evidence_files": []
+    },
+    "hero_and_team": {
+      "status": "NOT_RUN",
+      "observation": "",
+      "evidence_files": []
+    },
+    "items_and_skills": {
+      "status": "NOT_RUN",
+      "observation": "",
+      "evidence_files": []
+    },
+    "lane_position_mapping": {
+      "status": "NOT_RUN",
+      "observation": "",
+      "evidence_files": []
+    },
+    "team_behaviour": {
+      "status": "NOT_RUN",
+      "observation": "",
+      "evidence_files": []
+    },
+    "full_match_and_restart": {
+      "status": "NOT_RUN",
+      "observation": "",
+      "evidence_files": []
+    },
+    "bot_version_rollback": {
+      "status": "NOT_RUN",
+      "observation": "",
+      "evidence_files": []
+    },
+    "stutter_comparison_probe_off": {
+      "status": "NOT_RUN",
+      "observation": "",
+      "evidence_files": []
+    }
+  },
+  "overall": "NOT_RUN",
+  "limitations": [
+    "意向位置映射未实现",
+    "编译和真实连接须本地验证"
+  ],
+  "note": "仅人工按真实证据填PASS/FAIL/BLOCKED/NOT_RUN；不得用模拟进程/合成UI资源替代。"
+}

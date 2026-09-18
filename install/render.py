@@ -38,7 +38,7 @@ def firewall(d):
 
 def nginx(d):
     allow = '\n'.join(f'    allow {c};' for c in d['lan_cidrs'])
-    return f'''# Local management endpoint; trusted-LAN HTTP, no public listener.
+    return f'''# Trusted LAN HTTP management. No TLS, redirects, or panel login.
 server {{
     listen {d['panel_port']};
     server_name _;

@@ -17,12 +17,15 @@ from pathlib import Path
 from typing import Any
 from .common import (ACTIONS, DEFAULT_CONFIG, VERSION, Fault, Paths, atomic_json, build_command,
                      credentials, installed, manifest, new_id, now, plain, read_json, tail, validate_config)
+from .resources import ResourceMonitor
+from .lan_addon import LanAddon
+from .bots import BotLibrary, lookup_item, workshop_id, version_id
 from .logs import SafeLog
 from .process import GameProcess
 from .steam import Cancelled, SteamJob
 
 class Manager:
-    def __init__(self, paths: Paths):
+    def __init__(self, paths: Paths, workshop_lookup=None):
         self.paths = paths
         paths.prepare()
         self.lock = threading.RLock()
@@ -33,6 +36,10 @@ class Manager:
         self.worker = None
         self.closed = False
         self.game = GameProcess(paths)
+        self.bots = BotLibrary(paths)
+        self.addon = LanAddon(paths)
+        self.workshop_lookup = workshop_lookup or lookup_item
+        self.resources = ResourceMonitor()
         self.audit = SafeLog(paths.state / "logs/agent.log")
         self.config = validate_config(read_json(paths.config, DEFAULT_CONFIG.copy()))
         if not paths.config.exists():
@@ -94,7 +101,7 @@ class Manager:
         action = data.get("action")
         if action not in ACTIONS:
             raise Fault("不支持此操作")
-        for flag in ("stop_server", "restart_after"):
+        for flag in ("stop_server", "restart_after", "select_after", "entry_probe"):
             if flag in data and type(data[flag]) is not bool:
                 raise Fault(f"{flag} 必须为布尔值")
         with self.lock:
@@ -103,9 +110,22 @@ class Manager:
             if self.active:
                 raise Fault("已有任务正在执行；请等待结束或取消当前任务。", 409)
             private: dict[str, Any] = {}
-            if action in {"login", "install", "update", "validate"}:
+            if action in {"login", "install", "update", "validate", "bot_download"}:
                 private = credentials({"username": data.get("username") or self.config["steam_username"],
                                        "password": data.get("password", ""), "guard": data.get("guard", "")})
+            if action in {"bot_download", "bot_check", "bot_select", "bot_remove"}:
+                private["item_id"] = workshop_id(data.get("item_id"))
+            if action in {"bot_select", "bot_remove"} and data.get("version"):
+                private["version"] = version_id(data["version"])
+            if action in {"bot_select", "bot_download"}:
+                difficulty = data.get("difficulty", 2)
+                if type(difficulty) is not int or not 0 <= difficulty <= 3:
+                    raise Fault("机器人难度必须在 0～3 之间")
+                private.update(difficulty=difficulty, entry_probe=data.get("entry_probe", True))
+            if action == "bot_remove" and not private.get("version"):
+                raise Fault("移除机器人版本必须指定完整版本 SHA")
+            if action == "bot_download" and shutil.disk_usage(self.paths.state).free < 1024**3 and not os.environ.get("DOTA_TEST_ROOT"):
+                raise Fault("机器人安装至少需要 1 GiB 空闲空间", 409)
             if action in {"install", "update", "validate"}:
                 if self.game.running() and not data.get("stop_server", False):
                     raise Fault("游戏正在运行；先停服，或明确允许本次维护停服。", 409)
@@ -119,6 +139,8 @@ class Manager:
                     raise Fault("存在未完成维护标记；先成功更新/校验，不能启动可能损坏的安装。", 409)
                 if not installed(self.paths):
                     raise Fault("请先安装 Dota 2", 409)
+            if action == "addon_deploy" and self.game.running():
+                raise Fault("附加模式部署必须先停服", 409)
             if action == "restore":
                 if self.game.running():
                     raise Fault("恢复配置前请先停服", 409)
@@ -130,14 +152,14 @@ class Manager:
             self.cancel_event = threading.Event()
             self.input_event = threading.Event()
             self._persist()
-            options = {"stop_server": data.get("stop_server", False), "restart_after": data.get("restart_after", False)}
+            options = {"stop_server": data.get("stop_server", False), "restart_after": data.get("restart_after", False), "select_after": data.get("select_after", False)}
             self.worker = threading.Thread(target=self._run, args=(job, private, options), daemon=True)
             self.worker.start()
             self.audit.event(f"任务 {job['id']}：{action}")
             return dict(job)
 
     def _run(self, job: dict, private: dict, options: dict) -> None:
-        log = SafeLog(self.paths.state / "logs" / f"{job['id']}.log", [v for v in private.values() if isinstance(v, str)])
+        log = SafeLog(self.paths.state / "logs" / f"{job['id']}.log", [private[k] for k in ("username", "password", "guard") if private.get(k)])
         action = job["action"]
         was_running = self.game.running()
         try:
@@ -157,16 +179,57 @@ class Manager:
                     (self.paths.state / "maintenance.json").unlink(missing_ok=True)
                     if was_running and options["restart_after"]:
                         self._stage("restarting_server")
-                        self.game.start(self.config)
+                        self._start_game()
+            elif action in {"bot_download", "bot_check"}:
+                self._stage("checking_workshop_metadata")
+                metadata = self.workshop_lookup(private["item_id"])
+                self._check_cancel()
+                job["workshop"] = metadata
+                log.event(f"Workshop {metadata['item_id']}：{metadata['title']}")
+                if action == "bot_download":
+                    runner = SteamJob(self.paths, log, self.cancel_event, self._ask, self._stage)
+                    cred = {k: private[k] for k in ("username", "password", "guard")}
+                    source = runner.run(cred, "workshop", private["item_id"])
+                    self._check_cancel()
+                    self._stage("installing_bot_version")
+                    info = self.bots.install(source, metadata, self._check_cancel)
+                    job["bot_version"] = info["version"]
+                    log.event(f"文件安装完成：{info['version']}，{len(info['files'])} 个文件；未进行真实 AI 验收。")
+                    if info['skipped_count']:
+                        log.event(f"未部署 {info['skipped_count']} 个非脚本/数据文件，详见版本元数据。")
+                    if options["select_after"]:
+                        self._check_cancel()
+                        self.bots.select({"item_id": private["item_id"], "version": info["version"],
+                                          "difficulty": private["difficulty"], "entry_probe": private["entry_probe"]})
+                        log.event("已设为下一局脚本。当前运行进程及其脚本没有改变。")
+            elif action == "bot_select":
+                job["selection"] = self.bots.select(private)
+                log.event("已保存下一局选择，实际部署在下次手动启动/重启之前执行。")
+            elif action == "bot_default":
+                self.bots.select({"item_id": None})
+                log.event("下次手动开局停用面板自定义机器人；恢复接管前 bots 目录（它可能也是用户脚本）。")
+            elif action == "bot_rollback":
+                job["selection"] = self.bots.rollback_selection()
+                log.event("已恢复上次的下一局选择；不改变当前对局。")
+            elif action == "bot_remove":
+                self.bots.remove(private, self.game.bot_spec if self.game.running() else None)
+                log.event("已移除未引用的脚本版本；SteamCMD 下载缓存未删除。")
+            elif action == "addon_deploy":
+                job["addon"] = self.addon.deploy()
+                log.event("附加模式源文件已部署；编译资源与真实连通性仍须验收。")
+            elif action == "addon_scan":
+                report = self.addon.scan(self.bots)
+                job["audit"] = {k: report[k] for k in ("content_sha256", "lua_files", "static_result")}
+                log.event("静态扫描完成；未在此步骤执行第三方 Lua 或声明运行兼容。")
             elif action == "start":
                 self.crashes.clear()
-                self.game.start(self.config)
+                self._start_game()
             elif action == "stop":
                 self.game.stop()
             elif action == "restart":
                 self.game.stop()
                 self.crashes.clear()
-                self.game.start(self.config)
+                self._start_game()
             elif action == "backup":
                 filename = self._backup()
                 log.event(f"配置备份已保存：{filename}")
@@ -209,6 +272,24 @@ class Manager:
                     if path.name.split(".log", 1)[0] not in keep:
                         path.unlink(missing_ok=True)
 
+    def _check_cancel(self):
+        if self.cancel_event.is_set() or self.closed:
+            raise Cancelled()
+
+    def _start_game(self, reuse_running=False):
+        if self.game.running():
+            raise Fault("服务器已经在运行", 409)
+        if (self.paths.state / "maintenance.json").exists():
+            raise Fault("安装维护未完成，禁止开服", 409)
+        use_addon = bool(self.game.addon_spec) if reuse_running else self.addon.config["enabled"]
+        if use_addon:
+            spec, runtime = self.addon.prepare(self.bots, override=self.game.bot_spec, reuse=reuse_running,
+                                               prior=self.game.addon_spec)
+            self.game.start(self.config, spec, addon=runtime)
+        else:
+            spec = self.bots.prepare_launch(override=self.game.bot_spec, use_override=reuse_running)
+            self.game.start(self.config, spec)
+
     def _backup_file(self, name: Any) -> Path:
         if not isinstance(name, str) or not re.fullmatch(r"cfg-\d{8}-\d{6}-[a-f0-9]{8}\.json", name):
             raise Fault("备份名称不正确")
@@ -237,18 +318,22 @@ class Manager:
                     "notice": "更改游戏端口后，须同步修改 PVE 防火墙规则；面板不会修改宿主。"}
 
     def metrics(self) -> dict:
-        usage = shutil.disk_usage(self.paths.game)
-        result = {"disk_total": usage.total, "disk_free": usage.free, "load_average": list(os.getloadavg()),
-                  "memory_current": None, "memory_max": None, "memory_events": ""}
-        root = Path("/sys/fs/cgroup")
+        resources = self.resources.sample()
+        memory = resources['memory']
         try:
-            current = root.joinpath("memory.current").read_text().strip()
-            maximum = root.joinpath("memory.max").read_text().strip()
-            result.update(memory_current=int(current), memory_max=int(maximum) if maximum.isdigit() else None,
-                          memory_events=root.joinpath("memory.events").read_text()[:2000])
-        except (OSError, ValueError):
-            pass
-        return result
+            disk = shutil.disk_usage(self.paths.game)
+            disk_total, disk_free = disk.total, disk.free
+        except OSError:
+            disk_total = disk_free = None
+        try:
+            load = list(os.getloadavg())
+        except OSError:
+            load = []
+        # Compatibility keys remain for existing consumers of /api/status.
+        return {"disk_total": disk_total, "disk_free": disk_free, "load_average": load,
+                "memory_current": memory['used_bytes'], "memory_max": memory['limit_bytes'],
+                "memory_events": "\n".join(f"{k} {v}" for k,v in memory['events'].items()),
+                "resources": resources}
 
     def status(self) -> dict:
         with self.lock:
@@ -266,15 +351,22 @@ class Manager:
                     "uptime": int(time.time() - self.game.started_at) if running and self.game.started_at else 0,
                     "last_exit": self.game.last_exit, "udp_port_listening": udp,
                     "readiness": "process_running_client_check_required" if running else "stopped",
+                    "addon_active": bool(running and self.game.addon_spec),
                     "port": self.config["port"], "maintenance_block": read_json(self.paths.state / "maintenance.json"),
                     "active_job": dict(self.active) if self.active else None, "metrics": self.metrics(),
+                    "bot_runtime": {"selection": self.game.bot_spec if running else None,
+                                    "entry_seen": self.game.bot_entry_seen if running else False,
+                                    "acceptance": "entry_executed_not_full_ai_verified" if running and self.game.bot_entry_seen else "not_verified"},
                     "crash_restarts_last_10min": len([x for x in self.crashes if x > time.time() - 600])}
 
     def diagnostics(self) -> dict:
         result = {"generated_at": now(), "version": VERSION, "platform": platform.platform(), "status": self.status(),
                   "notice": "这是本地运行诊断，不是客户端联机通过的证明。未包含 Steam 凭据缓存。"}
         try:
-            cmd, _ = build_command(self.paths, self.config)
+            running = self.game.running()
+            preview_addon = self.game.addon_spec if running else ({"name": "lan_dota", "launch_method": self.addon.config["launch_method"]} if self.addon.config["enabled"] else None)
+            preview_bot = self.game.bot_spec if running else (None if self.addon.config["enabled"] and not self.addon.config["probe_bots"] else self.bots._selection().get("selected"))
+            cmd, _ = build_command(self.paths, self.config, preview_bot, preview_addon)
             for i, part in enumerate(cmd[:-1]):
                 if part == "+sv_password":
                     cmd[i + 1] = "[REDACTED]"
@@ -302,6 +394,24 @@ class Manager:
         op, data = request.get("op"), request.get("data", {})
         if not isinstance(data, dict):
             raise Fault("请求 data 必须是对象")
+        if op == "addon":
+            with self.lock:
+                return self.addon.status(self.game)
+        if op == "addon_report":
+            with self.lock:
+                return {"generated_at": now(), "version": VERSION, "game_manifest": manifest(self.paths),
+                        "addon": self.addon.status(self.game), "server_log_tail": tail(self.paths.state / "logs/server.log", 32000),
+                        "notice": "自动日志证据与静态审计，不是完整实机验收。分享前核对玩家名称和本地路径。"}
+        if op == "save_addon":
+            with self.lock:
+                if self.active or self.game.running():
+                    raise Fault("修改附加模式启动策略前先停服并结束任务", 409)
+                return self.addon.save(data)
+        if op == "bots":
+            with self.lock:
+                return self.bots.list()
+        if op == "metrics":
+            return self.resources.sample()
         if op == "status":
             return self.status()
         if op == "config":
@@ -317,7 +427,7 @@ class Manager:
             with self.lock:
                 if not self.active or self.active["id"] != data.get("job_id"):
                     raise Fault("任务不存在或已结束", 409)
-                if self.active["action"] not in {"login", "install", "update", "validate"}:
+                if self.active["action"] not in {"login", "install", "update", "validate", "bot_download", "bot_check"}:
                     raise Fault("该短操作不能取消", 409)
                 self.cancel_event.set()
                 return {"ok": True, "message": "已请求取消，等待 SteamCMD 安全退出。"}
@@ -329,8 +439,11 @@ class Manager:
         if op == "backup_read":
             return read_json(self._backup_file(data.get("name")))
         if op == "console":
-            self.game.console(data)
-            return {"ok": True}
+            with self.lock:
+                if self.active and self.active["action"] not in {"bot_download", "bot_check", "login"}:
+                    raise Fault("变更任务执行中不能操作游戏控制台", 409)
+                self.game.console(data)
+                return {"ok": True}
         if op == "logs":
             name = data.get("name", "server")
             if name in {"server", "agent"}:
@@ -366,7 +479,7 @@ class Manager:
                 self.audit.event("检测到游戏意外退出；准备自动重新启动。")
                 # Do not use submit(start), which intentionally resets manual retry budget.
                 try:
-                    self.game.start(self.config)
+                    self._start_game(reuse_running=True)
                 except Fault as exc:
                     self.audit.event(str(exc))
 
