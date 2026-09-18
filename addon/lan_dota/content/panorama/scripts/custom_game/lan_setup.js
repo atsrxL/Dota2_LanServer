@@ -11,7 +11,7 @@
     function chosen(id, fallback) { var p = el(id).GetSelected(); return p ? p.id : fallback; }
     function msg(s) { el('Message').text = String(s); }
     var errors = {
-        host_only:'只有配置者可以操作。', stale_revision:'配置已经改变，请检查最新内容后重试。',
+        engine_team_assignment_failed:'引擎未接受队伍分配，请保留本提示。', invalid_team_or_role:'队伍或位置值无效。', host_only:'只有配置者可以操作。', stale_revision:'配置已经改变，请检查最新内容后重试。',
         not_in_setup:'当前不在可配置的准备阶段。', ui_handshake_required:'服务端尚未确认此界面的版本。',
         client_revision_mismatch:'客户端 UI 与服务端版本不一致；请安装同一份编译资源。',
         players_not_ready:'仍有连接中的玩家尚未完成界面握手、选边或准备。',
@@ -28,13 +28,18 @@
         // Do not send a player identity. The server resolves the event source.
         GameEvents.SendCustomGameEventToServer('lan_action', data);
     }
-    function bind(id, fn) { el(id).SetPanelEvent('onactivate', fn); }
+    function bind(id, fn) {
+        el(id).SetPanelEvent('onactivate', function () {
+            msg('正在提交操作…');
+            try { fn(); } catch (e) { msg('界面操作失败：' + String(e)); }
+        });
+    }
     function render(table) {
         if (!table) return; state = table;
         var ps = rows(state.players), own = me(), host = Number(state.host) === pid(), setup = state.phase === 'setup';
         var phases = {waiting_engine:'等待引擎进入准备阶段',setup:'等待玩家配置与准备',starting:'开局初始化中',hero_selection:'选人阶段',pregame:'赛前阶段',playing:'比赛中',postgame:'比赛结束，请在面板重开',error:'运行异常，请保留日志并停服检查'};
         el('Phase').text = phases[state.phase] || state.phase;
-        el('Owner').text = '配置者：' + (Number(state.host) >= 0 ? 'Player ' + state.host : '等待有效玩家');
+        el('Owner').text = '本机：' + pid() + ' / 配置者：' + (Number(state.host) >= 0 ? 'Player ' + state.host : '等待有效玩家');
         el('LANRoot').SetHasClass('Compact', collapsed || (state.phase !== 'setup' && state.phase !== 'waiting_engine' && state.phase !== 'starting' && state.phase !== 'error'));
         ['RadiantRows','DireRows'].forEach(function(id,i) {
             var root = el(id), team = i+2; root.RemoveAndDeleteChildren();

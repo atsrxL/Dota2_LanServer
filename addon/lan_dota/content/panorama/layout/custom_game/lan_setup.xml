@@ -4,7 +4,7 @@
     <Panel class="LANRoot" hittest="false">
     <Panel id="LANRoot" hittest="false">
         <Panel id="LANWindow" hittest="true">
-            <Panel class="TitleRow"><Label class="Eyebrow" text="LAN DOTA / COMPATIBILITY LAB" /><Button id="Toggle"><Label text="收起 / 展开" /></Button></Panel>
+            <Panel class="TitleRow"><Label class="Eyebrow" text="LAN DOTA / COMPATIBILITY LAB" /><Button id="Toggle"><Label hittest="false" text="收起 / 展开" /></Button></Panel>
             <Label class="Title" text="局域网对战准备" />
             <Label id="Phase" text="等待服务端准备状态…" />
             <Label id="Message" class="Message" text="请先连接到 LXC。界面出现并不代表天地星已运行。" />
@@ -17,7 +17,7 @@
                 <Panel class="Row"><Label class="FieldName" text="我的队伍 / 意向位置" />
                     <DropDown id="MyTeam"><Label id="team2" text="天辉" /><Label id="team3" text="夜魇" /></DropDown>
                     <DropDown id="MyRole"><Label id="role1" text="1号位 / 优势路" /><Label id="role2" text="2号位 / 中路" /><Label id="role3" text="3号位 / 劣势路" /><Label id="role4" text="4号位 / 辅助" /><Label id="role5" text="5号位 / 辅助" /></DropDown>
-                    <Button id="Assign"><Label text="选择队伍与位置" /></Button>
+                    <Button id="Assign"><Label hittest="false" text="选择队伍与位置" /></Button>
                 </Panel>
                 <Label class="Footnote" text="意向位置用于玩家准备与验收记录，尚未强制映射天地星内部槽位。" />
                 <Panel id="HostOptions">
@@ -28,9 +28,9 @@
                     <Panel class="Row"><Label class="FieldName" text="金币收入倍率（%）" /><TextEntry id="GoldPercent" text="100" maxchars="4" /><Label class="Footnote" text="25–1000；100 为原倍率，仅正向金币事件，实机验证中" /></Panel>
                     <ToggleButton id="AckUnverified" text="我了解天地星兼容性未完成实机验收；本局用于验证" />
                     <Label id="BotInfo" class="Footnote" text="未读取脚本快照" />
-                    <Panel class="Row"><Button id="SaveOptions"><Label text="保存参数（清除准备）" /></Button><DropDown id="TransferTarget" /><Button id="Transfer"><Label text="转交配置权" /></Button></Panel>
+                    <Panel class="Row"><Button id="SaveOptions"><Label hittest="false" text="保存参数（清除准备）" /></Button><DropDown id="TransferTarget" /><Button id="Transfer"><Label hittest="false" text="转交配置权" /></Button></Panel>
                 </Panel>
-                <Panel class="Row Footer"><Button id="Ready" class="Primary"><Label text="准备 / 取消准备" /></Button><Button id="Start" class="Primary"><Label text="锁定并开始" /></Button><Label id="Owner" text="配置者：等待玩家" /></Panel>
+                <Panel class="Row Footer"><Button id="Ready" class="Primary"><Label hittest="false" text="准备 / 取消准备" /></Button><Button id="Start" class="Primary"><Label hittest="false" text="锁定并开始" /></Button><Label id="Owner" text="配置者：等待玩家" /></Panel>
             </Panel>
         </Panel>
     </Panel>

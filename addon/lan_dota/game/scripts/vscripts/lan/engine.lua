@@ -114,6 +114,7 @@ function Engine:dispatch(source,keys)
         ok,err=self.room:can_start(pid,rev)
         if ok then self:start_match() end
     end
+    if action~='hello' then self:emit('ACTION',{pid=pid,action=tostring(action),ok=ok and 1 or 0,message=err or 'ok'}) end
     self:reply(pid,ok,err)
 end
 function Engine:start_match()

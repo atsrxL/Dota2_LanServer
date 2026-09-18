@@ -66,3 +66,7 @@ Linux 当前不支持 dota_launch_custom_game；-addon 参数也未挂载 addon�
 已通过 QGA 同步 .98、真实编译、资源清单校验，部署 CT270 并重启游戏进程，收到新 session BOOT，无 runtime errors。r5 游戏内展开/收起视觉及交互待用户复核，不能以编译成功替代验收。客户端包 lanlab-client-r5.zip SHA256 46f02b9d8d66e69d9b0fb04bb27b2323934fd3d96cdfc4d1f697a2ea6c1bac2e。
 
 r5 完整源码回归：204 passed / 28 warnings（70.30s），既有 forkpty 与重复 ZIP fixture 警告仍在。未把 mock 测试计为游戏内视觉验证。
+
+## r6 选队提交诊断
+
+用户确认 r5 排版正常，但选单切换后点击“选择队伍与位置”没有加入列表。原日志仅有 hello、team=5/role=0，没有选队 action；尚不能证明是服务端拒绝。按钮 Label 增加 hittest=false，使点击落在按钮；回调增加提交提示和异常提示，服务端增加非 hello ACTION 结果日志，展示本机 PID 便于定位禁用状态。Windows 真实编译通过、39 项 addon mock 测试通过，已同步双端并重启。修复是否奏效与完整准备→开始流程仍待实机复测。
