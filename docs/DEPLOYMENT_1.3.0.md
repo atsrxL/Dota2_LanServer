@@ -58,3 +58,11 @@ Linux 当前不支持 dota_launch_custom_game；-addon 参数也未挂载 addon�
 中立装备解锁时间：当前 build 25329722 的 scripts/npc/neutral_items.txt 使用 neutral_tiers/start_time，依次 0:00/15:00/25:00/35:00/60:00。尚未实现自定义时间的可靠运行时加载，不开放无效控件。
 
 普通服天地星 1573671599 已从 Windows Workshop 导入，固定版本 ea5bacf5e672376dc1514f0758e7def17c48b28b8bf4a35a83c1308795f7f438，实测 1 人 + 9 Bot，用户观察暂未发现逻辑异常。addon 原生 Bot 路线仍未验收，不能把普通服结果套用。
+
+## r5 下拉菜单样式修复
+
+用户复核 r4 后仍报告选单重叠。lan_setup.xml 原先仅载入自定义样式，未载入原生控件基础样式；新增引用游戏 VPK 中真实存在的 s2r://panorama/styles/dotastyles.vcss。file:// 源码引用因 Tools 缺少对应原始 CSS 而编译失败，改用已编译资源引用后真实 resourcecompiler 通过。补充 DropDown 非选中 Label 隐藏、选中项显示、DropDownMenu 纵向排列及滚动，复选框子项横排。
+
+已通过 QGA 同步 .98、真实编译、资源清单校验，部署 CT270 并重启游戏进程，收到新 session BOOT，无 runtime errors。r5 游戏内展开/收起视觉及交互待用户复核，不能以编译成功替代验收。客户端包 lanlab-client-r5.zip SHA256 46f02b9d8d66e69d9b0fb04bb27b2323934fd3d96cdfc4d1f697a2ea6c1bac2e。
+
+r5 完整源码回归：204 passed / 28 warnings（70.30s），既有 forkpty 与重复 ZIP fixture 警告仍在。未把 mock 测试计为游戏内视觉验证。

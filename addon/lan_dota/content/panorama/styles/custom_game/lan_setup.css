@@ -38,3 +38,15 @@ ToggleButton { margin:5px 14px 5px 0px; vertical-align:center; }
 ToggleButton Label { font-size:16px; color:#d7e3e9; }
 #Owner { color:#a1c7d4; vertical-align:center; }
 .Footer { margin-top:16px; }
+
+/* Base controls require dotastyles.css: selection visibility, popup lifecycle,
+   dropdown arrow and checkbox children are engine-managed. Scope our overrides. */
+#LANWindow DropDown { padding:0px 30px 0px 10px; border:1px solid #587483; }
+#LANWindow DropDown Label { visibility:collapse; width:100%; margin:0px; padding:0px; text-overflow:ellipsis; }
+#LANWindow DropDown Label:selected { visibility:visible; }
+DropDownMenu { flow-children:down; max-height:360px; overflow:squish scroll; padding:4px; }
+DropDownMenu Label { width:100%; min-height:38px; margin:0px; padding:8px 12px; }
+DropDownMenu Label:hover { background-color:#365463; }
+#LANWindow ToggleButton { flow-children:right; }
+#LANWindow ToggleButton Label { vertical-align:center; margin-left:8px; }
+#LANWindow TextEntry { padding:6px 8px; }

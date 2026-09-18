@@ -1,5 +1,5 @@
 <root>
-    <styles><include src="file://{resources}/styles/custom_game/lan_setup.css" /></styles>
+    <styles><include src="s2r://panorama/styles/dotastyles.vcss" /><include src="file://{resources}/styles/custom_game/lan_setup.css" /></styles>
     <scripts><include src="file://{resources}/scripts/custom_game/lan_setup.js" /></scripts>
     <Panel class="LANRoot" hittest="false">
     <Panel id="LANRoot" hittest="false">
