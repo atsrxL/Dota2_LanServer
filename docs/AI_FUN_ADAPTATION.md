@@ -21,3 +21,5 @@ Real r9 compilation passed; 42 addon tests include asymmetric 3v4 Tutorial fill,
 User confirmed r9 entered gameplay and AI appeared (not full behavior validation). Removed universal shop, fast courier, extra towers/phased setting and anti-diving from UI, server allowlists, defaults and effects. Retained building endurance/power and bot protection. Native difficulty now 0 passive / 1 easy / 2 medium / 3 hard / 4 unfair. This changes the engine difficulty setting, not the selected Tiandixing script.
 
 All four gold/XP multipliers share 0.15 increments from 0.15 to 4.95, plus explicit 1.00 default and 5.00 upper endpoint. Server accepts only those values. 42 addon tests pass, including upper limit, grid rejection, removed option rejection and native difficulty 4; real Workshop Tools compilation passed.
+
+r11 replaces the r10 multiplier grid per user: 1, 1.15, 1.25, 1.35, 1.5, 1.75, 2, 2.5, 3, 4, 5. All four selectors and server allowlists match; 42 addon tests and real compilation passed.
