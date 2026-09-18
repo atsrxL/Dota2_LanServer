@@ -132,7 +132,12 @@ local __lanlab_probe_130 = (function()
             if n == 1 or n == 64 or n == 1024 or n %% 8192 == 0 then
                 emit("BOT_CALLBACK", callback .. ":" .. tostring(n))
                 local bot = type(GetBot)=="function" and GetBot() or nil
-                if bot then emit("BOT_ACTOR", tostring(bot:GetPlayerID()) .. ":" .. bot:GetUnitName() .. ":" .. callback .. ":" .. tostring(n)) end
+                if bot then
+                    emit("BOT_ACTOR", tostring(bot:GetPlayerID()) .. ":" .. bot:GetUnitName() .. ":" .. callback .. ":" .. tostring(n))
+                    if n == 1 and callback == "ItemPurchaseThink" then
+                        emit("BOT_SETUP", tostring(bot:GetPlayerID()) .. ":" .. bot:GetUnitName() .. ":team=" .. tostring(GetTeam()) .. ":roster=" .. tostring(#GetTeamPlayers(GetTeam())) .. ":lane=" .. tostring(bot:GetAssignedLane()) .. ":next=" .. tostring(bot.itemToBuy and bot.itemToBuy[#bot.itemToBuy]))
+                    end
+                end
             end
         end)
     end

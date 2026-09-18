@@ -1,5 +1,17 @@
 -- Conventional game options adapted from AI Fun events.lua / gamemode.lua.
 local M={}
+function M.apply_bot_difficulty(e,h)
+ if not h or not h.IsRealHero or not h:IsRealHero() or h:IsIllusion() then return end
+ local pid=h:GetPlayerOwnerID()
+ if not PlayerResource:IsValidPlayerID(pid) or not PlayerResource:IsFakeClient(pid) then return end
+ local team=h:GetTeamNumber()
+ if team~=2 and team~=3 then return end
+ local difficulty=e.room.options[(team==3 and 'dire' or 'radiant')..'_difficulty']
+ if h.lan_bot_difficulty==difficulty then return end
+ h:SetBotDifficulty(difficulty)
+ h.lan_bot_difficulty=difficulty
+ e:emit('BOT_DIFFICULTY',{pid=pid,team=team,difficulty=difficulty})
+end
 function M.start(e)
  local o=e.room.options;local mode=e.mode
  GameRules:SetCustomGameTeamMaxPlayers(2,o.radiant_player_number)
@@ -16,8 +28,9 @@ function M.start(e)
   mode:SetCustomHeroMaxLevel(o.max_level);mode:SetCustomXPRequiredToReachNextLevel(xp)
  end
  if LinkLuaModifier then
-  for _,name in ipairs({'modifier_tower_power','modifier_tower_endure','modifier_bot_protection'}) do LinkLuaModifier(name,'lan/original_modifiers',LUA_MODIFIER_MOTION_NONE) end
+  for _,name in ipairs({'modifier_tower_power','modifier_tower_endure'}) do LinkLuaModifier(name,'lan/original_modifiers',LUA_MODIFIER_MOTION_NONE) end
  end
+ if ListenToGameEvent then ListenToGameEvent('npc_spawned',function(k) M.apply_bot_difficulty(e,EntIndexToHScript(k.entindex)) end,nil) end
  if ListenToGameEvent then ListenToGameEvent('entity_killed',function(k)
   local h=EntIndexToHScript(k.entindex_killed)
   if h and h.IsRealHero and h:IsRealHero() then
@@ -31,14 +44,13 @@ function M.tick(e,phase)
  local o=e.room.options
  if not Entities then return end
  for _,h in pairs(HeroList:GetAllHeroes()) do
+  M.apply_bot_difficulty(e,h)
   if h:IsRealHero() and not h:IsIllusion() and not h:IsClone() and not h:IsTempestDouble() and not h.lan_initialized then
    h.lan_initialized=true
    local bat_ok,bat=pcall(h.GetBaseAttackTime,h,false)
    if bat_ok then h.lan_initial_bat=bat else e:emit('BAT_INIT_WARNING',tostring(bat)) end
    local side=h:GetTeamNumber()==3 and 'dire' or 'radiant'
    h:SetGold(0,true);h:SetGold(o[side..'_gold_start'],false)
-   while h:GetLevel()<math.min(o[side..'_lvl_start'],o.max_level) do h:HeroLevelUp(false) end
-   if o.bot_protection==1 and PlayerResource:IsFakeClient(h:GetPlayerOwnerID()) then h:AddNewModifier(h,nil,'modifier_bot_protection',{}) end
   end
  end
  if not e.buildings_applied then

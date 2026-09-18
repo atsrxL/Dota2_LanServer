@@ -3,8 +3,8 @@ local Room = {}; Room.__index = Room
 local function copy(t) local out={} for k,v in pairs(t) do out[k]=v end return out end
 local function integer(v,lo,hi) return type(v)=='number' and v==math.floor(v) and v>=lo and v<=hi end
 local function default_options()
-    return {bot_mode='none', fill_bots=false, ack_unverified=false, difficulty=2,
-            selection_seconds=60, pregame_seconds=30, allow_pause=true, gold_percent=100,radiant_gold_multiplier=1,radiant_xp_multiplier=1,radiant_gold_start=600,radiant_lvl_start=1,radiant_player_number=5,dire_gold_multiplier=1,dire_xp_multiplier=1,dire_gold_start=600,dire_lvl_start=1,dire_player_number=5,respawn_time_percentage=100,buyback_cooldown=480,tower_power=1,tower_endure=1,max_level=30,bot_protection=0,}
+    return {bot_mode='none', fill_bots=false, ack_unverified=false, radiant_difficulty=2, dire_difficulty=2,
+            selection_seconds=60, pregame_seconds=30, gold_percent=100,radiant_gold_multiplier=1,radiant_xp_multiplier=1,radiant_gold_start=600,radiant_player_number=5,dire_gold_multiplier=1,dire_xp_multiplier=1,dire_gold_start=600,dire_player_number=5,respawn_time_percentage=100,buyback_cooldown=480,tower_power=1,tower_endure=1,max_level=30,}
 end
 function Room.new(clock, revision)
     return setmetatable({clock=clock, client_revision=revision, revision=1, phase='waiting_engine',
@@ -89,27 +89,24 @@ function Room:set_options(pid,expected,raw)
     for key in pairs(raw) do if value[key]==nil then return false,'unknown_option' end end
     for key in pairs(value) do if raw[key]~=nil then value[key]=raw[key] end end
     if value.bot_mode~='none' and value.bot_mode~='tiandixing_native_lab' then return false,'invalid_bot_mode' end
-    for _,key in ipairs({'fill_bots','ack_unverified','allow_pause'}) do
+    for _,key in ipairs({'fill_bots','ack_unverified'}) do
         if type(value[key])~='boolean' then return false,'invalid_boolean' end
     end
-    if not integer(value.difficulty,0,4) or not integer(value.selection_seconds,30,120)
+    if not integer(value.radiant_difficulty,0,4) or not integer(value.dire_difficulty,0,4) or not integer(value.selection_seconds,30,120)
         or not integer(value.pregame_seconds,10,60) or not integer(value.gold_percent,25,1000) then return false,'invalid_number' end
     if not ({[1]=true,[1.15]=true,[1.25]=true,[1.35]=true,[1.5]=true,[1.75]=true,[2]=true,[2.5]=true,[3]=true,[4]=true,[5]=true})[value.radiant_gold_multiplier] then return false,'invalid_number' end
     if not ({[1]=true,[1.15]=true,[1.25]=true,[1.35]=true,[1.5]=true,[1.75]=true,[2]=true,[2.5]=true,[3]=true,[4]=true,[5]=true})[value.radiant_xp_multiplier] then return false,'invalid_number' end
     if not ({[600]=true,[1000]=true,[1700]=true,[3200]=true,[6000]=true,[10000]=true,[100000]=true})[value.radiant_gold_start] then return false,'invalid_number' end
-    if not ({[1]=true,[2]=true,[3]=true,[5]=true,[10]=true,[15]=true,[20]=true,[25]=true,[30]=true})[value.radiant_lvl_start] then return false,'invalid_number' end
-    if not ({[1]=true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[8]=true,[10]=true,[12]=true})[value.radiant_player_number] then return false,'invalid_number' end
+    if not ({[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true,[11]=true,[12]=true})[value.radiant_player_number] then return false,'invalid_number' end
     if not ({[1]=true,[1.15]=true,[1.25]=true,[1.35]=true,[1.5]=true,[1.75]=true,[2]=true,[2.5]=true,[3]=true,[4]=true,[5]=true})[value.dire_gold_multiplier] then return false,'invalid_number' end
     if not ({[1]=true,[1.15]=true,[1.25]=true,[1.35]=true,[1.5]=true,[1.75]=true,[2]=true,[2.5]=true,[3]=true,[4]=true,[5]=true})[value.dire_xp_multiplier] then return false,'invalid_number' end
     if not ({[600]=true,[1000]=true,[1700]=true,[3200]=true,[6000]=true,[10000]=true,[100000]=true})[value.dire_gold_start] then return false,'invalid_number' end
-    if not ({[1]=true,[2]=true,[3]=true,[5]=true,[10]=true,[15]=true,[20]=true,[25]=true,[30]=true})[value.dire_lvl_start] then return false,'invalid_number' end
-    if not ({[1]=true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[8]=true,[10]=true,[12]=true})[value.dire_player_number] then return false,'invalid_number' end
+    if not ({[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true,[11]=true,[12]=true})[value.dire_player_number] then return false,'invalid_number' end
     if not ({[0]=true,[10]=true,[25]=true,[50]=true,[75]=true,[100]=true})[value.respawn_time_percentage] then return false,'invalid_number' end
     if not ({[0]=true,[30]=true,[60]=true,[120]=true,[240]=true,[480]=true})[value.buyback_cooldown] then return false,'invalid_number' end
     if not ({[1]=true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true})[value.tower_power] then return false,'invalid_number' end
     if not ({[1]=true,[2]=true,[3]=true,[4]=true,[5]=true,[6]=true,[7]=true,[8]=true,[9]=true,[10]=true})[value.tower_endure] then return false,'invalid_number' end
     if not ({[30]=true,[50]=true,[100]=true,[200]=true,[400]=true,[800]=true,[1600]=true})[value.max_level] then return false,'invalid_number' end
-    if not ({[0]=true,[1]=true})[value.bot_protection] then return false,'invalid_number' end
     if value.bot_mode=='none' and value.fill_bots then return false,'fill_requires_bot_mode' end
     if value.bot_mode~='none' and not self.bot_available then return false,'bot_snapshot_missing' end
     self.options=value; self:changed(true); return true

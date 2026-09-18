@@ -8,9 +8,6 @@ function M.hero_tool(e,pid,action)
  if name then
   if not M.abilities[name] then return false,'不允许添加该技能' end
   if h:FindAbilityByName(name) then return false,'已拥有该技能' end
-  local free=false
-  for i=0,23 do if not h:GetAbilityByIndex(i) then free=true;break end end
-  if not free then return false,'英雄技能栏已满' end
   local a=h:AddAbility(name)
   if not a then return false,'当前游戏版本无法添加该技能：'..name end
   a:SetLevel(math.max(1,a:GetMaxLevel()))

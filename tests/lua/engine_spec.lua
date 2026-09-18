@@ -17,7 +17,7 @@ PlayerResource={
  SetCustomTeamAssignment=function(_,i,t)players[i].team=t end,
  GetSteamAccountID=function(_,i)return i+1 end,
  GetPlayerName=function(_,i)return players[i].name end}
-local emitted={};local mode={SetFreeCourierModeEnabled=function(_,v)emitted.free_courier=v end,SetPauseEnabled=function()end,SetBotThinkingEnabled=function(_,v)emitted.thinking=v end,
+local emitted={};local mode={SetFreeCourierModeEnabled=function(_,v)emitted.free_courier=v end,SetPauseEnabled=function(_,v)assert(v==true)end,SetBotThinkingEnabled=function(_,v)emitted.thinking=v end,
  SetContextThink=function(_,name,fn)emitted.tick=fn end}
 local state=2;local cheat=false
 GameRules={GetGameModeEntity=function()return mode end,IsCheatMode=function()return cheat end,
@@ -96,7 +96,7 @@ players[1]=nil;solo:tick()
 soloact('solo_start',{gold_percent=0})
 assert(not solo.room.started)
 local before=emitted.finish
-soloact('solo_start',{gold_percent=150,difficulty=2,allow_pause=1})
+soloact('solo_start',{gold_percent=150,radiant_difficulty=2,dire_difficulty=4})
 assert(solo.room.started and players[0].team==2 and solo.room.options.fill_bots)
 assert(solo.room.options.gold_percent==150 and emitted.finish==before+1)
 soloact('solo_start',{})
@@ -109,15 +109,15 @@ PlayerResource.GetPlayerCountForTeam=function(_,team)local n=0;for _,p in pairs(
 local tutorial=Engine.new({client_revision='v1',session=string.rep('d',32),source_sha256='fixture',bot_available=true})
 tutorial:init();tutorial:tick()
 local function tutorialact(action,opts)emitted.listener(100,{action=action,revision=tutorial.room.revision,client_revision='v1',options=opts})end
-tutorialact('hello');tutorialact('solo_start',{radiant_player_number=3,dire_player_number=4,radiant_gold_multiplier=1.5})
+tutorialact('hello');tutorialact('solo_start',{radiant_player_number=4,dire_player_number=5,radiant_gold_multiplier=1.5})
 assert(tutorial.room.started and tutorial.room.options.radiant_gold_multiplier==1.5)
-state=4;tutorial:tick();assert(adds==6 and tutorial.bot_fill_deadline==nil)
-tutorial:tick();assert(adds==6)
+state=4;tutorial:tick();assert(adds==8 and tutorial.bot_fill_deadline==nil)
+tutorial:tick();assert(adds==8)
 
 -- Tutorial fake clients can report CONNECTED instead of BOT.
 PlayerResource.IsFakeClient=function(_,pid)return pid~=0 end
 for pid,p in pairs(players) do p.conn=2 end
-assert(tutorial:bot_count()==6)
+assert(tutorial:bot_count()==8)
 tutorial:refresh_players();assert(tutorial.room.players[1]==nil)
 
 local tutorialStarts=0
@@ -153,11 +153,11 @@ assert(chats.button(tutorial,0,'enemy_gold'));assert(amounts[2]==1600 and amount
 assert(not chats.button(tutorial,0,'arbitrary_command'))
 tutorial.room.phase='setup';assert(not chats.button(tutorial,0,'self_gold'))
 
--- Self-only ability allowlist, duplicate/full/failure handling and reversible BAT.
+-- Self-only ability allowlist, duplicate/failure handling and reversible BAT.
 tutorial.room.phase='playing'
 local abilities={};local bat=1.7
 local ownHero={GetBaseAttackTime=function(_,ignoreModifiers)assert(ignoreModifiers==false);return bat end,SetBaseAttackTime=function(_,v)bat=v end,
- FindAbilityByName=function(_,name)return abilities[name] end,GetAbilityByIndex=function()return nil end,
+ FindAbilityByName=function(_,name)return abilities[name] end,GetAbilityByIndex=function()return {} end,
  AddAbility=function(_,name)
   local a={GetMaxLevel=function()return 4 end,SetLevel=function(self,n)self.level=n end,GetLevel=function(self)return self.level end}
   abilities[name]=a;return a
@@ -187,3 +187,17 @@ assert(runes.allow({spawner_entindex_const=1}))
 assert(not runes.allow({spawner_entindex_const=2}))
 assert(not runes.allow({spawner_entindex_const=3}))
 assert(not runes.allow({}))
+
+-- Native per-hero difficulty is applied independently and never to humans.
+local rules=require('lan.rules')
+tutorial.room.options.radiant_difficulty=1;tutorial.room.options.dire_difficulty=4
+local assigned={}
+local function botHero(pid,team)
+ return {IsRealHero=function()return true end,IsIllusion=function()return false end,
+ GetPlayerOwnerID=function()return pid end,GetTeamNumber=function()return team end,
+ SetBotDifficulty=function(_,d)assigned[pid]=d end}
+end
+rules.apply_bot_difficulty(tutorial,botHero(1,2))
+rules.apply_bot_difficulty(tutorial,botHero(2,3))
+rules.apply_bot_difficulty(tutorial,botHero(0,2))
+assert(assigned[1]==1 and assigned[2]==4 and assigned[0]==nil)

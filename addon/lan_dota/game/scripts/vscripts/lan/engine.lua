@@ -89,12 +89,10 @@ function Engine:dispatch(source,keys)
         if ok then
             local raw=keys.options
             local value={bot_mode='tiandixing_native_lab',fill_bots=true,ack_unverified=true}
-            local allowed={radiant_gold_multiplier=true,radiant_xp_multiplier=true,radiant_gold_start=true,radiant_lvl_start=true,radiant_player_number=true,dire_gold_multiplier=true,dire_xp_multiplier=true,dire_gold_start=true,dire_lvl_start=true,dire_player_number=true,respawn_time_percentage=true,buyback_cooldown=true,tower_power=true,tower_endure=true,max_level=true,bot_protection=true,difficulty=true,gold_percent=true,selection_seconds=true,pregame_seconds=true,allow_pause=true}
+            local allowed={radiant_gold_multiplier=true,radiant_xp_multiplier=true,radiant_gold_start=true,radiant_player_number=true,dire_gold_multiplier=true,dire_xp_multiplier=true,dire_gold_start=true,dire_player_number=true,respawn_time_percentage=true,buyback_cooldown=true,tower_power=true,tower_endure=true,max_level=true,radiant_difficulty=true,dire_difficulty=true,gold_percent=true,selection_seconds=true,pregame_seconds=true}
             if type(raw)~='table' then ok=false else
                 for k,v in pairs(raw) do
                     if not allowed[k] then ok=false
-                    elseif k=='allow_pause' then
-                        if v~=0 and v~=1 then ok=false else value[k]=v==1 end
                     else value[k]=numeric(v);if (k=='radiant_gold_multiplier' or k=='dire_gold_multiplier' or k=='radiant_xp_multiplier' or k=='dire_xp_multiplier') and (type(v)=='number' or type(v)=='string') then value[k]=tonumber(v) end;if value[k]==nil then ok=false end end
                 end
             end
@@ -126,12 +124,12 @@ function Engine:dispatch(source,keys)
     elseif action=='options' then
         local raw=keys.options
         if type(raw)=='table' then
-            local allowed={bot_mode=true,fill_bots=true,ack_unverified=true,difficulty=true,
-                selection_seconds=true,pregame_seconds=true,allow_pause=true,gold_percent=true}
+            local allowed={bot_mode=true,fill_bots=true,ack_unverified=true,radiant_difficulty=true,dire_difficulty=true,
+                selection_seconds=true,pregame_seconds=true,gold_percent=true}
             local value={}; local unknown=false
             for k,v in pairs(raw) do
                 if not allowed[k] then unknown=true
-                elseif k=='fill_bots' or k=='ack_unverified' or k=='allow_pause' then
+                elseif k=='fill_bots' or k=='ack_unverified' then
                     if v~=0 and v~=1 and type(v)~='boolean' then unknown=true else value[k]=bool(v) end
                 elseif k=='bot_mode' then
                     if type(v)~='string' then unknown=true else value[k]=v end
@@ -175,13 +173,10 @@ function Engine:start_match()
     r:begin() -- latch before any engine side effect / duplicate event
     GameRules:SetHeroSelectionTime(o.selection_seconds)
     GameRules:SetPreGameTime(o.pregame_seconds)
-    self.mode:SetPauseEnabled(o.allow_pause)
+    self.mode:SetPauseEnabled(true)
     if o.bot_mode=='tiandixing_native_lab' then
         self.mode:SetBotThinkingEnabled(true)
-        -- Fixed command names and validated integers only. Unknown convars stay
-        -- visible in logs; these are experimental controls, not proven effects.
-        SendToServerConsole('dota_bot_set_difficulty '..tostring(o.difficulty))
-        SendToServerConsole('dota_bot_practice_difficulty '..tostring(o.difficulty))
+        -- Difficulty is assigned to each spawned bot by lan.rules, per team.
     end
     GameRules:LockCustomGameSetupTeamAssignment(true)
     self:emit('START',{mode=o.bot_mode,fill=o.fill_bots,roles='preferences_not_mapped_to_tiandixing_slots'})

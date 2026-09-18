@@ -32,3 +32,22 @@ def test_other_versions_unchanged(tmp_path):
     p=tmp_path/'hero_selection.lua';p.write_text('return tLaneAssignList')
     adapt(tmp_path,{'item_id':ITEM,'version':'different'})
     assert p.read_text()=='return tLaneAssignList'
+
+
+def test_outfit_roles_extend_beyond_five(tmp_path):
+    (tmp_path/'FunLib').mkdir()
+    p=tmp_path/'FunLib/aba_item.lua'
+    p.write_text('for i = 1, 5\n\tdo\n\t\tlocal memberID = nTeamPlayerIDs[i]\nreturn sOutfitTypeList[i]\nend')
+    adapt(tmp_path,{'item_id':ITEM,'version':VERSION})
+    text=p.read_text()
+    assert 'for i = 1, #nTeamPlayerIDs' in text
+    assert 'sOutfitTypeList[((i - 1) % 5) + 1]' in text
+
+
+def test_bot_names_cover_twelve_without_consuming_source(tmp_path):
+    p=tmp_path/'hero_selection.lua'
+    p.write_text("function X.GetRandomNameList( sStarList )\nlocal sNameList={sStarList[1]}\ntable.remove(sStarList,1)\nfor i = 1, 4 do table.insert(sNameList,table.remove(sStarList,1)) end\nreturn sNameList\nend\nfunction Think() end")
+    adapt(tmp_path,{'item_id':ITEM,'version':VERSION})
+    text=p.read_text()
+    assert 'math.min(11, #sStarList)' in text
+    assert 'sStarList=copy' in text

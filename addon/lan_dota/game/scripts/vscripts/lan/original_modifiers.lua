@@ -98,34 +98,3 @@ function modifier_tower_power:GetModifierBaseDamageOutgoing_Percentage()
 end
 
 
-modifier_bot_protection = class({})
-function modifier_bot_protection:IsPurgable() return false end
-function modifier_bot_protection:RemoveOnDeath() return false end
-function modifier_bot_protection:DeclareFunctions()
-	return {MODIFIER_PROPERTY_TOTALDAMAGEOUTGOING_PERCENTAGE, MODIFIER_PROPERTY_INCOMING_DAMAGE_PERCENTAGE, MODIFIER_EVENT_ON_DEATH}
-end
-function modifier_bot_protection:GetTexture() return "Bot_hard_icon" end
-function modifier_bot_protection:OnDeath(keys)
-	if keys.unit:IsRealHero() then
-		local iPlayerID = self:GetParent():GetPlayerOwnerID()
-		self:SetStackCount(PlayerResource:GetDeaths(iPlayerID)-PlayerResource:GetKills(iPlayerID)-5)
-	end
-end
-
-function modifier_bot_protection:IsHidden()
-	if self:GetStackCount() <= 0 then return true else return false end
-end
-
-function modifier_bot_protection:GetModifierIncomingDamage_Percentage()
-	local iPercentage = -self:GetStackCount()*5
-	if iPercentage < -50 then iPercentage = -50 end
-	return iPercentage
-end
-
-function modifier_bot_protection:GetModifierTotalDamageOutgoing_Percentage()
-	local iPercentage = self:GetStackCount()*10
-	if iPercentage > 100 then iPercentage = 100 end
-	return iPercentage
-end
-
-

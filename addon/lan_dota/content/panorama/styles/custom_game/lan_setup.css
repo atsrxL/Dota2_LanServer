@@ -70,3 +70,16 @@ Button:disabled { opacity:0.35; }
 #LANRoot.InMatch #MatchBody { max-height:760px; overflow:squish scroll; }
 .BatButtons { width:100%; flow-children:right; }
 .BatButtons Button { width:fill-parent-flow(1); margin-right:3px; padding:6px 2px; }
+
+/* Native HUD menu buttons are 30px wide with 8px side margins (three visible buttons). */
+#ToolIcon { visibility:collapse; }
+#LANRoot.InMatch #LANWindow { horizontal-align:left; margin:0px 0px 0px 146px; padding:0px; }
+#LANRoot.InMatch.Compact #LANWindow { width:76px; padding:0px; background-color:transparent; border:0px; }
+#LANRoot.InMatch #Phase { visibility:collapse; }
+#LANRoot.InMatch .Header { height:34px; margin:0px; }
+#LANRoot.InMatch #ToggleText { visibility:collapse; }
+#LANRoot.InMatch #ToolIcon { visibility:visible; }
+#LANRoot.InMatch .Header Button { width:30px; height:30px; padding:2px; margin:0px 8px 0px 0px; border:0px; background-color:transparent; vertical-align:center; }
+#LANRoot.InMatch .Header Image { width:26px; height:26px; wash-color:#ccddff; opacity:0.7; }
+#LANRoot.InMatch .Header Button:hover Image { opacity:1; wash-color:white; }
+#LANRoot.InMatch #MatchBody { padding:8px; }

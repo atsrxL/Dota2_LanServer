@@ -45,9 +45,29 @@ do
  local r=Room.new(function()return 0 end,'v1')
  r:sync({{pid=0,identity='solo',connected=true,team=2,name='Solo'}})
  r:hello(0,'v1');r.phase='setup'
- assert(r:set_options(0,r.revision,{difficulty=4,radiant_gold_multiplier=1.25,dire_xp_multiplier=1.35}))
+ assert(r:set_options(0,r.revision,{radiant_difficulty=4,dire_difficulty=0,radiant_gold_multiplier=1.25,dire_xp_multiplier=1.35}))
  assert(r:set_options(0,r.revision,{radiant_gold_multiplier=5}))
  assert(not r:set_options(0,r.revision,{radiant_gold_multiplier=5.1}))
  assert(not r:set_options(0,r.revision,{radiant_gold_multiplier=1.1}))
  assert(not r:set_options(0,r.revision,{universal_shop=1}))
+end
+
+do
+ local r=Room.new(function()return 0 end,'v1')
+ r:sync({{pid=0,identity='solo',connected=true,team=2,name='Solo'}})
+ r:hello(0,'v1');r.phase='setup'
+ assert(r:set_options(0,r.revision,{radiant_difficulty=0,dire_difficulty=4}))
+ assert(r.options.radiant_difficulty==0 and r.options.dire_difficulty==4)
+ for _,key in ipairs({'difficulty','radiant_lvl_start','dire_lvl_start','bot_protection','anti_diving','allow_pause'}) do
+  assert(not r:set_options(0,r.revision,{[key]=1}))
+ end
+ assert(not r:set_options(0,r.revision,{dire_difficulty=5}))
+end
+
+do
+ local r=Room.new(function()return 0 end,'v1')
+ r:sync({{pid=0,identity='solo',connected=true,team=2,name='Solo'}})
+ r:hello(0,'v1');r.phase='setup'
+ for n=4,12 do assert(r:set_options(0,r.revision,{radiant_player_number=n,dire_player_number=n})) end
+ for _,n in ipairs({1,2,3,13}) do assert(not r:set_options(0,r.revision,{radiant_player_number=n})) end
 end

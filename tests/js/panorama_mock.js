@@ -27,7 +27,7 @@ const create=sandbox.$.CreatePanel;
 sandbox.$.CreatePanel=function(type,parent,id,attrs){const p=create(type,parent,id);Object.assign(p,attrs||{});return p;};
 vm.runInNewContext(source,sandbox,{filename:'lan_setup.js'});
 assert(sent[0].action==='hello');
-current={phase:'setup',revision:9,host:0,players:[{pid:0,hello:1}],bot_available:1,options:{difficulty:2,gold_percent:100,selection_seconds:60,pregame_seconds:30,allow_pause:1}};
+current={phase:'setup',revision:9,host:0,players:[{pid:0,hello:1}],bot_available:1,options:{radiant_difficulty:2,dire_difficulty:4,gold_percent:100,selection_seconds:60,pregame_seconds:30,allow_pause:1}};
 listeners.lan_room('lan_room','state',current);
 all.get('radiant_gold_multiplier').SetSelected('1.25');
 all.get('radiant_gold_multiplier').events.oninputsubmit();
@@ -45,3 +45,8 @@ all.get('BatDown').events.onactivate();assert(sent.at(-1).tool==='self_bat_down'
 all.get('BatUp').events.onactivate();assert(sent.at(-1).tool==='self_bat_up');
 all.get('BatReset').events.onactivate();assert(sent.at(-1).tool==='self_bat_reset');
 for(const id of all.keys())if(id.startsWith('Add_')){all.get(id).events.onactivate();assert(sent.at(-1).tool==='self_ability_'+id.slice(4));}
+
+assert(!all.has('Difficulty') && !all.has('bot_protection') && !all.has('radiant_lvl_start') && !all.has('dire_lvl_start'));
+assert(sent.find(x=>x.action==='solo_start').options.dire_difficulty===4);
+
+assert(!all.has('AllowPause'));

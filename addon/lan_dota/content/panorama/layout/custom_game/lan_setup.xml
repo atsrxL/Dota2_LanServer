@@ -2,13 +2,12 @@
 <styles><include src="s2r://panorama/styles/dotastyles.vcss" /><include src="file://{resources}/styles/custom_game/lan_setup.css" /></styles>
 <scripts><include src="file://{resources}/scripts/custom_game/lan_setup.js" /></scripts>
 <Panel class="LANRoot" hittest="false"><Panel id="LANRoot" hittest="false"><Panel id="LANWindow">
-<Panel class="Header"><Button id="SelfRespawn" class="QuickReset"><Label hittest="false" text="重置" /></Button><Label id="MenuTitle" class="Title" text="游戏选项" /><Button id="Toggle"><Label hittest="false" text="收起 / 展开" /></Button></Panel>
+<Panel class="Header"><Button id="SelfRespawn" class="QuickReset" onmouseover="$.DispatchEvent('DOTAShowTextTooltip', this, '重置英雄');" onmouseout="$.DispatchEvent('DOTAHideTextTooltip', this);"><Image hittest="false" src="s2r://panorama/images/control_icons/refresh_psd.vtex" /></Button><Label id="MenuTitle" class="Title" text="游戏选项" /><Button id="Toggle" onmouseover="$.DispatchEvent('DOTAShowTextTooltip', this, '对局工具');" onmouseout="$.DispatchEvent('DOTAHideTextTooltip', this);"><Label id="ToggleText" hittest="false" text="收起 / 展开" /><Image id="ToolIcon" hittest="false" src="s2r://panorama/images/control_icons/settings_png.vtex" /></Button></Panel>
 <Label id="Phase" text="连接服务器中…" />
 <Panel id="LANBody">
 <Label class="Subtitle" text="单人 AI 对战" />
 <Label class="Hint" text="你自动加入天辉，其余位置由 AI 补齐。" />
 <Panel id="GameOptionSubpanelContainerInner" />
-<Panel class="Row"><Label class="FieldName" text="允许暂停" /><ToggleButton id="AllowPause" /></Panel>
 <Label id="BotInfo" class="Hint" text="检查 AI 脚本…" />
 <Label id="Message" class="Message" text="确认后自动补 AI 并进入英雄选择。" />
 <Button id="Start" class="Primary"><Label hittest="false" text="确认设置并开始" /></Button>
