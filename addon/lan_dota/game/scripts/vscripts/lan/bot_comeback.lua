@@ -1,20 +1,21 @@
--- Per-bot, per-match additive income bonuses; no change to native bot AI.
+-- Per-bot triangular income stacks, capped at nine (5x from a 1x baseline).
 local M={}
 function M.bonus(e,pid,kind)
  if type(pid)~='number' or not PlayerResource:IsValidPlayerID(pid)
   or not PlayerResource.IsFakeClient or not PlayerResource:IsFakeClient(pid) then return 0 end
  local deaths=e.bot_death_bonus and e.bot_death_bonus[pid] or 0
- return deaths*(kind=='gold' and 0.2 or 0.1)
+ return deaths*(deaths+1)/20
 end
 function M.scale(e,pid,kind,amount,base)
  if amount<=0 then return amount end
- if e.bot_income_reset and e.bot_income_reset[pid] then base=1 end
  local bonus=M.bonus(e,pid,kind)
- if bonus==0 then return math.floor(amount*base) end
+ local bot=type(pid)=='number' and PlayerResource:IsValidPlayerID(pid) and PlayerResource.IsFakeClient and PlayerResource:IsFakeClient(pid)
+ local multiplier=bot and math.min(5,base+bonus) or base
+ if not bot then return math.floor(amount*multiplier) end
  -- Carry fractional rewards so frequent 1-gold ticks still receive the bonus.
  e.bot_reward_remainders=e.bot_reward_remainders or {}
  local rem=e.bot_reward_remainders[pid] or {};e.bot_reward_remainders[pid]=rem
- local exact=amount*(base+bonus)+(rem[kind] or 0)
+ local exact=amount*multiplier+(rem[kind] or 0)
  local whole=math.floor(exact+0.000000001)
  rem[kind]=math.max(0,exact-whole)
  return whole
@@ -30,10 +31,9 @@ function M.hero_kill(e,victim,attacker)
  local killer=PlayerResource:GetSelectedHeroEntity(pid)
  if not killer or killer:GetTeamNumber()==victim:GetTeamNumber() then return end
  -- Player-owned summons/illusions attribute the kill to their owning bot.
- e.bot_death_bonus=e.bot_death_bonus or {};e.bot_death_bonus[pid]=0
- e.bot_income_reset=e.bot_income_reset or {};e.bot_income_reset[pid]=true
+ e.bot_death_bonus=e.bot_death_bonus or {};e.bot_death_bonus[pid]=math.max(0,(e.bot_death_bonus[pid] or 0)-3)
  if e.bot_reward_remainders then e.bot_reward_remainders[pid]=nil end
- e:emit('BOT_COMEBACK_RESET',{pid=pid,gold_multiplier=1,xp_multiplier=1})
+ M.report(e,pid,killer:GetTeamNumber(),'BOT_COMEBACK_REDUCED')
 end
 function M.killed(e,h)
  if e.room.phase~='pregame' and e.room.phase~='playing' then return end
@@ -44,10 +44,13 @@ function M.killed(e,h)
  if not PlayerResource:IsValidPlayerID(pid) or not PlayerResource:IsFakeClient(pid)
   or PlayerResource:GetSelectedHeroEntity(pid)~=h then return end
  e.bot_death_bonus=e.bot_death_bonus or {}
- e.bot_death_bonus[pid]=(e.bot_death_bonus[pid] or 0)+1
- local side=h:GetTeamNumber()==3 and 'dire' or 'radiant'
- e:emit('BOT_COMEBACK',{pid=pid,deaths=e.bot_death_bonus[pid],
-  gold_multiplier=(e.bot_income_reset and e.bot_income_reset[pid] and 1 or e.room.options[side..'_gold_multiplier']*(e.room.options.gold_percent or 100)/100)+M.bonus(e,pid,'gold'),
-  xp_multiplier=(e.bot_income_reset and e.bot_income_reset[pid] and 1 or e.room.options[side..'_xp_multiplier'])+M.bonus(e,pid,'xp')})
+ e.bot_death_bonus[pid]=math.min(9,(e.bot_death_bonus[pid] or 0)+1)
+ M.report(e,pid,h:GetTeamNumber(),'BOT_COMEBACK')
+end
+function M.report(e,pid,team,event)
+ local side=team==3 and 'dire' or 'radiant'
+ e:emit(event,{pid=pid,layers=e.bot_death_bonus[pid],
+  gold_multiplier=math.min(5,e.room.options[side..'_gold_multiplier']*(e.room.options.gold_percent or 100)/100+M.bonus(e,pid,'gold')),
+  xp_multiplier=math.min(5,e.room.options[side..'_xp_multiplier']+M.bonus(e,pid,'xp'))})
 end
 return M

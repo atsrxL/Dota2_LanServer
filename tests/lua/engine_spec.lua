@@ -163,7 +163,7 @@ local abilities={};local bat=1.7
 local ownHero={GetBaseAttackTime=function(_,ignoreModifiers)assert(ignoreModifiers==false);return bat end,SetBaseAttackTime=function(_,v)bat=v end,
  FindAbilityByName=function(_,name)return abilities[name] end,GetAbilityByIndex=function()return {} end,
  AddAbility=function(_,name)
-  local a={GetMaxLevel=function()return 4 end,SetLevel=function(self,n)self.level=n end,GetLevel=function(self)return self.level end}
+  local a={GetAbilityKeyValues=function()return {Innate=name=='silencer_brain_drain' and '1' or '0'} end,GetMaxLevel=function()return 4 end,SetLevel=function(self,n)self.level=n end,GetLevel=function(self)return self.level end}
   abilities[name]=a;return a
  end}
 PlayerResource.GetSelectedHeroEntity=function(_,pid)assert(pid==0);return ownHero end
@@ -176,8 +176,12 @@ for name in pairs(chats.abilities) do
 end
 assert(not chats.button(tutorial,0,'self_ability_arbitrary'))
 GetAbilityKeyValuesByName=function(name)return name=='axe_berserkers_call' and {AbilityType='DOTA_ABILITY_TYPE_BASIC'} or nil end
-assert(chats.button(tutorial,0,'self_add_ability','  axe_berserkers_call  '));assert(abilities.axe_berserkers_call.level==4)
+assert(chats.button(tutorial,0,'self_add_ability','  axe_berserkers_call  '));assert(abilities.axe_berserkers_call.level==0)
 assert(not chats.button(tutorial,0,'self_add_ability','axe_berserkers_call'))
+abilities.silencer_brain_drain=nil
+GetAbilityKeyValuesByName=function()return {AbilityType='DOTA_ABILITY_TYPE_BASIC'} end
+assert(chats.button(tutorial,0,'self_add_ability','silencer_brain_drain'));assert(abilities.silencer_brain_drain.level==4)
+GetAbilityKeyValuesByName=function(name)return name=='axe_berserkers_call' and {AbilityType='DOTA_ABILITY_TYPE_BASIC'} or nil end
 for _,invalid in ipairs({'','does_not_exist','axe_berserkers_call;quit','dota_create_ability axe_berserkers_call',string.rep('a',129)}) do assert(not chats.button(tutorial,0,'self_add_ability',invalid)) end
 assert(not chats.button(tutorial,0,'self_add_ability',{}))
 tutorial.room.players[0].hello=false;assert(not chats.button(tutorial,0,'self_add_ability','axe_berserkers_call'));tutorial.room.players[0].hello=true
@@ -226,10 +230,10 @@ state=7;players[0].conn=3;tutorial:tick()
 assert(tutorial.room.phase=='playing' and tutorial.room.started)
 state=8;tutorial:tick();assert(tutorial.room.phase=='postgame')
 
--- Adaptive rewards are independent per bot and preserve small fractional ticks.
+-- Per-bot triangular stacks, reward carry, cap and three-layer kill reduction.
 local comeback=require('lan.bot_comeback')
 local heroes={}
-local ce={room={phase='playing',options={radiant_gold_multiplier=1.5,dire_gold_multiplier=1,radiant_xp_multiplier=1,dire_xp_multiplier=2,gold_percent=100}},emit=function()end}
+local ce={room={phase='playing',options={radiant_gold_multiplier=1,dire_gold_multiplier=1,radiant_xp_multiplier=1,dire_xp_multiplier=1,gold_percent=100}},emit=function()end}
 PlayerResource.IsValidPlayerID=function(_,p)return p==0 or p==1 or p==2 end
 PlayerResource.IsFakeClient=function(_,p)return p~=0 end
 PlayerResource.GetSelectedHeroEntity=function(_,p)return heroes[p] end
@@ -239,31 +243,26 @@ local function victim(pid)
 end
 for pid=0,2 do heroes[pid]=victim(pid) end
 comeback.killed(ce,heroes[0]);assert(comeback.bonus(ce,0,'gold')==0)
-comeback.killed(ce,heroes[1]);comeback.killed(ce,heroes[1])
-assert(ce.bot_death_bonus[1]==2 and comeback.bonus(ce,2,'gold')==0)
-assert(comeback.scale(ce,1,'gold',100,1.5)==190)
-assert(comeback.scale(ce,1,'xp',100,1)==120)
-assert(comeback.scale(ce,2,'xp',100,2)==200)
-assert(comeback.scale(ce,0,'gold',100,1.5)==150)
-assert(comeback.scale(ce,1,'gold',-100,1.5)==-100)
-local total=0;for i=1,10 do total=total+comeback.scale(ce,1,'gold',1,1) end;assert(total==14)
-comeback.killed(ce,victim(1));assert(ce.bot_death_bonus[1]==2)
-heroes[1].IsReincarnating=function()return true end;comeback.killed(ce,heroes[1]);assert(ce.bot_death_bonus[1]==2)
-heroes[1].IsReincarnating=nil;heroes[1].IsIllusion=function()return true end;comeback.killed(ce,heroes[1]);assert(ce.bot_death_bonus[1]==2)
-comeback.killed(ce,heroes[2]);assert(ce.bot_death_bonus[2]==1)
-assert(comeback.bonus({room=ce.room},1,'gold')==0)
-
--- A credited enemy hero kill resets both multipliers to exactly 1x, even
--- when the configured side baseline is higher; subsequent deaths start there.
-heroes[1].IsIllusion=function()return false end
-comeback.hero_kill(ce,heroes[2],heroes[1])
-assert(ce.bot_death_bonus[1]==0 and ce.bot_income_reset[1])
-assert(comeback.scale(ce,1,'gold',100,1.5)==100)
-assert(comeback.scale(ce,1,'xp',100,2)==100)
-assert(ce.bot_reward_remainders[1]==nil)
-comeback.killed(ce,heroes[1])
-assert(comeback.scale(ce,1,'gold',100,1.5)==120)
-assert(comeback.scale(ce,1,'xp',100,2)==110)
-comeback.hero_kill(ce,heroes[0],heroes[1]);assert(ce.bot_death_bonus[1]==1) -- ally deny
+for i,mult in ipairs({1.1,1.3,1.6,2,2.5,3.1,3.8,4.6,5}) do
+ comeback.killed(ce,heroes[1]);assert(ce.bot_death_bonus[1]==i)
+ for _,kind in ipairs({'gold','xp'}) do assert(comeback.scale(ce,1,kind,100,1)==math.floor(mult*100+0.001)) end
+end
+comeback.killed(ce,heroes[1]);assert(ce.bot_death_bonus[1]==9)
+comeback.hero_kill(ce,heroes[2],heroes[1]);assert(ce.bot_death_bonus[1]==6)
+assert(comeback.scale(ce,1,'gold',100,1)==310)
+comeback.hero_kill(ce,heroes[2],heroes[1]);assert(ce.bot_death_bonus[1]==3)
+assert(comeback.scale(ce,1,'xp',100,1)==160)
+comeback.hero_kill(ce,heroes[2],heroes[1]);comeback.hero_kill(ce,heroes[2],heroes[1]);assert(ce.bot_death_bonus[1]==0)
+comeback.killed(ce,heroes[1]);local total=0
+for i=1,10 do total=total+comeback.scale(ce,1,'gold',1,1) end;assert(total==11)
+assert(comeback.scale(ce,1,'xp',100,2)==210) -- configured starting multiplier retained
+assert(comeback.scale(ce,1,'gold',100,5)==500)
+assert(comeback.scale(ce,0,'gold',100,2)==200)
+assert(comeback.scale(ce,1,'gold',-100,2)==-100)
+assert(comeback.bonus(ce,2,'xp')==0)
+comeback.hero_kill(ce,heroes[0],heroes[1]);assert(ce.bot_death_bonus[1]==1)
 comeback.hero_kill(ce,{IsRealHero=function()return false end},heroes[1]);assert(ce.bot_death_bonus[1]==1)
-comeback.hero_kill(ce,heroes[1],heroes[2]);assert(ce.bot_death_bonus[2]==0 and ce.bot_death_bonus[1]==1)
+comeback.killed(ce,victim(1));assert(ce.bot_death_bonus[1]==1)
+heroes[1].IsReincarnating=function()return true end;comeback.killed(ce,heroes[1]);assert(ce.bot_death_bonus[1]==1)
+heroes[1].IsReincarnating=nil;heroes[1].IsIllusion=function()return true end;comeback.killed(ce,heroes[1]);assert(ce.bot_death_bonus[1]==1)
+assert(comeback.bonus({room=ce.room},1,'gold')==0)

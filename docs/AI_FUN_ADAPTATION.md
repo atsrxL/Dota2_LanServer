@@ -147,3 +147,14 @@ Mocks cover independent bots, unchanged humans, configured baselines, repeated d
 Deployment: server restarted with no connected players; session 1311029042beb7f2f8c0f69b798c206e, source SHA b48a9fd460c995df46082c91d7bdd1297e3c16d084c517c13a4eeeab4f6fd667, no addon boot errors. Full suite212 passed (28 existing warnings). Backup /root/agent.backup/dota-r22-source-20260919/before-r22.tar.gz. No claim of actual kill/death acceptance yet.
 
 2026-09-19 .180 follow-up: SSH online on DESKTOP-98X3D; r22 client package installed to D:/steamC/steamapps/common/dota 2 beta, all20 game files SHA256 verified. Backup C:/root/agent.backup/dota-lan-client-20260919-163357; retained it and20260918-215726, removed known agent backup20260918-205855. Includes r21 typed ability UI. Client restart/reconnect required to discard cached Panorama.
+
+
+## r23 — triangular comeback stacks and untrained typed abilities (2026-09-19)
+
+Both resources now use per-bot layers n: bonus n(n+1)/20, applied additively to configured starting multiplier, with effective bot rewards capped at5x. Default1x sequence is1.1,1.3,1.6,2,2.5,3.1,3.8,4.6,5. Layers saturate at9 (no hidden excess stacks). Enemy hero kill reduces layers by3 to minimum0, rather than resetting multipliers;9->6 is3.1x on default baseline. Preserves human rewards, independent bot counters and fractional carry. Death exclusions and attribution rules fromr22 retained. Tests include full sequence, repeated deaths atcap,9->6->3->0 reductions, small rewards, configured baseline and human preservation.
+
+Removed Faceless Void shortcut from XML/JS/server shortcut allowlist. Typed names remain available. Typed non-innate abilities explicitly start atlevel0, while innate/remaining shortcut behavior retains maxlevel. Current installed VPK confirms the innate KV key is `Innate` (not AbilityIsInnate); tests cover both typed innate and ordinary abilities. Existing abilities are not downgraded.
+
+212 tests passed; real Windows Workshop Tools XML/JS compilation succeeded, unchanged CSS/manifest reused. Both.98 and.180 installed20 files and verified SHA256. Client ZIP r23 SHA e4d639722960148159985404595b30d98909a1effc83da14db9d019f3efe21b1, source f02b3fdcc152dad3826d04c4c1de7ddbef7106f4049958c6689979dbd038fafb, UI7d07ee181a4e6a8cd954aa0c124b1ae95be5bda93d5f7b5f87e7429ca825283a.
+
+IMPORTANT: user is playing; **server source staged only**, active match preserved at r22 source b48a9fd460c995df46082c91d7bdd1297e3c16d084c517c13a4eeeab4f6fd667. Manual panel restart/new server start required to deploy r23; automatic crash retry source-lock may reject changed source. Client Dota restart clears Panorama cache. Actual r23 in-match behavior still unverified. Server source backup /root/agent.backup/dota-r23-source-20260919/before-r23.tar.gz. Client backups.98 20260919-173455 and.180 20260919-173431; known older snapshots rotated to retain latest2. No public push.

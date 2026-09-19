@@ -1,6 +1,6 @@
 -- Personal LAN chat cheats. This does not change the GC lobby cheat flag.
 local M={}
-M.abilities={death_prophet_witchcraft=true,winter_wyvern_eldwurms_edda=true,silencer_brain_drain=true,tinker_eureka=true,beastmaster_inner_beast=true,razor_unstable_current=true,bloodseeker_thirst=true,faceless_void_distortion_field=true}
+M.abilities={death_prophet_witchcraft=true,winter_wyvern_eldwurms_edda=true,silencer_brain_drain=true,tinker_eureka=true,beastmaster_inner_beast=true,razor_unstable_current=true,bloodseeker_thirst=true}
 function M.hero_tool(e,pid,action,input)
  local h=PlayerResource:GetSelectedHeroEntity(pid)
  if not h then return false,'尚未选择英雄' end
@@ -19,7 +19,10 @@ function M.hero_tool(e,pid,action,input)
   if h:FindAbilityByName(name) then return false,'已拥有该技能' end
   local a=h:AddAbility(name)
   if not a then return false,'当前游戏版本无法添加该技能：'..name end
-  a:SetLevel(math.max(1,a:GetMaxLevel()))
+  local kv=a.GetAbilityKeyValues and a:GetAbilityKeyValues() or {}
+  local innate=kv and (kv.Innate==true or tonumber(kv.Innate)==1)
+  if action~='self_add_ability' or innate then a:SetLevel(math.max(1,a:GetMaxLevel()))
+  else a:SetLevel(0) end
   e:emit('MENU_ABILITY',{pid=pid,ability=name,level=a:GetLevel()})
   return true,'已添加：'..name
  end

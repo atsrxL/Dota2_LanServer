@@ -62,3 +62,5 @@ for(const setting of ['difficulty','gold_multiplier','xp_multiplier','gold_start
 all.get('AbilityName').text='  axe_berserkers_call  ';all.get('AddAbilityName').events.onactivate();
 assert(sent.at(-1).tool==='self_add_ability' && sent.at(-1).ability_name==='axe_berserkers_call');
 let beforeInvalid=sent.length;all.get('AbilityName').text='bad;quit';all.get('AbilityName').events.oninputsubmit();assert(sent.length===beforeInvalid);
+
+assert(!all.has('Add_faceless_void_distortion_field'));
