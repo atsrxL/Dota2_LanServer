@@ -145,3 +145,5 @@ Existing positive income filters now route through lan.bot_comeback; negative go
 Mocks cover independent bots, unchanged humans, configured baselines, repeated death, negative rewards, fractional ticks, invalid/illusion/reincarnation victims, enemy-kill reset to1x, post-reset stacking, ally denial, non-hero kills, and fresh match state. Actual in-match kill/death income acceptance remains pending.
 
 Deployment: server restarted with no connected players; session 1311029042beb7f2f8c0f69b798c206e, source SHA b48a9fd460c995df46082c91d7bdd1297e3c16d084c517c13a4eeeab4f6fd667, no addon boot errors. Full suite212 passed (28 existing warnings). Backup /root/agent.backup/dota-r22-source-20260919/before-r22.tar.gz. No claim of actual kill/death acceptance yet.
+
+2026-09-19 .180 follow-up: SSH online on DESKTOP-98X3D; r22 client package installed to D:/steamC/steamapps/common/dota 2 beta, all20 game files SHA256 verified. Backup C:/root/agent.backup/dota-lan-client-20260919-163357; retained it and20260918-215726, removed known agent backup20260918-205855. Includes r21 typed ability UI. Client restart/reconnect required to discard cached Panorama.
