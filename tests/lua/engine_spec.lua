@@ -175,6 +175,12 @@ for name in pairs(chats.abilities) do
  assert(not chats.button(tutorial,0,'self_ability_'..name))
 end
 assert(not chats.button(tutorial,0,'self_ability_arbitrary'))
+GetAbilityKeyValuesByName=function(name)return name=='axe_berserkers_call' and {AbilityType='DOTA_ABILITY_TYPE_BASIC'} or nil end
+assert(chats.button(tutorial,0,'self_add_ability','  axe_berserkers_call  '));assert(abilities.axe_berserkers_call.level==4)
+assert(not chats.button(tutorial,0,'self_add_ability','axe_berserkers_call'))
+for _,invalid in ipairs({'','does_not_exist','axe_berserkers_call;quit','dota_create_ability axe_berserkers_call',string.rep('a',129)}) do assert(not chats.button(tutorial,0,'self_add_ability',invalid)) end
+assert(not chats.button(tutorial,0,'self_add_ability',{}))
+tutorial.room.players[0].hello=false;assert(not chats.button(tutorial,0,'self_add_ability','axe_berserkers_call'));tutorial.room.players[0].hello=true
 ownHero.AddAbility=function()error('engine rejected ability')end;abilities={}
 assert(not chats.button(tutorial,0,'self_ability_bloodseeker_thirst'))
 assert(tutorial.room.phase=='playing')

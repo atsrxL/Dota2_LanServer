@@ -84,6 +84,13 @@ send('solo_start',{options:options});
  }catch(e){pending=false;msg('操作失败：'+String(e));render(state);}
 });
 [['SelfRespawn','self_respawn'],['SelfRefresh','self_refresh'],['SelfGold','self_gold'],['AllyGold','ally_gold'],['EnemyGold','enemy_gold'],['AllyLevel','ally_level'],['EnemyLevel','enemy_level'],['BatDown','self_bat_down'],['BatUp','self_bat_up'],['BatReset','self_bat_reset'],['Add_death_prophet_witchcraft','self_ability_death_prophet_witchcraft'],['Add_winter_wyvern_eldwurms_edda','self_ability_winter_wyvern_eldwurms_edda'],['Add_silencer_brain_drain','self_ability_silencer_brain_drain'],['Add_tinker_eureka','self_ability_tinker_eureka'],['Add_beastmaster_inner_beast','self_ability_beastmaster_inner_beast'],['Add_razor_unstable_current','self_ability_razor_unstable_current'],['Add_bloodseeker_thirst','self_ability_bloodseeker_thirst'],['Add_faceless_void_distortion_field','self_ability_faceless_void_distortion_field']].forEach(function(pair){el(pair[0]).SetPanelEvent('onactivate',function(){msg('正在执行…');send('match_tool',{tool:pair[1]});});});
+function addTypedAbility(){
+ var name=String(el('AbilityName').text||'').trim();
+ if(!/^[a-z][a-z0-9_]{0,95}$/.test(name)){msg('只填技能内部名称，例如 bloodseeker_thirst');return;}
+ msg('正在添加技能…');send('match_tool',{tool:'self_add_ability',ability_name:name});
+}
+el('AddAbilityName').SetPanelEvent('onactivate',addTypedAbility);
+el('AbilityName').SetPanelEvent('oninputsubmit',addTypedAbility);
 el('Toggle').SetPanelEvent('onactivate',function(){collapsed=!collapsed;render(state);});
 var errors={solo_requires_one_player:'单人模式只允许一名真人连接。',bot_snapshot_missing:'尚未加载 AI 脚本。',invalid_options:'参数无效，请检查数字范围。',invalid_number:'选人30–120秒，赛前10–60秒，金币25–1000%。',bot_populate_requires_explicit_cheats:'服务器需要开启 sv_cheats 后重开。',stale_revision:'状态已更新，请重试。'};
 GameEvents.Subscribe('lan_reply',function(r){pending=false;msg(yes(r.ok)?(r.message&&r.message!=='ok'?r.message:'设置已确认。'):(errors[r.message]||String(r.message)));render(state);});

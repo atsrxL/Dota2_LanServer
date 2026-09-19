@@ -1,12 +1,21 @@
 -- Personal LAN chat cheats. This does not change the GC lobby cheat flag.
 local M={}
 M.abilities={death_prophet_witchcraft=true,winter_wyvern_eldwurms_edda=true,silencer_brain_drain=true,tinker_eureka=true,beastmaster_inner_beast=true,razor_unstable_current=true,bloodseeker_thirst=true,faceless_void_distortion_field=true}
-function M.hero_tool(e,pid,action)
+function M.hero_tool(e,pid,action,input)
  local h=PlayerResource:GetSelectedHeroEntity(pid)
  if not h then return false,'尚未选择英雄' end
  local name=action:match('^self_ability_(.+)$')
+ if action=='self_add_ability' then
+  if type(input)~='string' or #input>128 then return false,'请输入有效的技能内部名称' end
+  name=input:match('^%s*(.-)%s*$')
+  if #name==0 or #name>96 or not name:match('^[a-z][a-z0-9_]*$') then return false,'只填技能内部名称，例如 bloodseeker_thirst' end
+  if type(GetAbilityKeyValuesByName)=='function' then
+   local kv=GetAbilityKeyValuesByName(name)
+   if type(kv)~='table' or next(kv)==nil then return false,'技能名称不存在：'..name end
+  end
+ end
  if name then
-  if not M.abilities[name] then return false,'不允许添加该技能' end
+  if action~='self_add_ability' and not M.abilities[name] then return false,'不允许添加该技能' end
   if h:FindAbilityByName(name) then return false,'已拥有该技能' end
   local a=h:AddAbility(name)
   if not a then return false,'当前游戏版本无法添加该技能：'..name end
@@ -67,17 +76,18 @@ function M.handle(e,k)
  end
  e:emit('CHAT_CHEAT',result)
 end
-function M.button(e,pid,action)
+function M.button(e,pid,action,input)
+ if type(action)~='string' then return false,'未知操作' end
  local actions={self_respawn=true,self_refresh=true,self_gold=true,ally_gold=true,enemy_gold=true,ally_level=true,enemy_level=true}
  local ability=type(action)=='string' and action:match('^self_ability_(.+)$')
- local hero_tool=(ability and M.abilities[ability]) or action=='self_bat_down' or action=='self_bat_up' or action=='self_bat_reset'
+ local hero_tool=action=='self_add_ability' or (ability and M.abilities[ability]) or action=='self_bat_down' or action=='self_bat_up' or action=='self_bat_reset'
  if not actions[action] and not hero_tool then return false,'未知操作' end
  if e.room.phase~='pregame' and e.room.phase~='playing' then return false,'进入比赛后才能操作' end
  local p=e.room.players[pid]
  if not p or not p.connected or not p.hello then return false,'ui_handshake_required' end
  if not Convars:GetBool('sv_cheats') then return false,'作弊开关未开启' end
  if hero_tool then
-  local ok,success,message=pcall(M.hero_tool,e,pid,action)
+  local ok,success,message=pcall(M.hero_tool,e,pid,action,input)
   if not ok then e:emit('MENU_TOOL_ERROR',{pid=pid,action=action,error=tostring(success)});return false,'操作失败，已记录日志' end
   return success,message
  end

@@ -58,3 +58,7 @@ const rows=all.get('GameOptionSubpanelContainerInner').children.map(p=>p.id);
 for(const setting of ['difficulty','gold_multiplier','xp_multiplier','gold_start','player_number']){
  assert(rows.indexOf('dire_'+setting+'_Container')===rows.indexOf('radiant_'+setting+'_Container')+1);
 }
+
+all.get('AbilityName').text='  axe_berserkers_call  ';all.get('AddAbilityName').events.onactivate();
+assert(sent.at(-1).tool==='self_add_ability' && sent.at(-1).ability_name==='axe_berserkers_call');
+let beforeInvalid=sent.length;all.get('AbilityName').text='bad;quit';all.get('AbilityName').events.oninputsubmit();assert(sent.length===beforeInvalid);
