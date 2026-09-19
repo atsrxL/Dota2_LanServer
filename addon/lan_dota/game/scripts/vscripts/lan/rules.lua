@@ -18,7 +18,7 @@ function M.start(e)
  GameRules:SetCustomGameTeamMaxPlayers(3,o.dire_player_number)
  if mode.SetModifyExperienceFilter then mode:SetModifyExperienceFilter(function(_,v)
   local side=PlayerResource:GetTeam(v.player_id_const)==3 and 'dire' or 'radiant'
-  if v.experience and v.experience>0 then v.experience=math.floor(v.experience*o[side..'_xp_multiplier']) end
+  if v.experience and v.experience>0 then v.experience=require('lan.bot_comeback').scale(e,v.player_id_const,'xp',v.experience,o[side..'_xp_multiplier']) end
   return true
  end,e) end
  if o.max_level~=30 and mode.SetCustomHeroMaxLevel then
@@ -33,6 +33,9 @@ function M.start(e)
  if ListenToGameEvent then ListenToGameEvent('npc_spawned',function(k) M.apply_bot_difficulty(e,EntIndexToHScript(k.entindex)) end,nil) end
  if ListenToGameEvent then ListenToGameEvent('entity_killed',function(k)
   local h=EntIndexToHScript(k.entindex_killed)
+  local comeback=require('lan.bot_comeback')
+  comeback.killed(e,h)
+  comeback.hero_kill(e,h,k.entindex_attacker and EntIndexToHScript(k.entindex_attacker) or nil)
   if h and h.IsRealHero and h:IsRealHero() then
    if o.respawn_time_percentage~=100 then h:SetTimeUntilRespawn(math.max(0,h:GetRespawnTime()*o.respawn_time_percentage/100)) end
    h:SetBuybackCooldownTime(o.buyback_cooldown)

@@ -225,3 +225,45 @@ PlayerResource.GetSelectedHeroEntity=function()return nil end
 state=7;players[0].conn=3;tutorial:tick()
 assert(tutorial.room.phase=='playing' and tutorial.room.started)
 state=8;tutorial:tick();assert(tutorial.room.phase=='postgame')
+
+-- Adaptive rewards are independent per bot and preserve small fractional ticks.
+local comeback=require('lan.bot_comeback')
+local heroes={}
+local ce={room={phase='playing',options={radiant_gold_multiplier=1.5,dire_gold_multiplier=1,radiant_xp_multiplier=1,dire_xp_multiplier=2,gold_percent=100}},emit=function()end}
+PlayerResource.IsValidPlayerID=function(_,p)return p==0 or p==1 or p==2 end
+PlayerResource.IsFakeClient=function(_,p)return p~=0 end
+PlayerResource.GetSelectedHeroEntity=function(_,p)return heroes[p] end
+local function victim(pid)
+ return {IsRealHero=function()return true end,IsIllusion=function()return false end,
+ GetPlayerOwnerID=function()return pid end,GetTeamNumber=function()return pid==2 and 3 or 2 end}
+end
+for pid=0,2 do heroes[pid]=victim(pid) end
+comeback.killed(ce,heroes[0]);assert(comeback.bonus(ce,0,'gold')==0)
+comeback.killed(ce,heroes[1]);comeback.killed(ce,heroes[1])
+assert(ce.bot_death_bonus[1]==2 and comeback.bonus(ce,2,'gold')==0)
+assert(comeback.scale(ce,1,'gold',100,1.5)==190)
+assert(comeback.scale(ce,1,'xp',100,1)==120)
+assert(comeback.scale(ce,2,'xp',100,2)==200)
+assert(comeback.scale(ce,0,'gold',100,1.5)==150)
+assert(comeback.scale(ce,1,'gold',-100,1.5)==-100)
+local total=0;for i=1,10 do total=total+comeback.scale(ce,1,'gold',1,1) end;assert(total==14)
+comeback.killed(ce,victim(1));assert(ce.bot_death_bonus[1]==2)
+heroes[1].IsReincarnating=function()return true end;comeback.killed(ce,heroes[1]);assert(ce.bot_death_bonus[1]==2)
+heroes[1].IsReincarnating=nil;heroes[1].IsIllusion=function()return true end;comeback.killed(ce,heroes[1]);assert(ce.bot_death_bonus[1]==2)
+comeback.killed(ce,heroes[2]);assert(ce.bot_death_bonus[2]==1)
+assert(comeback.bonus({room=ce.room},1,'gold')==0)
+
+-- A credited enemy hero kill resets both multipliers to exactly 1x, even
+-- when the configured side baseline is higher; subsequent deaths start there.
+heroes[1].IsIllusion=function()return false end
+comeback.hero_kill(ce,heroes[2],heroes[1])
+assert(ce.bot_death_bonus[1]==0 and ce.bot_income_reset[1])
+assert(comeback.scale(ce,1,'gold',100,1.5)==100)
+assert(comeback.scale(ce,1,'xp',100,2)==100)
+assert(ce.bot_reward_remainders[1]==nil)
+comeback.killed(ce,heroes[1])
+assert(comeback.scale(ce,1,'gold',100,1.5)==120)
+assert(comeback.scale(ce,1,'xp',100,2)==110)
+comeback.hero_kill(ce,heroes[0],heroes[1]);assert(ce.bot_death_bonus[1]==1) -- ally deny
+comeback.hero_kill(ce,{IsRealHero=function()return false end},heroes[1]);assert(ce.bot_death_bonus[1]==1)
+comeback.hero_kill(ce,heroes[1],heroes[2]);assert(ce.bot_death_bonus[2]==0 and ce.bot_death_bonus[1]==1)

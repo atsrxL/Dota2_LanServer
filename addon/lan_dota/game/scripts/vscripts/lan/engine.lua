@@ -163,7 +163,7 @@ function Engine:start_match()
         self.mode:SetModifyGoldFilter(function(_,event)
             if type(event.gold)=='number' and event.gold>0 then
                 local side=method(PlayerResource,'GetTeam') and PlayerResource:GetTeam(event.player_id_const)==3 and 'dire' or 'radiant'
-                event.gold=math.floor(event.gold*o.gold_percent/100*o[side..'_gold_multiplier'])
+                event.gold=require('lan.bot_comeback').scale(self,event.player_id_const,'gold',event.gold,o.gold_percent/100*o[side..'_gold_multiplier'])
             end
             return true
         end,self)
