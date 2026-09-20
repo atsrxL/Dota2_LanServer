@@ -47,7 +47,20 @@ function renderStatus(s){
   $('cancelTask').disabled=!(j&&['login','install','update','validate','bot_download','bot_check'].includes(j.action));
   document.querySelectorAll('.action,.steam-action').forEach(b=>{const a=b.dataset.action; b.disabled=!!j||(a==='start'&&(s.running||!s.installed||!!s.maintenance_block))||(a==='addon_deploy'&&s.running)||(a==='stop'&&!s.running)||(a==='restart'&&(!s.installed||!!s.maintenance_block));});
 }
+function renderSteamAuth(){
+ const steamActions=['login','install','update','validate','bot_download'];
+ const relevant=jobs.filter(j=>steamActions.includes(j.action));
+ const latest=relevant[0];
+ const success=relevant.find(j=>j.authenticated_at||(j.action==='login'&&j.state==='success'));
+ const active=status?.active_job;
+ const busy=active&&steamActions.includes(active.action);
+ const stageNames={logging_in:'正在登录',awaiting_mobile_approval:'等待 Steam 手机批准',authenticated:'本次登录已验证',starting:'正在启动 SteamCMD'};
+ $('steamAuthState').textContent=busy?(active.waiting_for?'等待密码 / Steam Guard 输入':stageNames[active.stage]||'正在执行 SteamCMD 任务'):latest&&['failed','cancelled','interrupted'].includes(latest.state)?'最近 SteamCMD 任务'+(states[latest.state]||latest.state):success?'最近登录验证成功':'尚无成功登录验证记录';
+ $('steamAuthDetail').textContent=(success?'最近成功验证：'+localDate(success.authenticated_at||success.finished_at)+'。 ':'')+(latest?'最近任务：'+(labels[latest.action]||latest.action)+' · '+(states[latest.state]||latest.state)+' · '+latest.message:'点击“测试登录 / 授权”验证。');
+ $('steamAccountState').textContent=config?.steam_username?'已保存账号名：'+config.steam_username:'尚未保存账号名；登录成功后可点“仅保存账号名”，方便下次使用。';
+}
 function renderJobs(){
+  renderSteamAuth();
   const tbody=$('jobTable');tbody.replaceChildren();
   if(!jobs.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=5;td.textContent='暂无任务记录。';tr.append(td);tbody.append(tr);return;}
   for(const j of jobs){
@@ -66,7 +79,7 @@ async function refreshExtra(){
   if(currentPage==='overview'&&window.AddonPanel)await window.AddonPanel.refresh();
   if(currentPage==='backups')await loadBackups();
   if(currentPage==='logs'){const data=await api('/api/logs?name='+encodeURIComponent($('logChoice').value));$('mainLog').textContent=data.text;}
-  if(currentPage==='steam'&&jobs.length){const data=await api('/api/logs?name='+encodeURIComponent(status?.active_job?.id||jobs[0].id));$('steamLog').textContent=data.text;}
+  if(currentPage==='steam'){const j=jobs.find(j=>['login','install','update','validate','bot_download'].includes(j.action));$('steamLog').textContent=j?(await api('/api/logs?name='+encodeURIComponent(j.id))).text:'暂无 SteamCMD 任务日志。';}
 }
 async function poll(){
   if(polling||document.hidden)return;polling=true;

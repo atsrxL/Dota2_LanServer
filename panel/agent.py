@@ -61,6 +61,8 @@ class Manager:
         with self.lock:
             if self.active:
                 self.active["stage"] = stage
+                if stage == "authenticated":
+                    self.active["authenticated_at"] = now()
                 self._persist()
 
     def _ask(self, kind: str, message: str) -> str:
