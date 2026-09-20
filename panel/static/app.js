@@ -19,7 +19,7 @@ function setPage(page){
   if(!$(page)||!$(page).classList.contains('page'))return;
   currentPage=page; document.querySelectorAll('.page').forEach(x=>x.hidden=x.id!==page);
   document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.page===page));
-  $('pageTitle').textContent={overview:'运行概览',steam:'SteamCMD',jobs:'任务记录',logs:'日志与控制台',settings:'服务器配置',backups:'备份与诊断',bots:'机器人脚本',addon:'LAN 附加模式'}[page];
+  $('pageTitle').textContent={overview:'运行概览',client:'Windows 客户端资源',steam:'SteamCMD',jobs:'任务记录',logs:'日志与控制台',settings:'服务器配置',backups:'备份与诊断',bots:'机器人脚本',addon:'LAN 附加模式'}[page];
   if(page==='settings'&&!config)loadConfig().catch(e=>showMessage(e.message,true));
   if(page==='backups')loadBackups().catch(e=>showMessage(e.message,true));
   refreshExtra().catch(e=>showMessage(e.message,true));
@@ -31,17 +31,15 @@ async function loadConfig(){
 }
 function renderStatus(s){
   status=s; $('apiState').textContent='代理在线'; $('apiState').classList.add('accent');
-  $('serverState').textContent=s.running?'● 游戏进程运行中 · 客户端连接待验证':s.installed?'○ 已安装 · 当前未运行':'○ 等待安装 Dota 2';
+  $('serverState').textContent=s.running?'● 运行中':s.installed?'○ 已停止':'○ 等待安装 Dota 2';
   const host=location.hostname; $('connectCommand').textContent=`connect ${host}:${s.port}`;
   $('uptime').textContent=s.running?`${Math.floor(s.uptime/3600)}h ${Math.floor(s.uptime%3600/60)}m`:'未运行';
   $('pid').textContent=s.running?`PID ${s.pid}`:s.last_exit?`上次退出：${s.last_exit.exit_code??'signal '+s.last_exit.signal}`:'等待进程启动';
   $('memory').textContent=typeof s.metrics.memory_current==='number'&&s.metrics.memory_max?`${(s.metrics.memory_current/1073741824).toFixed(1)} / ${(s.metrics.memory_max/1073741824).toFixed(1)} GiB`:'未提供';
   $('disk').textContent=gib(s.metrics.disk_free); $('diskTotal').textContent=`文件系统总量 ${gib(s.metrics.disk_total)}`;
-  $('buildId').textContent=s.manifest.buildid||'未安装'; $('udpState').textContent=`UDP ${s.port}：${s.udp_port_listening?'发现监听（非联机验收）':'未发现监听'}`;
+  $('buildId').textContent=s.manifest.buildid||'未安装'; $('udpState').textContent=`UDP ${s.port}：${s.udp_port_listening?'监听中':'未发现监听'}`;
   $('maintenanceWarning').hidden=!s.maintenance_block;
   const j=s.active_job;
-  $('currentTask').textContent=j?`${labels[j.action]||j.action} · ${states[j.state]||j.state}\n${j.message}`:'当前没有任务；服务器运行与下载由独立代理管理。';
-  $('progressLine').hidden=!j;
   $('pendingInput').hidden=!(j&&j.waiting_for);
   if(j&&j.waiting_for){$('inputTitle').textContent=j.waiting_for==='guard'?'Steam Guard 验证码':'Steam 登录密码';$('inputMessage').textContent=j.message;}
   $('cancelTask').disabled=!(j&&['login','install','update','validate','bot_download','bot_check'].includes(j.action));
@@ -76,7 +74,13 @@ function renderJobs(){
 }
 async function refreshExtra(){
   if(!csrf)return;
-  if(currentPage==='overview'&&window.AddonPanel)await window.AddonPanel.refresh();
+  if(currentPage==='client'){
+    const d=await api('/api/client-resources');
+    $('clientLinks').hidden=!(d.available&&d.server_matches);
+    $('clientState').textContent=!d.available?d.message:d.server_matches?'可下载 · 与服务器资源一致':'等待更新 · 安装包与服务器资源不一致';
+    $('clientDetails').textContent=d.available?d.version+' · '+(d.files.exe.bytes/1048576).toFixed(2)+' MB · '+d.resource_count+' 个资源文件 · 构建于 '+localDate(d.built_at):'';
+    $('clientHash').textContent=d.available?'安装包 SHA-256：'+d.files.exe.sha256:'';
+  }
   if(currentPage==='backups')await loadBackups();
   if(currentPage==='logs'){const data=await api('/api/logs?name='+encodeURIComponent($('logChoice').value));$('mainLog').textContent=data.text;}
   if(currentPage==='steam'){const j=jobs.find(j=>['login','install','update','validate','bot_download'].includes(j.action));$('steamLog').textContent=j?(await api('/api/logs?name='+encodeURIComponent(j.id))).text:'暂无 SteamCMD 任务日志。';}
@@ -115,7 +119,7 @@ $('rememberUser').onclick=async()=>{try{const c=await api('/api/config');c.steam
 $('taskInputForm').addEventListener('submit',async e=>{e.preventDefault();const value=$('taskSecret').value;$('taskSecret').value='';try{await api('/api/input',{job_id:status?.active_job?.id,value});showMessage('一次性输入已提交。');await poll();}catch(err){showMessage(err.message,true);}});
 $('cancelTask').onclick=async()=>{if(!status?.active_job||!confirm('取消会中断 SteamCMD；安装中断后须成功校验才能开服。确认？'))return;try{await api('/api/cancel',{job_id:status.active_job.id});await poll();}catch(e){showMessage(e.message,true);}};
 $('sayForm').addEventListener('submit',async e=>{e.preventDefault();try{await api('/api/console',{command:'say',text:$('sayText').value});$('sayText').value='';showMessage('消息已提交。');}catch(err){showMessage(err.message,true);}});
-$('configForm').addEventListener('submit',async e=>{e.preventDefault();const f=e.target;const c={schema:1};for(const key of ['hostname','map','game_password','steam_username'])c[key]=f.elements.namedItem(key).value;for(const key of ['port','game_mode'])c[key]=Number(f.elements.namedItem(key).value);for(const key of ['auto_start','auto_restart','cheats','insecure'])c[key]=f.elements.namedItem(key).checked;try{const r=await api('/api/config',c);config=c;$('serverName').textContent=c.hostname;showMessage('配置已保存。'+(r.restart_required?'下次重启游戏后生效。':'')+'更改端口须同步 PVE 防火墙。');}catch(err){showMessage(err.message,true);}});
+$('configForm').addEventListener('submit',async e=>{e.preventDefault();const f=e.target;const c={schema:1,steam_username:config.steam_username};for(const key of ['hostname','map','game_password'])c[key]=f.elements.namedItem(key).value;for(const key of ['port','game_mode'])c[key]=Number(f.elements.namedItem(key).value);for(const key of ['auto_start','auto_restart','cheats','insecure'])c[key]=f.elements.namedItem(key).checked;try{const r=await api('/api/config',c);config=c;$('serverName').textContent=c.hostname;showMessage('配置已保存。'+(r.restart_required?'下次重启游戏后生效。':'')+'更改端口须同步 PVE 防火墙。');}catch(err){showMessage(err.message,true);}});
 $('reloadConfig').onclick=()=>loadConfig().then(()=>showMessage('已重新读取配置。')).catch(e=>showMessage(e.message,true));
 $('refreshLog').onclick=()=>refreshExtra().catch(e=>showMessage(e.message,true));$('logChoice').onchange=$('refreshLog').onclick;
 poll();

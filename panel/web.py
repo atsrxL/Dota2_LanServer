@@ -9,6 +9,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 from .agent import rpc
 from .common import VERSION, Fault, read_json
+from . import client_downloads
 
 STATIC = Path(__file__).parent / "static"
 MAX_BODY = 16384
@@ -67,6 +68,12 @@ class WebApp:
                 routes = {"/api/addon": "addon", "/api/bots": "bots", "/api/metrics": "metrics", "/api/status": "status", "/api/config": "config", "/api/jobs": "jobs", "/api/backups": "backups"}
                 if path in routes:
                     body = self._json(self.rpc(routes[path]))
+                elif path == "/api/client-resources":
+                    body = self._json(client_downloads.metadata())
+                elif path == "/api/client-download":
+                    body, filename = client_downloads.download(q.get('kind', ['exe'])[0])
+                    content_type = 'application/octet-stream'
+                    extra_headers.append(('Content-Disposition', 'attachment; filename="' + filename + '"'))
                 elif path == "/api/logs":
                     body = self._json(self.rpc("logs", {"name": q.get("name", ["server"])[0]}))
                 elif path == "/api/addon/report":

@@ -34,7 +34,7 @@
     byId('resourceFreshness').textContent = message;
     byId('cpuPercent').textContent = byId('memoryPercent').textContent = '—';
     bar('cpuBar', null); bar('memoryBar', null);
-    byId('cpuCores').textContent = '数据已失效；正在自动重试，不把缺失数据记为 0%。';
+    byId('cpuCores').textContent = '数据已失效，正在重试。';
     for (const id of ['memoryBytes','memoryWorking','memoryCache','memorySwap','memoryOom']) byId(id).textContent = '—';
     history.push({at:performance.now(),cpu:null,memory:null}); drawHistory();
   }
@@ -51,10 +51,9 @@
     const cpu = data.cpu, mem = data.memory;
     byId('resourceState').textContent = valid(cpu.total_percent) ? '实时 · 2 秒' : '首轮 / 重置后采样中';
     byId('resourceState').classList.add('accent');
-    byId('resourceFreshness').textContent = `采样时间 ${new Date(data.sampled_at * 1000).toLocaleTimeString()} · 页面隐藏时暂停 · 趋势仅保存在当前页面`;
+    byId('resourceFreshness').textContent = `采样时间 ${new Date(data.sampled_at * 1000).toLocaleTimeString()}`;
     byId('cpuPercent').textContent = percent(cpu.total_percent); bar('cpuBar',cpu.total_percent);
     byId('cpuCapacity').textContent = `占用 ${valid(cpu.cores_used)?cpu.cores_used.toFixed(2):'—'} 核 / 有效配额 ${valid(cpu.capacity_cores)?cpu.capacity_cores:'—'} 核；可见 ${cpu.visible_core_count} 核`;
-    byId('cpuScope').textContent = `总量：${cpu.source}（${cpu.scope}）；每核：${cpu.per_core_source}（${cpu.per_core_scope}）。100% 表示有效总配额占满，不是只占满单核。`;
     const root = byId('cpuCores'); root.replaceChildren();
     for (const core of cpu.per_core) {
       const row = document.createElement('div'); row.className = 'cpu-core';
@@ -65,15 +64,14 @@
       const value = document.createElement('strong'); value.textContent = percent(core.percent);
       row.append(label,meter,value); root.append(row);
     }
-    if (!cpu.per_core.length) root.textContent = '每核心数据不可用；未伪造核心列表。';
+    if (!cpu.per_core.length) root.textContent = '每核心数据不可用。';
     byId('memoryPercent').textContent = percent(mem.percent); bar('memoryBar',mem.percent);
     byId('memoryBytes').textContent = `${size(mem.used_bytes)} / ${size(mem.limit_bytes)} · ${mem.source.startsWith('cgroup')?'总占用包含已计费缓存':'按 MemTotal − MemAvailable 计算的可见占用'}`;
     byId('memoryWorking').textContent = size(mem.working_set_bytes);
     byId('memoryCache').textContent = size(mem.cache_bytes);
     byId('memorySwap').textContent = `${size(mem.swap_used_bytes)} / ${size(mem.swap_limit_bytes)}`;
     byId('memoryOom').textContent = `${mem.events?.oom ?? '—'} / ${mem.events?.oom_kill ?? '—'}`;
-    byId('memoryScope').textContent = `来源：${mem.source}（${mem.scope}）。工作集估算 = cgroup 总占用 − inactive_file，不是所有进程 RSS 之和。`;
-    byId('resourceWarnings').textContent = (data.warnings || []).join(' ') || '只读采样。CPU 与内存是可见 cgroup 根统计，不是仅 Dota 2 进程的占用。';
+    byId('resourceWarnings').textContent = (data.warnings || []).join(' ') || '';
     if (changed) history.push({at:now,cpu:cpu.total_percent,memory:mem.percent});
     drawHistory();
   }

@@ -53,6 +53,15 @@ def test_wrong_login_is_not_install_success(manager):
     assert result['state']=='failed'
     assert manager.status()['maintenance_block']
     with pytest.raises(Fault):manager.submit({'action':'start'})
+    assert manager.config['steam_username'] != 'tester'
+
+def test_successful_login_remembers_only_account(manager):
+    manager.submit({'action':'login','username':'tester','password':'test-secret-123'})
+    assert wait(manager)['authenticated_at']
+    assert manager.config['steam_username'] == 'tester'
+    saved = manager.paths.config.read_text()
+    assert 'test-secret-123' not in saved
+    assert json.loads(saved)['steam_username'] == 'tester'
 
 def test_twofactor_input(manager):
     j=manager.submit({'action':'install','username':'tester','password':'needs_guard'})

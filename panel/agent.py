@@ -262,6 +262,14 @@ class Manager:
                 job.update(state="failed", stage="failed", message=message)
             log.event(message)
         finally:
+            if job.get("authenticated_at") and private.get("username"):
+                try:
+                    with self.lock:
+                        saved = dict(self.config, steam_username=private["username"])
+                        atomic_json(self.paths.config, saved)
+                        self.config = saved
+                except OSError:
+                    log.event("登录已验证，但账号名保存失败；下次请重新填写账号名。")
             private.clear()
             log.finish()
             with self.lock:
