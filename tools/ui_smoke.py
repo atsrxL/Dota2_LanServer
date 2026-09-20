@@ -143,40 +143,7 @@ def main():
         assert page.locator('[data-page="bots"]').count() == 0
         assert page.locator('[data-command="bots"]').count() == 0
         results.append('Archived Bot controls are absent')
-        page.locator('[data-page="addon"]').click()
-        expect(page.locator('#addonAssetState')).to_contain_text('缺少')
-        expect(page.locator('#addonPhase')).to_contain_text('未运行附加模式')
-        expect(page.locator('#addonEvidence')).to_contain_text('尚无')
-        results.append('Addon page reports missing compiled UI and no fabricated engine heartbeat')
-        expect(page.locator('#addonAudit')).to_contain_text('尚未静态扫描')
-        results.append('Addon audit correctly reports no selected fixture')
-        page.screenshot(path=str(args.output/'lan-addon-panel-preview.png'),full_page=True)
-        page.set_viewport_size({'width':390,'height':844})
-        assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1')
-        page.screenshot(path=str(args.output/'lan-addon-mobile-preview.png'),full_page=True)
-        results.append('Addon page fits a 390px viewport')
-        page.set_viewport_size({'width':1440,'height':1080})
-        page.once('dialog',lambda dialog:dialog.accept())
-        page.locator('#addon [data-action="stop"]').click()
-        expect(page.locator('#serverState')).to_contain_text('当前未运行',timeout=15000)
-        page.locator('#addonEnabled').check()
-        page.locator('#addonForm button[type="submit"]').click()
-        expect(page.locator('#toast')).to_contain_text('配置已保存',timeout=10000)
-        expect(page.locator('#addon [data-action="addon_deploy"]')).to_be_enabled(timeout=10000)
-        page.locator('#addon [data-action="addon_deploy"]').click()
-        expect(page.locator('#addonDeployState')).to_contain_text('已部署',timeout=10000)
-        expect(page.locator('#addon [data-action="start"]')).to_be_enabled(timeout=10000)
-        page.locator('#addon [data-action="start"]').click()
-        expect(page.locator('#currentTask')).to_contain_text('当前没有任务',timeout=10000)
-        expect(page.locator('#serverState')).to_contain_text('当前未运行')
-        # Verify failed start is due to required assets, not a successful fake addon.
-        latest=json.loads(http_call('/api/jobs')['body'])[0]
-        assert latest['state']=='failed' and '编译' in latest['message'],latest
-        results.append('Stopped config/deploy succeeds; addon start fails safely with missing compiled UI')
-        report=json.loads(http_call('/api/addon/report')['body'])
-        assert report['addon']['runtime'] is None
-        assert report['addon']['audit']['runtime_verified'] is False
-        results.append('Export preserves unverified status rather than synthetic AI success')
+        assert page.locator('#addonForm').count() == 0
         help_page = context.new_page()
         if args.offline_transport:
             assert http_call('/help')['status']==200

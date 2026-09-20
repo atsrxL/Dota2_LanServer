@@ -63,7 +63,7 @@ function renderJobs(){
 }
 async function refreshExtra(){
   if(!csrf)return;
-  if(currentPage==='addon'&&window.AddonPanel)await window.AddonPanel.refresh();
+  if(currentPage==='overview'&&window.AddonPanel)await window.AddonPanel.refresh();
   if(currentPage==='backups')await loadBackups();
   if(currentPage==='logs'){const data=await api('/api/logs?name='+encodeURIComponent($('logChoice').value));$('mainLog').textContent=data.text;}
   if(currentPage==='steam'&&jobs.length){const data=await api('/api/logs?name='+encodeURIComponent(status?.active_job?.id||jobs[0].id));$('steamLog').textContent=data.text;}

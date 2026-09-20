@@ -17,15 +17,16 @@ PlayerResource={
  SetCustomTeamAssignment=function(_,i,t)players[i].team=t end,
  GetSteamAccountID=function(_,i)return i+1 end,
  GetPlayerName=function(_,i)return players[i].name end}
-local emitted={};local mode={SetFreeCourierModeEnabled=function(_,v)emitted.free_courier=v end,SetPauseEnabled=function(_,v)assert(v==true)end,SetBotThinkingEnabled=function(_,v)emitted.thinking=v end,
+local emitted={};local mode={SetModifyGoldFilter=function()end,SetFreeCourierModeEnabled=function(_,v)emitted.free_courier=v end,SetPauseEnabled=function(_,v)assert(v==true)end,SetBotThinkingEnabled=function(_,v)emitted.thinking=v end,
  SetContextThink=function(_,name,fn)emitted.tick=fn end}
-local state=2;local cheat=false
+local state=2;local cheat=false;local match_seconds=0
 GameRules={GetGameModeEntity=function()return mode end,IsCheatMode=function()return cheat end,
+ GetDOTATime=function(_,pregame,negative)assert(not pregame and not negative);return match_seconds end,
  State_Get=function()return state end,
  EnableCustomGameSetupAutoLaunch=function(_,v)emitted.autolaunch=v end,
  SetCustomGameSetupTimeout=function(_,v)emitted.timeout=v end,
  SetCustomGameTeamMaxPlayers=function()end,LockCustomGameSetupTeamAssignment=function()end,
- SetHeroSelectionTime=function()end,SetPreGameTime=function()end,
+ SetHeroSelectionTime=function(_,v)assert(v==45)end,SetPreGameTime=function(_,v)assert(v==45)end,
  FinishCustomGameSetup=function()emitted.finish=(emitted.finish or 0)+1;state=3 end,
  BotPopulate=function()emitted.fill=(emitted.fill or 0)+1;for i=2,9 do players[i]={team=i<5 and 2 or 3,conn=1,name='bot'} end end}
 CustomNetTables={SetTableValue=function(_,table,key,value) emitted.state=value end}
@@ -44,7 +45,7 @@ end
 act(0,'hello');act(1,'hello');assert(engine.room.host==0)
 -- Forged payload identity is ignored; engine source belongs to player 1.
 act(1,'options',{PlayerID=0,options={selection_seconds=90}})
-assert(emitted.reply.ok==0 and engine.room.options.selection_seconds==60)
+assert(emitted.reply.ok==0 and engine.room.options.selection_seconds==45)
 act(0,'options',{options={selection_seconds={1}}});assert(emitted.reply.ok==0 and engine.room.phase=='setup')
 act(0,'team',{team=2,role=1});act(1,'team',{team=3,role=2})
 act(0,'options',{options={bot_mode='tiandixing_native_lab',fill_bots=1,ack_unverified=1}})
@@ -75,9 +76,11 @@ recovered:tick();assert(resets==1)
 local filter
 mode.SetModifyGoldFilter=function(_,fn,ctx) filter=function(e)return fn(ctx,e)end end
 mode.SetFilterMoreGold=function(_,enabled) assert(enabled) end
-recovered.room.options.gold_percent=200
 recovered:start_match()
-local gain={gold=37};assert(filter(gain) and gain.gold==74)
+local gain={gold=100};assert(filter(gain) and gain.gold==100)
+match_seconds=600;gain={gold=100};assert(filter(gain) and gain.gold==125)
+match_seconds=900;gain={gold=100};assert(filter(gain) and gain.gold==150)
+match_seconds=0
 local loss={gold=-100};assert(filter(loss) and loss.gold==-100)
 local zero={gold=0};assert(filter(zero) and zero.gold==0)
 
@@ -96,9 +99,9 @@ players[1]=nil;solo:tick()
 soloact('solo_start',{gold_percent=0})
 assert(not solo.room.started)
 local before=emitted.finish
-soloact('solo_start',{gold_percent=150,radiant_difficulty=2,dire_difficulty=4})
+soloact('solo_start',{radiant_difficulty=2,dire_difficulty=4})
 assert(solo.room.started and players[0].team==2 and solo.room.options.fill_bots)
-assert(solo.room.options.gold_percent==150 and emitted.finish==before+1)
+assert(emitted.finish==before+1)
 soloact('solo_start',{})
 assert(emitted.finish==before+1)
 -- Tutorial fill uses configured team sizes, once, at strategy time.
@@ -113,8 +116,8 @@ PlayerResource.GetPlayerCountForTeam=function(_,team)local n=0;for _,p in pairs(
 local tutorial=Engine.new({client_revision='v1',session=string.rep('d',32),source_sha256='fixture',bot_available=true,bot={hero_pool=hero_pool}})
 tutorial:init();tutorial:tick()
 local function tutorialact(action,opts)emitted.listener(100,{action=action,revision=tutorial.room.revision,client_revision='v1',options=opts})end
-tutorialact('hello');tutorialact('solo_start',{radiant_player_number=4,dire_player_number=5,radiant_gold_multiplier=1.5})
-assert(tutorial.room.started and tutorial.room.options.radiant_gold_multiplier==1.5)
+tutorialact('hello');tutorialact('solo_start',{radiant_player_number=4,dire_player_number=5})
+assert(tutorial.room.started)
 state=4;tutorial:tick();assert(adds==8 and tutorial.bot_fill_deadline==nil)
 tutorial:tick();assert(adds==8 and random_calls==8 and not picked.npc_dota_hero_axe and hero_pool[1]=='axe')
 
@@ -170,6 +173,18 @@ PlayerResource.GetSelectedHeroEntity=function(_,pid)assert(pid==0);return ownHer
 assert(chats.button(tutorial,0,'self_bat_down'));assert(math.abs(bat-1.6)<0.0001)
 assert(chats.button(tutorial,0,'self_bat_up'));assert(math.abs(bat-1.7)<0.0001)
 assert(chats.button(tutorial,0,'self_bat_down'));assert(chats.button(tutorial,0,'self_bat_reset'));assert(bat==1.7)
+for i=1,3 do assert(chats.button(tutorial,0,'self_bat_down')) end
+assert(math.abs(bat-1.4)<0.00001 and not chats.button(tutorial,0,'self_bat_down'))
+assert(chats.button(tutorial,0,'self_bat_reset'))
+for i=1,3 do assert(chats.button(tutorial,0,'self_bat_up')) end
+assert(bat==2 and not chats.button(tutorial,0,'self_bat_up'))
+chats.handle(tutorial,{playerid=0,text='-basetime 0.8'});assert(bat==0.8 and ownHero.lan_initial_bat==1.7)
+chats.handle(tutorial,{playerid=0,text='-basetime 12'});assert(bat==12)
+for _,arg in ipairs({'0','-1','nan','inf','1;quit','1.7 2','1e999'}) do
+ chats.handle(tutorial,{playerid=0,text='-basetime '..arg});assert(bat==12)
+end
+assert(not chats.button(tutorial,0,'self_bat_down'))
+assert(chats.button(tutorial,0,'self_bat_reset'));assert(bat==1.7)
 for name in pairs(chats.abilities) do
  assert(chats.button(tutorial,0,'self_ability_'..name));assert(abilities[name].level==4)
  assert(not chats.button(tutorial,0,'self_ability_'..name))
@@ -232,6 +247,10 @@ state=8;tutorial:tick();assert(tutorial.room.phase=='postgame')
 
 -- Per-bot triangular stacks, reward carry, cap and three-layer kill reduction.
 local comeback=require('lan.bot_comeback')
+for _,row in ipairs({{-45,1},{0,1},{299,1},{300,1},{600,1.25},{900,1.5},{1800,1.5}}) do
+ match_seconds=row[1];assert(comeback.base()==row[2])
+end
+match_seconds=0
 local heroes={}
 local ce={room={phase='playing',options={radiant_gold_multiplier=1,dire_gold_multiplier=1,radiant_xp_multiplier=1,dire_xp_multiplier=1,gold_percent=100}},emit=function()end}
 PlayerResource.IsValidPlayerID=function(_,p)return p==0 or p==1 or p==2 end
@@ -255,9 +274,10 @@ assert(comeback.scale(ce,1,'xp',100,1)==160)
 comeback.hero_kill(ce,heroes[2],heroes[1]);comeback.hero_kill(ce,heroes[2],heroes[1]);assert(ce.bot_death_bonus[1]==0)
 comeback.killed(ce,heroes[1]);local total=0
 for i=1,10 do total=total+comeback.scale(ce,1,'gold',1,1) end;assert(total==11)
-assert(comeback.scale(ce,1,'xp',100,2)==210) -- configured starting multiplier retained
-assert(comeback.scale(ce,1,'gold',100,5)==500)
-assert(comeback.scale(ce,0,'gold',100,2)==200)
+match_seconds=600;assert(comeback.scale(ce,1,'xp',100)==135)
+match_seconds=900;assert(comeback.scale(ce,1,'gold',100)==160)
+assert(comeback.scale(ce,0,'gold',100)==150)
+match_seconds=0
 assert(comeback.scale(ce,1,'gold',-100,2)==-100)
 assert(comeback.bonus(ce,2,'xp')==0)
 comeback.hero_kill(ce,heroes[0],heroes[1]);assert(ce.bot_death_bonus[1]==1)
@@ -266,3 +286,9 @@ comeback.killed(ce,victim(1));assert(ce.bot_death_bonus[1]==1)
 heroes[1].IsReincarnating=function()return true end;comeback.killed(ce,heroes[1]);assert(ce.bot_death_bonus[1]==1)
 heroes[1].IsReincarnating=nil;heroes[1].IsIllusion=function()return true end;comeback.killed(ce,heroes[1]);assert(ce.bot_death_bonus[1]==1)
 assert(comeback.bonus({room=ce.room},1,'gold')==0)
+-- The shared clock baseline also retains fractional income for the human.
+match_seconds=600;ce.bot_reward_remainders=nil
+local small=0;for i=1,4 do small=small+comeback.scale(ce,0,'gold',1) end;assert(small==5)
+ce.bot_death_bonus[1]=9;match_seconds=1800
+assert(comeback.scale(ce,1,'gold',100)==500 and comeback.scale(ce,1,'xp',100)==500)
+match_seconds=0

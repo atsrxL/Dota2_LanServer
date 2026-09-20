@@ -29,10 +29,10 @@ vm.runInNewContext(source,sandbox,{filename:'lan_setup.js'});
 assert(sent[0].action==='hello');
 current={phase:'setup',revision:9,host:0,players:[{pid:0,hello:1}],bot_available:1,options:{radiant_difficulty:2,dire_difficulty:4,gold_percent:100,selection_seconds:60,pregame_seconds:30,allow_pause:1}};
 listeners.lan_room('lan_room','state',current);
-all.get('radiant_gold_multiplier').SetSelected('1.25');
-all.get('radiant_gold_multiplier').events.oninputsubmit();
+all.get('radiant_player_number').SetSelected('8');
+all.get('radiant_player_number').events.oninputsubmit();
 all.get('Start').events.onactivate();
-assert(sent.at(-1).action==='solo_start' && sent.at(-1).options.radiant_gold_multiplier===1.25);
+assert(sent.at(-1).action==='solo_start' && sent.at(-1).options.radiant_player_number===8);
 assert(!all.get('Start').enabled);
 handlers.lan_reply({ok:0,message:'invalid_number'});assert(all.get('Start').enabled);
 current.phase='playing';listeners.lan_room('lan_room','state',current);
@@ -55,7 +55,7 @@ assert(!all.has('SelectionSeconds') && !all.has('buyback_cooldown'));
 assert(all.get('respawn_time_percentage').selected==='30');
 assert(all.get('max_level').selected==='50');
 const rows=all.get('GameOptionSubpanelContainerInner').children.map(p=>p.id);
-for(const setting of ['difficulty','gold_multiplier','xp_multiplier','gold_start','player_number']){
+for(const setting of ['difficulty','player_number']){
  assert(rows.indexOf('dire_'+setting+'_Container')===rows.indexOf('radiant_'+setting+'_Container')+1);
 }
 
@@ -64,3 +64,8 @@ assert(sent.at(-1).tool==='self_add_ability' && sent.at(-1).ability_name==='axe_
 let beforeInvalid=sent.length;all.get('AbilityName').text='bad;quit';all.get('AbilityName').events.oninputsubmit();assert(sent.length===beforeInvalid);
 
 assert(!all.has('Add_faceless_void_distortion_field'));
+assert(!all.has('Add_beastmaster_inner_beast'));
+for(const id of ['PregameSeconds','radiant_gold_start','dire_gold_start','radiant_gold_multiplier','dire_gold_multiplier','radiant_xp_multiplier','dire_xp_multiplier']){
+ assert(!all.has(id));assert(!(id in sent.find(x=>x.action==='solo_start').options));
+}
+assert.deepStrictEqual([...xml.matchAll(/id="Add_([^"]+)"/g)].map(m=>m[1]),['death_prophet_witchcraft','razor_unstable_current','bloodseeker_thirst','winter_wyvern_eldwurms_edda','tinker_eureka','silencer_brain_drain']);

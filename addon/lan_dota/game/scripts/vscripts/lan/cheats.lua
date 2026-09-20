@@ -1,6 +1,6 @@
 -- Personal LAN chat cheats. This does not change the GC lobby cheat flag.
 local M={}
-M.abilities={death_prophet_witchcraft=true,winter_wyvern_eldwurms_edda=true,silencer_brain_drain=true,tinker_eureka=true,beastmaster_inner_beast=true,razor_unstable_current=true,bloodseeker_thirst=true}
+M.abilities={death_prophet_witchcraft=true,razor_unstable_current=true,bloodseeker_thirst=true,winter_wyvern_eldwurms_edda=true,tinker_eureka=true,silencer_brain_drain=true}
 function M.hero_tool(e,pid,action,input)
  local h=PlayerResource:GetSelectedHeroEntity(pid)
  if not h then return false,'尚未选择英雄' end
@@ -31,7 +31,11 @@ function M.hero_tool(e,pid,action,input)
   local value=h.lan_initial_bat
   if action~='self_bat_reset' then
    value=math.floor((h:GetBaseAttackTime(false)+(action=='self_bat_up' and 0.1 or -0.1))*100+0.5)/100
-   if value<0.1 or value>10 then return false,'基础攻击间隔范围为 0.1～10 秒' end
+   local low=math.max(0.01,h.lan_initial_bat-0.3)
+   local high=h.lan_initial_bat+0.3
+   if value<low-0.000001 or value>high+0.000001 then
+    return false,string.format('面板范围 %.2f～%.2f 秒；可用 -basetime 数值直接设置',low,high)
+   end
   end
   h:SetBaseAttackTime(value)
   e:emit('MENU_BAT',{pid=pid,value=h:GetBaseAttackTime(false),initial=h.lan_initial_bat})
@@ -42,7 +46,7 @@ end
 function M.handle(e,k)
  if type(k)~='table' or type(k.text)~='string' then return end
  local cmd,arg=k.text:match('^%s*(%-%a+)%s*(.-)%s*$')
- if cmd~='-gold' and cmd~='-lvlup' and cmd~='-refresh' and cmd~='-respawn' then return end
+ if cmd~='-gold' and cmd~='-lvlup' and cmd~='-refresh' and cmd~='-respawn' and cmd~='-basetime' then return end
  local pid=tonumber(k.playerid)
  -- player_chat is emitted by the engine, not a custom client payload.
  if not pid or not PlayerResource:IsValidPlayerID(pid) or not PlayerResource:GetPlayer(pid) then return end
@@ -51,7 +55,16 @@ function M.handle(e,k)
  local h=PlayerResource:GetSelectedHeroEntity(pid)
  if not h then return end
  local result={pid=pid,command=cmd}
- if cmd=='-gold' then
+ if cmd=='-basetime' then
+  local n=tonumber(arg)
+  if not arg:match('^%d*%.?%d+$') or not n or n~=n or n<=0 or n>=math.huge or n>3.4028234e38 or n<1.1754944e-38 then
+   e:reply(pid,false,'用法：-basetime 正数，例如 -basetime 1.7');return
+  end
+  if not h.lan_initial_bat then h.lan_initial_bat=h:GetBaseAttackTime(false) end
+  h:SetBaseAttackTime(n)
+  result.after=h:GetBaseAttackTime(false)
+  e:reply(pid,true,string.format('基础攻击间隔已设置为 %g 秒',n))
+ elseif cmd=='-gold' then
   local n=tonumber(arg)
   if not n or n~=math.floor(n) or math.abs(n)>999999 then e:reply(pid,false,'用法：-gold 整数（范围 -999999～999999）');return end
   local before=PlayerResource:GetGold(pid)
@@ -130,6 +143,6 @@ function M.init(e)
   local ok,err=pcall(M.handle,e,k)
   if not ok then e:emit('CHAT_CHEAT_ERROR',tostring(err));e:reply(tonumber(k.playerid),false,'作弊指令执行失败，已记录日志。') end
  end,nil)
- e:emit('CHAT_CHEATS','enabled: -gold -lvlup -refresh -respawn; addon_chat_bridge')
+ e:emit('CHAT_CHEATS','enabled: -gold -lvlup -refresh -respawn -basetime; addon_chat_bridge')
 end
 return M

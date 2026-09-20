@@ -78,11 +78,11 @@ def test_render_firewall_and_nginx():
     m=renderer();c=m.validate(json.loads((Path(__file__).parents[1]/'install/bootstrap.example.json').read_text()))
     fw=m.firewall(c);ng=m.nginx(c)
     assert 'policy_in: DROP' in fw and '-p udp -dport 27015' in fw
-    assert '-source 192.168.1.0/24' in fw and 'listen 8080;' in ng
+    assert '-source 192.168.1.0/24' in fw and '-p tcp -dport 80' in fw and 'listen 80;' in ng
     assert 'deny all;' in ng and ' ssl' not in ng and 'ssl_certificate' not in ng and '/api/login' not in ng
     assert 'proxy_pass http://127.0.0.1:8765;' in ng
 
 def test_render_rejects_config_injection():
     m=renderer();base=json.loads((Path(__file__).parents[1]/'install/bootstrap.example.json').read_text())
-    for patch in [{'hostname':'evil;}'},{'lan_cidrs':['0.0.0.0/0']},{'panel_port':True},{'timezone':'../../etc'}]:
+    for patch in [{'hostname':'evil;}'},{'lan_cidrs':['0.0.0.0/0']},{'panel_port':True},{'panel_port':0},{'game_port':80},{'timezone':'../../etc'}]:
         with pytest.raises((ValueError,AssertionError)):m.validate(base|patch)

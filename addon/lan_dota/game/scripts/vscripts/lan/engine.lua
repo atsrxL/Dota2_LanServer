@@ -89,11 +89,11 @@ function Engine:dispatch(source,keys)
         if ok then
             local raw=keys.options
             local value={bot_mode='tiandixing_native_lab',fill_bots=true,ack_unverified=true}
-            local allowed={radiant_gold_multiplier=true,radiant_xp_multiplier=true,radiant_gold_start=true,radiant_player_number=true,dire_gold_multiplier=true,dire_xp_multiplier=true,dire_gold_start=true,dire_player_number=true,respawn_time_percentage=true,buyback_cooldown=true,tower_power=true,tower_endure=true,max_level=true,radiant_difficulty=true,dire_difficulty=true,gold_percent=true,selection_seconds=true,pregame_seconds=true}
+            local allowed={radiant_player_number=true,dire_player_number=true,respawn_time_percentage=true,buyback_cooldown=true,tower_power=true,tower_endure=true,max_level=true,radiant_difficulty=true,dire_difficulty=true}
             if type(raw)~='table' then ok=false else
                 for k,v in pairs(raw) do
                     if not allowed[k] then ok=false
-                    else value[k]=numeric(v);if (k=='radiant_gold_multiplier' or k=='dire_gold_multiplier' or k=='radiant_xp_multiplier' or k=='dire_xp_multiplier') and (type(v)=='number' or type(v)=='string') then value[k]=tonumber(v) end;if value[k]==nil then ok=false end end
+                    else value[k]=numeric(v);if value[k]==nil then ok=false end end
                 end
             end
             if not ok then err='invalid_options'
@@ -125,7 +125,7 @@ function Engine:dispatch(source,keys)
         local raw=keys.options
         if type(raw)=='table' then
             local allowed={bot_mode=true,fill_bots=true,ack_unverified=true,radiant_difficulty=true,dire_difficulty=true,
-                selection_seconds=true,pregame_seconds=true,gold_percent=true}
+                selection_seconds=true,pregame_seconds=true}
             local value={}; local unknown=false
             for k,v in pairs(raw) do
                 if not allowed[k] then unknown=true
@@ -155,19 +155,18 @@ function Engine:dispatch(source,keys)
 end
 function Engine:start_match()
     local r=self.room; local o=r.options
-    if o.gold_percent~=100 and not method(self.mode,'SetModifyGoldFilter') then
+    if not method(self.mode,'SetModifyGoldFilter') then
         self:error('gold_filter_unavailable'); return
     end
     if method(self.mode,'SetModifyGoldFilter') then
         if method(self.mode,'SetFilterMoreGold') then self.mode:SetFilterMoreGold(true) end
         self.mode:SetModifyGoldFilter(function(_,event)
             if type(event.gold)=='number' and event.gold>0 then
-                local side=method(PlayerResource,'GetTeam') and PlayerResource:GetTeam(event.player_id_const)==3 and 'dire' or 'radiant'
-                event.gold=require('lan.bot_comeback').scale(self,event.player_id_const,'gold',event.gold,o.gold_percent/100*o[side..'_gold_multiplier'])
+                event.gold=require('lan.bot_comeback').scale(self,event.player_id_const,'gold',event.gold)
             end
             return true
         end,self)
-        self:emit('GOLD_RULE',{percent=o.gold_percent,scope='positive_gold_filter_events'})
+        self:emit('GOLD_RULE',{base_start_seconds=300,base_end_seconds=900,base_max=1.5,scope='positive_gold_filter_events'})
     end
     require('lan.rules').start(self)
     r:begin() -- latch before any engine side effect / duplicate event

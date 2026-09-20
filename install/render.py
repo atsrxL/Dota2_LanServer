@@ -16,7 +16,7 @@ def validate(raw):
     if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9.-]{0,62}', d['hostname']):
         raise ValueError('hostname 无效')
     for key in ('panel_port', 'game_port'):
-        if type(d[key]) is not int or not 1024 <= d[key] <= 65535:
+        if type(d[key]) is not int or not (key == 'panel_port' and d[key] == 80 or 1024 <= d[key] <= 65535):
             raise ValueError('端口范围无效')
     if not re.fullmatch(r'[A-Za-z0-9_+/-]+', d['timezone']) or '..' in d['timezone']:
         raise ValueError('timezone 无效')

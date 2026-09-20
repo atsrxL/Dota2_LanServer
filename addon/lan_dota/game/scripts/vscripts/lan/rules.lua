@@ -17,8 +17,7 @@ function M.start(e)
  GameRules:SetCustomGameTeamMaxPlayers(2,o.radiant_player_number)
  GameRules:SetCustomGameTeamMaxPlayers(3,o.dire_player_number)
  if mode.SetModifyExperienceFilter then mode:SetModifyExperienceFilter(function(_,v)
-  local side=PlayerResource:GetTeam(v.player_id_const)==3 and 'dire' or 'radiant'
-  if v.experience and v.experience>0 then v.experience=require('lan.bot_comeback').scale(e,v.player_id_const,'xp',v.experience,o[side..'_xp_multiplier']) end
+  if v.experience and v.experience>0 then v.experience=require('lan.bot_comeback').scale(e,v.player_id_const,'xp',v.experience) end
   return true
  end,e) end
  if o.max_level~=30 and mode.SetCustomHeroMaxLevel then
@@ -52,8 +51,6 @@ function M.tick(e,phase)
    h.lan_initialized=true
    local bat_ok,bat=pcall(h.GetBaseAttackTime,h,false)
    if bat_ok then h.lan_initial_bat=bat else e:emit('BAT_INIT_WARNING',tostring(bat)) end
-   local side=h:GetTeamNumber()==3 and 'dire' or 'radiant'
-   h:SetGold(0,true);h:SetGold(o[side..'_gold_start'],false)
   end
  end
  if not e.buildings_applied then

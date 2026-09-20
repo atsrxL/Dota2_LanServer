@@ -14,7 +14,7 @@ assert(not r:check_team(1,r.revision,2,1))
 assert(r:check_team(1,r.revision,3,2));r:assign(1,3,2)
 assert(r:set_ready(0,r.revision,true));assert(not r:can_start(0,r.revision))
 assert(r:set_ready(1,r.revision,true));assert(r:can_start(0,r.revision))
-assert(r:set_options(0,r.revision,{selection_seconds=80}));assert(not r.players[0].ready)
+assert(r:set_options(0,r.revision,{radiant_difficulty=3}));assert(not r.players[0].ready)
 assert(not r:set_options(0,r.revision,{cheats=true}))
 assert(not r:set_options(0,r.revision,{selection_seconds=5}))
 assert(not r:set_options(0,r.revision,{bot_mode='tiandixing_native_lab'}))
@@ -45,8 +45,8 @@ do
  local r=Room.new(function()return 0 end,'v1')
  r:sync({{pid=0,identity='solo',connected=true,team=2,name='Solo'}})
  r:hello(0,'v1');r.phase='setup'
- assert(r:set_options(0,r.revision,{radiant_difficulty=4,dire_difficulty=0,radiant_gold_multiplier=1.25,dire_xp_multiplier=1.35}))
- assert(r:set_options(0,r.revision,{radiant_gold_multiplier=5}))
+ assert(r:set_options(0,r.revision,{radiant_difficulty=4,dire_difficulty=0}))
+ assert(not r:set_options(0,r.revision,{radiant_gold_multiplier=5}))
  assert(not r:set_options(0,r.revision,{radiant_gold_multiplier=5.1}))
  assert(not r:set_options(0,r.revision,{radiant_gold_multiplier=1.1}))
  assert(not r:set_options(0,r.revision,{universal_shop=1}))
@@ -90,4 +90,14 @@ end
 local defaults=Room.new(function()return 0 end,'defaults').options
 assert(defaults.radiant_difficulty==1 and defaults.dire_difficulty==4)
 assert(defaults.respawn_time_percentage==30 and defaults.buyback_cooldown==60)
-assert(defaults.max_level==50 and defaults.selection_seconds==60 and defaults.pregame_seconds==30)
+assert(defaults.max_level==50 and defaults.selection_seconds==45 and defaults.pregame_seconds==45)
+do
+ local r=Room.new(function()return 0 end,'v1')
+ r:sync({{pid=0,identity='solo',connected=true,team=2,name='Solo'}})
+ r:hello(0,'v1');r.phase='setup'
+ for _,key in ipairs({'radiant_gold_start','dire_gold_start','radiant_gold_multiplier','dire_gold_multiplier','radiant_xp_multiplier','dire_xp_multiplier','gold_percent'}) do
+  assert(not r:set_options(0,r.revision,{[key]=1}))
+ end
+ assert(not r:set_options(0,r.revision,{selection_seconds=60}))
+ assert(not r:set_options(0,r.revision,{pregame_seconds=30}))
+end

@@ -7,7 +7,7 @@
     <p class="nav-caption">工作空间</p><nav id="navigation">
       <button data-page="overview" class="nav active"><span>◈</span>运行概览</button>
       <button data-page="steam" class="nav"><span>↓</span>SteamCMD</button>
-      <button data-page="addon" class="nav"><span>◇</span>LAN 附加模式</button>
+
       <button data-page="jobs" class="nav"><span>≡</span>任务记录</button>
       <button data-page="logs" class="nav"><span>›_</span>日志与控制台</button>
       <button data-page="settings" class="nav"><span>⚙</span>服务器配置</button>
@@ -21,7 +21,7 @@
     <div id="pendingInput" class="notice input-notice" hidden><div><strong id="inputTitle">任务需要输入</strong><p id="inputMessage"></p></div><form id="taskInputForm"><input id="taskSecret" type="password" autocomplete="off" placeholder="一次性输入，不保存" required><button type="submit" class="primary">提交一次性输入</button></form></div>
     <section id="overview" class="page">
       <div class="hero card"><div><p class="eyebrow">SERVER / INSTANCE 01</p><h2 id="serverName">Dota 2 LAN</h2><p id="serverState" class="state-line">正在读取代理状态…</p><p class="muted">网页只是控制入口，关闭页面不会停止下载或对局。</p><div class="button-row"><button class="primary action" data-action="start">启动服务器</button><button class="secondary action" data-action="restart">重启</button><button class="danger-button action" data-action="stop">停止</button></div></div><div class="hero-side"><span class="badge accent">LAN ONLY</span><p>CLIENT CONNECTION</p><code id="connectCommand">connect —:27015</code><button id="copyConnect" class="ghost">复制连接命令 ↗</button></div></div>
-      <div class="metric-grid"><article class="metric card"><span>游戏运行时间</span><strong id="uptime">—</strong><small id="pid">等待进程启动</small></article><article class="metric card"><span>容器内存 / cgroup</span><strong id="memory">—</strong><small>无有效 cgroup 数据时不伪造数值</small></article><article class="metric card"><span>剩余磁盘</span><strong id="disk">—</strong><small id="diskTotal">—</small></article><article class="metric card"><span>本地 Build ID</span><strong id="buildId">未安装</strong><small id="udpState">UDP 监听待检查</small></article></div>
+<article class="card"><h3>天地星单人对战</h3><p id="addonSummary">读取资源状态…</p><a href="/api/addon/report">下载游戏诊断报告</a></article>      <div class="metric-grid"><article class="metric card"><span>游戏运行时间</span><strong id="uptime">—</strong><small id="pid">等待进程启动</small></article><article class="metric card"><span>容器内存 / cgroup</span><strong id="memory">—</strong><small>无有效 cgroup 数据时不伪造数值</small></article><article class="metric card"><span>剩余磁盘</span><strong id="disk">—</strong><small id="diskTotal">—</small></article><article class="metric card"><span>本地 Build ID</span><strong id="buildId">未安装</strong><small id="udpState">UDP 监听待检查</small></article></div>
       <article id="resourceMonitor" class="card resource-monitor">
         <div class="section-head"><div><p class="eyebrow">LIVE RESOURCES / READ-ONLY</p><h3>CPU 与内存实时监控</h3></div><span id="resourceState" class="badge">首次采样中</span></div>
         <p id="resourceFreshness" class="footnote">每 2 秒刷新；页面隐藏时暂停，返回自动恢复。</p>
@@ -46,28 +46,7 @@
       <article class="card"><h3>安装与维护</h3><p class="muted">耗时任务由独立运行代理管理。重复任务会被拒绝；任务中断后先完成校验。</p><div class="stack-buttons"><button class="primary steam-action" data-action="install">↓ 安装 Dota 2（含校验）</button><button class="secondary steam-action" data-action="update">↻ 更新现有安装</button><button class="secondary steam-action" data-action="validate">✓ 校验 / 修复游戏文件</button></div><label class="check"><input id="stopForUpdate" type="checkbox">允许本次维护先停止正在运行的服务器</label><label class="check"><input id="restartAfter" type="checkbox">成功后恢复原先运行中的服务器</label><p class="footnote">这两项默认关闭。更新失败不自动开服，不会定时打断对局。校验可能覆盖对 Valve 原始文件的修改。</p></article></div>
       <article class="card"><div class="section-head"><h3>最近任务输出</h3><button id="cancelTask" class="danger-button">取消当前 SteamCMD 任务</button></div><pre id="steamLog" class="console">暂无任务日志。</pre></article>
     </section>
-    <section id="addon" class="page" hidden>
-      <div class="notice subtle" id="addonWarning">标准 dota 地图 + 游戏内准备界面 + 天地星原生 Bot 实验，不连接私人 GC。</div>
-      <div id="addonRecovery" class="notice danger" hidden></div>
-      <div class="two-columns"><article class="card"><p class="eyebrow">01 / LAUNCH &amp; ASSETS</p><h3>附加模式启动</h3>
-        <form id="addonForm" class="form-stack">
-          <label class="check"><input id="addonEnabled" type="checkbox">启用 LAN 附加模式（固定标准 dota 地图）</label>
-          <label>实验启动策略<select id="addonLaunch"><option value="custom_command">dota_launch_custom_game（旧候选，当前 Linux 不支持）</option><option value="addon_flag">map customgamemode（当前 Linux 已挂载验证）</option></select></label>
-          <div class="button-row"><button class="primary" type="submit">停服后保存设置</button><button id="addonReload" type="button" class="ghost">重新读取</button></div>
-        </form>
-        <p class="footnote">普通模式的 map / game_mode 不应用到附加模式。本服固定使用天地星 AI，游戏内选择难度和人数。默认开启 sv_cheats。</p>
-        <h4 id="addonAssetState">读取资源状态…</h4><p id="addonAssetReason" class="muted"></p><code id="addonSourceHash" class="hash-wrap"></code><p id="addonDeployState"></p>
-        <div class="button-row"><button class="secondary action" data-action="addon_deploy">停服部署模块</button><button class="primary action" data-action="start">启动已选模式</button><button class="danger-button action" data-action="stop">停止</button></div>
-        <p class="footnote">Panorama 源码必须先由本地 Workshop Tools 编译。接手文件提供双端打包工具；不把 XML 改名成已编译资源。客户端也需要同版 UI。</p>
-      </article><article class="card"><p class="eyebrow">02 / IN-GAME PREPARATION</p><h3 id="addonPhase">等待引擎状态</h3><p id="addonSession" class="footnote"></p>
-        <div id="addonPlayers" class="empty">玩家 connect 后在游戏里选择队伍、意向位置、参数与准备。</div>
-        <div class="button-row"><button id="addonStatusRequest" class="secondary">请求状态</button><button id="addonReleaseHost" class="ghost">重新选举配置者</button></div>
-        <div class="notice subtle">网页不远程跳过准备直接开局。游戏内参数变化会清除准备；配置者点击开始才推进选人。意向位置不等于天地星槽位已还原。</div>
-      </article></div>
-      <div class="two-columns"><article class="card"><p class="eyebrow">03 / TIANDIXING COMPATIBILITY</p><h3>脚本静态审计</h3><pre id="addonAudit" class="audit-output">尚未扫描。</pre><button class="secondary action" data-action="addon_scan">扫描已选天地星版本</button><p class="footnote">仅扫描文本和文件完整性，不把第三方 Bot Lua require 到游廊 VM，不实现伪 GetBot。</p></article>
-      <article class="card"><h3>真实进程探针证据</h3><pre id="addonEvidence" class="audit-output">尚无运行证据。</pre><a class="button secondary" href="/api/addon/report">导出本轮验证报告 JSON ↓</a><p class="footnote">入口、回调执行和 API 存在性分别记录；不自动勾选完整 AI 验收。报告含游戏内名称和路径，分享前检查。</p></article></div>
-      <article class="card"><h3>当前进程实验事件</h3><pre id="addonEvents" class="console">暂无事件。</pre></article>
-    </section>
+
     <section id="jobs" class="page" hidden><article class="card"><div class="section-head"><h3>任务历史</h3><span class="muted">保留最近 100 条</span></div><div class="table-wrap"><table><thead><tr><th>任务 / ID</th><th>状态</th><th>阶段</th><th>开始时间</th><th>结果</th></tr></thead><tbody id="jobTable"></tbody></table></div></article></section>
     <section id="logs" class="page" hidden><article class="card"><div class="section-head"><h3>日志流</h3><div class="button-row"><select id="logChoice" aria-label="日志来源"><option value="server">游戏服务器</option><option value="agent">运行代理</option></select><button id="refreshLog" class="ghost">刷新</button></div></div><pre id="mainLog" class="console tall">暂无日志。</pre><p class="footnote">展示最近约 48 KiB；日志会轮转。这里不是 SSH，也不接受任意 Shell 命令。</p></article><article class="card"><h3>受限游戏控制台</h3><div class="button-row"><button class="secondary console-preset" data-command="status">status</button><button class="secondary console-preset" data-command="pause">暂停 / 恢复</button></div><form id="sayForm" class="inline-form"><input id="sayText" maxlength="160" placeholder="向游戏内发送消息" required><button class="secondary" type="submit">发送 say</button></form><p class="footnote">命令会写入游戏 PTY。机器人、暂停及聊天能否生效取决于当前 Dota 2 模式/版本，请核对输出。</p></article></section>
     <section id="settings" class="page" hidden><form id="configForm" class="card"><div class="section-head"><h3>启动配置</h3><button id="reloadConfig" type="button" class="ghost">重新读取</button></div><div class="form-grid"><label>服务器名称<input name="hostname" maxlength="80" required></label><label>游戏端口<input name="port" type="number" min="1024" max="65535" required></label><label>初始地图<input name="map" required></label><label>游戏模式编号<input name="game_mode" type="number" min="0" max="30" required><small>1 = 常用 All Pick；0 = 不强制模式。兼容性以游戏实际响应为准。</small></label><label>游戏连接密码<input name="game_password" type="password" maxlength="64" autocomplete="off"></label><label>保存的 Steam 账号名<input name="steam_username" autocomplete="off"></label></div><div class="form-grid"><label class="check"><input name="auto_start" type="checkbox">代理启动时自动开服（安装完整时）</label><label class="check"><input name="auto_restart" type="checkbox">崩溃自动拉起（10 分钟最多 3 次）</label><label class="check"><input name="cheats" type="checkbox">允许游戏作弊指令（训练用途）</label><label class="check"><input name="insecure" type="checkbox">启用 -insecure（关闭服务器 VAC，非默认）</label></div><div class="notice subtle">sv_lan 固定为 1。更改游戏端口不会自动修改 PVE 防火墙；所有游戏启动参数在下次开服时生效。无任意可执行路径或启动 Shell 输入框。</div><button type="submit" class="primary">保存配置</button></form></section>

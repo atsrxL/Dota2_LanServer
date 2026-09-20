@@ -10,7 +10,7 @@ load_config() {
   source "$file"
   : "${CTID:?}" "${CT_HOSTNAME:?}" "${ROOTFS_STORAGE:?}" "${TEMPLATE_STORAGE:?}" "${BRIDGE:?}"
   TEMPLATE=${TEMPLATE:-auto}; IPV4=${IPV4:-dhcp}; GATEWAY=${GATEWAY:-}; DNS=${DNS:-}
-  VLAN_TAG=${VLAN_TAG:-}; LAN_CIDRS=${LAN_CIDRS:-auto}; PANEL_PORT=${PANEL_PORT:-8080}
+  VLAN_TAG=${VLAN_TAG:-}; LAN_CIDRS=${LAN_CIDRS:-auto}; PANEL_PORT=${PANEL_PORT:-80}
   GAME_PORT=${GAME_PORT:-27015}; TIMEZONE=${TIMEZONE:-Asia/Tokyo}; SWAP_MIB=${SWAP_MIB:-1024}
   SSH_PUBLIC_KEY_FILE=${SSH_PUBLIC_KEY_FILE:-}; STEAMCMD_ARCHIVE_SHA256=${STEAMCMD_ARCHIVE_SHA256:-}
   [[ "$CTID" =~ ^[1-9][0-9]{2,8}$ ]] || fail "CTID 必须为 >=100 的数字"
@@ -20,7 +20,7 @@ load_config() {
   done
   [[ "$SWAP_MIB" =~ ^[0-9]+$ ]] || fail "SWAP_MIB 无效"
   [[ "$PANEL_PORT" =~ ^[0-9]+$ && "$GAME_PORT" =~ ^[0-9]+$ ]] || fail "端口必须为数字"
-  ((PANEL_PORT >= 1024 && PANEL_PORT <= 65535 && GAME_PORT >= 1024 && GAME_PORT <= 65535)) || fail "端口范围 1024..65535"
+  (((PANEL_PORT == 80 || (PANEL_PORT >= 1024 && PANEL_PORT <= 65535)) && GAME_PORT >= 1024 && GAME_PORT <= 65535)) || fail "面板端口为 80 或 1024..65535，游戏端口为 1024..65535"
   [[ -z "$VLAN_TAG" || "$VLAN_TAG" =~ ^[0-9]+$ ]] || fail "VLAN 无效"
   if [[ -n "$VLAN_TAG" ]]; then ((VLAN_TAG >= 1 && VLAN_TAG <= 4094)) || fail "VLAN 范围 1..4094"; fi
   python3 - "$IPV4" "$GATEWAY" "$LAN_CIDRS" "$DNS" <<'PY'
