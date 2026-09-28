@@ -95,8 +95,13 @@ async function poll(){
   catch(e){$('apiState').textContent='连接异常';$('apiState').classList.remove('accent');showMessage(e.message,true);}
   finally{polling=false;}
 }
+function versionLabel(s){
+  const b=s.build||{};
+  const commit=b.commit?b.commit.slice(0,7)+(b.dirty?'（含未提交改动）':''):'未记录提交';
+  return 'v'+s.version+' · '+commit+(b.deployed_at?' · 部署于 '+localDate(b.deployed_at):'');
+}
 async function initializePanel(){
-  const s=await api('/api/session'); csrf=s.csrf; $('version').textContent='v'+s.version;
+  const s=await api('/api/session'); csrf=s.csrf; $('version').textContent=versionLabel(s);
   if(!config)await loadConfig();
 }
 async function submitAction(action, extra={}){

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Compile the staged Panorama sources with the official Windows resourcecompiler under Wine.
 
-Setup and verified depots are recorded in docs/LINUX_PANORAMA_BUILD.md. Run as the steam
+Environment and the full release flow are described in docs/RELEASE.md. Run as the steam
 user after `tools/addon_assets.py stage --dota-root <tools-root> --apply`; this tool
 only compiles what is already staged and never edits repository files.
 """

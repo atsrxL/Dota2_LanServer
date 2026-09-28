@@ -55,8 +55,11 @@ install -d -o root -g root -m 0755 /opt/dota2-lan-kit
 install -d -o root -g dotapanel -m 0750 /etc/dota-panel
 # Game/cache/state are outside the code tree and are NEVER --delete targets.
 rsync -a --delete --exclude='__pycache__' --exclude='*.pyc' "$SOURCE/panel/" /opt/dota2-lan-kit/panel/
-for dir in docs config addon; do rsync -a --delete "$SOURCE/$dir/" "/opt/dota2-lan-kit/$dir/"; done
-cp "$SOURCE/README.md" "$SOURCE/AGENTS.md" "$SOURCE/CODEX_HANDOFF.md" /opt/dota2-lan-kit/
+for dir in docs config tools scripts; do rsync -a --delete --exclude='__pycache__' "$SOURCE/$dir/" "/opt/dota2-lan-kit/$dir/"; done
+# compiled/ and its backups are server build products (tools/release.py); never delete them.
+rsync -a --delete --exclude='lan_dota/compiled/' --exclude='*.compiled-backup-*' "$SOURCE/addon/" /opt/dota2-lan-kit/addon/
+cp "$SOURCE/README.md" "$SOURCE/AGENTS.md" "$SOURCE/VERSION" /opt/dota2-lan-kit/
+if [[ -f "$SOURCE/BUILD.json" ]]; then cp "$SOURCE/BUILD.json" /opt/dota2-lan-kit/; fi
 chown -R root:root /opt/dota2-lan-kit
 find /opt/dota2-lan-kit -type d -exec chmod 0755 {} +
 find /opt/dota2-lan-kit -type f -exec chmod 0644 {} +

@@ -9,7 +9,7 @@ from tools.build_windows_client import publish
 def steps(monkeypatch):
     calls = []
     monkeypatch.setattr(r, 'as_user', lambda user, args: calls.append(('as_user', user, Path(args[1]).name)) if args[0] != 'find' else calls.append(('prune',)))
-    monkeypatch.setattr(r.addon_assets, 'collect', lambda s, t, a: calls.append(('collect', a.name)))
+    monkeypatch.setattr(r.addon_assets, 'collect', lambda s, t, a: (a.write_bytes(b'zip'), calls.append(('collect', a.name))))
     monkeypatch.setattr(r.addon_assets, 'import_assets', lambda s, a, apply, replace_invalid: calls.append(('import', apply, replace_invalid)))
     monkeypatch.setattr(r, 'compiled_status', lambda s: {'ready': True, 'source_sha256': 'abc'})
     monkeypatch.setattr(r, 'build', lambda s, o, v: calls.append(('build', v)) or {'files': {'exe': {}}})
@@ -39,3 +39,21 @@ def test_publish_replaces_files_and_leaves_no_staging(tmp_path):
     publish(built, out, ['a.exe', 'manifest.json'])
     assert (out / 'a.exe').read_text() == 'new' and (out / 'manifest.json').exists()
     assert sorted(p.name for p in out.iterdir()) == ['a.exe', 'manifest.json']
+
+
+def test_release_archives_and_rotates_only_marked_releases(steps, tmp_path):
+    artifacts = tmp_path / 'artifacts'; artifacts.mkdir()
+    (artifacts / 'r24').mkdir()  # hand-made, no marker: never pruned
+    source = tmp_path / 'addon' / 'lan_dota'; source.mkdir(parents=True)
+    for i in range(5):
+        (source.parent / f'lan_dota.compiled-backup-{i}').mkdir()
+    out = tmp_path / 'client'; out.mkdir(); (out / 'manifest.json').write_text('{}')
+    for v in ('r25', 'r26', 'r27', 'r28'):
+        r.release(v, source, tmp_path, out, None, False, log=lambda _: None, artifacts=artifacts, keep=3)
+    kept = sorted(p.name for p in artifacts.iterdir())
+    assert kept == ['r24', 'r26', 'r27', 'r28']
+    assert (artifacts / 'r28' / 'lan-dota-r28-compiled.zip').read_bytes() == b'zip'
+    assert (artifacts / 'r28' / 'manifest.json').exists() and (artifacts / 'r28' / 'release.json').exists()
+    assert len(list(source.parent.glob('lan_dota.compiled-backup-*'))) == 3
+    with pytest.raises(Fault):
+        r.release('r28', source, tmp_path, out, None, False, log=lambda _: None, artifacts=artifacts)

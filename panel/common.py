@@ -11,6 +11,24 @@ from pathlib import Path
 from typing import Any
 
 VERSION = "1.3.0"
+KIT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def build_info(root: Path = KIT_ROOT) -> dict:
+    """Commit recorded by scripts/package.py and the deploy time from tools/deploy_kit.py."""
+    info = {"version": VERSION, "commit": None, "dirty": False, "deployed_at": None}
+    for name in ("BUILD.json", "DEPLOYED.json"):
+        try:
+            doc = json.loads((root / name).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(doc, dict):
+            for key in ("commit", "dirty", "deployed_at"):
+                if key in doc:
+                    info[key] = doc[key]
+    if not (isinstance(info["commit"], str) and re.fullmatch(r"[0-9a-f]{40}", info["commit"])):
+        info["commit"] = None
+    return info
 DEFAULT_CONFIG = {
     "schema": 1, "hostname": "Dota 2 LAN", "port": 27015, "map": "dota",
     "game_mode": 1, "game_password": "", "insecure": False, "cheats": False,

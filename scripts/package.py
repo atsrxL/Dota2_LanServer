@@ -3,13 +3,16 @@
 from __future__ import annotations
 import argparse
 import hashlib
+import json
 import re
 import stat
+import subprocess
 import zipfile
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ROOT_FILES = {'.gitignore', 'AGENTS.md', 'CODEX_HANDOFF.md', 'CODEX_LAN_HANDOFF.md', 'LICENSE', 'README.md', 'VERSION',
+ROOT_FILES = {'.gitignore', 'AGENTS.md', 'BUILD.json', 'LICENSE', 'README.md', 'VERSION',
               'requirements-dev.txt', 'requirements-ui.txt'}
 DIRECTORIES = {'config', 'docs', 'install', 'panel', 'pve', 'scripts', 'systemd', 'tests', 'tools', 'addon', 'compat'}
 
@@ -18,6 +21,9 @@ def allowed(path: Path) -> bool:
     rel = path.relative_to(ROOT)
     if any(part in {'.git', '.venv', '__pycache__', '.pytest_cache', 'node_modules'} for part in rel.parts):
         return False
+    # Compiled UI is a server build product (tools/release.py), not packaged source.
+    if rel.parts[:3] == ('addon', 'lan_dota', 'compiled'):
+        return False
     if rel.as_posix() == 'pve/lxc.env' or any(any(tag in part for tag in ('.backup-', 'source-backup-', 'compiled-backup-')) for part in rel.parts):
         return False
     if path.suffix in {'.pyc', '.pyo', '.zip', '.key', '.pem'} or '.local.' in path.name:
@@ -25,6 +31,19 @@ def allowed(path: Path) -> bool:
     if path.name in {'.env', 'auth.json', 'web.json', 'dota-panel-credentials.txt', 'server.json'}:
         return False
     return (len(rel.parts) == 1 and path.name in ROOT_FILES) or rel.parts[0] in DIRECTORIES
+
+
+def write_build(version: str) -> None:
+    """Record which commit this package came from; the panel footer and deploy_kit read it."""
+    def git(*args):
+        return subprocess.run(['git', *args], cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip()
+    try:
+        commit, dirty = git('rev-parse', 'HEAD'), bool(git('status', '--porcelain', '--untracked-files=no'))
+    except (OSError, subprocess.CalledProcessError):
+        raise SystemExit('Packaging needs a git checkout to record the commit')
+    build = {'version': version, 'commit': commit, 'dirty': dirty,
+             'built_at': datetime.now(timezone.utc).isoformat(timespec='seconds')}
+    (ROOT/'BUILD.json').write_text(json.dumps(build, indent=2) + '\n', encoding='utf-8')
 
 
 def main() -> None:
@@ -38,6 +57,7 @@ def main() -> None:
     version = (ROOT/'VERSION').read_text().strip()
     if not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+', version):
         raise SystemExit('Invalid VERSION')
+    write_build(version)
     files = sorted(p for p in ROOT.rglob('*') if p.is_file() and allowed(p))
     if any(p.is_symlink() for p in files):
         raise SystemExit('Refusing source symlinks; review the tree first')

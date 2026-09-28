@@ -8,7 +8,7 @@ from http import HTTPStatus
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 from .agent import rpc
-from .common import VERSION, Fault, read_json
+from .common import VERSION, Fault, build_info, read_json
 from . import client_downloads
 
 STATIC = Path(__file__).parent / "static"
@@ -55,7 +55,8 @@ class WebApp:
                 body = (STATIC / name).read_bytes()
             elif method == "GET" and path == "/api/session":
                 body = self._json({"auth_required": False, "mode": "lan-no-auth",
-                                   "csrf": self.csrf, "transport": "http", "version": VERSION})
+                                   "csrf": self.csrf, "transport": "http", "version": VERSION,
+                                   "build": build_info()})
             elif method == "POST":
                 routes = {"/api/actions": "submit", "/api/config": "save_config", "/api/input": "input",
                           "/api/cancel": "cancel", "/api/console": "console", "/api/addon": "save_addon"}
