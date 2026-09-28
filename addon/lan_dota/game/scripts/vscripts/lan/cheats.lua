@@ -1,5 +1,6 @@
 -- Personal LAN chat cheats. This does not change the GC lobby cheat flag.
 local M={}
+M.bat_min,M.bat_max=0.1,10
 M.abilities={death_prophet_witchcraft=true,razor_unstable_current=true,bloodseeker_thirst=true,winter_wyvern_eldwurms_edda=true,tinker_eureka=true,silencer_brain_drain=true}
 function M.hero_tool(e,pid,action,input)
  local h=PlayerResource:GetSelectedHeroEntity(pid)
@@ -30,10 +31,14 @@ function M.hero_tool(e,pid,action,input)
   if not h.lan_initial_bat then h.lan_initial_bat=h:GetBaseAttackTime(false) end
   local value=h.lan_initial_bat
   if action~='self_bat_reset' then
-   value=math.floor((h:GetBaseAttackTime(false)+(action=='self_bat_up' and 0.1 or -0.1))*100+0.5)/100
-   local low=math.max(0.01,h.lan_initial_bat-0.3)
+   local current=h:GetBaseAttackTime(false)
+   local up=action=='self_bat_up'
+   local low=math.max(M.bat_min,h.lan_initial_bat-0.3)
    local high=h.lan_initial_bat+0.3
-   if value<low-0.000001 or value>high+0.000001 then
+   -- Clamp so a value set by -basetime outside the range steps back to the nearest edge.
+   value=math.floor((current+(up and 0.1 or -0.1))*100+0.5)/100
+   value=math.max(low,math.min(high,value))
+   if (up and value<=current+0.000001) or (not up and value>=current-0.000001) then
     return false,string.format('面板范围 %.2f～%.2f 秒；可用 -basetime 数值直接设置',low,high)
    end
   end
@@ -56,9 +61,9 @@ function M.handle(e,k)
  if not h then return end
  local result={pid=pid,command=cmd}
  if cmd=='-basetime' then
-  local n=tonumber(arg)
-  if not arg:match('^%d*%.?%d+$') or not n or n~=n or n<=0 or n>=math.huge or n>3.4028234e38 or n<1.1754944e-38 then
-   e:reply(pid,false,'用法：-basetime 正数，例如 -basetime 1.7');return
+  local n=arg:match('^%d*%.?%d+$') and tonumber(arg)
+  if not n or n<M.bat_min or n>M.bat_max then
+   e:reply(pid,false,string.format('用法：-basetime %g～%g 之间的秒数，例如 -basetime 1.7',M.bat_min,M.bat_max));return
   end
   if not h.lan_initial_bat then h.lan_initial_bat=h:GetBaseAttackTime(false) end
   h:SetBaseAttackTime(n)

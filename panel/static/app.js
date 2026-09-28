@@ -4,6 +4,7 @@ const labels = {addon_deploy:'部署附加模式',addon_scan:'扫描天地星兼
 const states = {running:'执行中',waiting:'等待输入',success:'成功',failed:'失败',cancelled:'已取消',interrupted:'已中断'};
 let csrf = null, currentPage = 'overview', config = null, status = null, jobs = [], polling = false;
 let toastTimer;
+const STEAM_ACTIONS = ['login','install','update','validate','bot_download'];
 const gib = n => typeof n === 'number' ? (n / 1073741824).toFixed(1) + ' GiB' : '未提供';
 function showMessage(text, bad=false) { const e=$('toast'); e.textContent=text; e.classList.toggle('danger',bad); e.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>e.hidden=true,10000); }
 async function api(path, data) {
@@ -19,7 +20,7 @@ function setPage(page){
   if(!$(page)||!$(page).classList.contains('page'))return;
   currentPage=page; document.querySelectorAll('.page').forEach(x=>x.hidden=x.id!==page);
   document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.page===page));
-  $('pageTitle').textContent={overview:'运行概览',client:'Windows 客户端资源',steam:'SteamCMD',jobs:'任务记录',logs:'日志与控制台',settings:'服务器配置',backups:'备份与诊断',bots:'机器人脚本',addon:'LAN 附加模式'}[page];
+  $('pageTitle').textContent={overview:'运行概览',client:'Windows 客户端资源',steam:'SteamCMD',jobs:'任务记录',logs:'日志与控制台',settings:'服务器配置',backups:'备份与诊断'}[page];
   if(page==='settings'&&!config)loadConfig().catch(e=>showMessage(e.message,true));
   if(page==='backups')loadBackups().catch(e=>showMessage(e.message,true));
   refreshExtra().catch(e=>showMessage(e.message,true));
@@ -42,16 +43,15 @@ function renderStatus(s){
   const j=s.active_job;
   $('pendingInput').hidden=!(j&&j.waiting_for);
   if(j&&j.waiting_for){$('inputTitle').textContent=j.waiting_for==='guard'?'Steam Guard 验证码':'Steam 登录密码';$('inputMessage').textContent=j.message;}
-  $('cancelTask').disabled=!(j&&['login','install','update','validate','bot_download','bot_check'].includes(j.action));
+  $('cancelTask').disabled=!(j&&[...STEAM_ACTIONS,'bot_check'].includes(j.action));
   document.querySelectorAll('.action,.steam-action').forEach(b=>{const a=b.dataset.action; b.disabled=!!j||(a==='start'&&(s.running||!s.installed||!!s.maintenance_block))||(a==='addon_deploy'&&s.running)||(a==='stop'&&!s.running)||(a==='restart'&&(!s.installed||!!s.maintenance_block));});
 }
 function renderSteamAuth(){
- const steamActions=['login','install','update','validate','bot_download'];
- const relevant=jobs.filter(j=>steamActions.includes(j.action));
+ const relevant=jobs.filter(j=>STEAM_ACTIONS.includes(j.action));
  const latest=relevant[0];
  const success=relevant.find(j=>j.authenticated_at||(j.action==='login'&&j.state==='success'));
  const active=status?.active_job;
- const busy=active&&steamActions.includes(active.action);
+ const busy=active&&STEAM_ACTIONS.includes(active.action);
  const stageNames={logging_in:'正在登录',awaiting_mobile_approval:'等待 Steam 手机批准',authenticated:'本次登录已验证',starting:'正在启动 SteamCMD'};
  $('steamAuthState').textContent=busy?(active.waiting_for?'等待密码 / Steam Guard 输入':stageNames[active.stage]||'正在执行 SteamCMD 任务'):latest&&['failed','cancelled','interrupted'].includes(latest.state)?'最近 SteamCMD 任务'+(states[latest.state]||latest.state):success?'最近登录验证成功':'尚无成功登录验证记录';
  $('steamAuthDetail').textContent=(success?'最近成功验证：'+localDate(success.authenticated_at||success.finished_at)+'。 ':'')+(latest?'最近任务：'+(labels[latest.action]||latest.action)+' · '+(states[latest.state]||latest.state)+' · '+latest.message:'点击“测试登录 / 授权”验证。');
@@ -83,7 +83,11 @@ async function refreshExtra(){
   }
   if(currentPage==='backups')await loadBackups();
   if(currentPage==='logs'){const data=await api('/api/logs?name='+encodeURIComponent($('logChoice').value));$('mainLog').textContent=data.text;}
-  if(currentPage==='steam'){const j=jobs.find(j=>['login','install','update','validate','bot_download'].includes(j.action));$('steamLog').textContent=j?(await api('/api/logs?name='+encodeURIComponent(j.id))).text:'暂无 SteamCMD 任务日志。';}
+  if(currentPage==='overview'&&window.AddonPanel)await window.AddonPanel.refresh();
+  if(currentPage==='steam'){
+    // A login job may save the account name in the background; keep the local copy current.
+    const saved=await api('/api/config');if(config)config.steam_username=saved.steam_username;renderSteamAuth();
+    const j=jobs.find(j=>STEAM_ACTIONS.includes(j.action));$('steamLog').textContent=j?(await api('/api/logs?name='+encodeURIComponent(j.id))).text:'暂无 SteamCMD 任务日志。';}
 }
 async function poll(){
   if(polling||document.hidden)return;polling=true;
@@ -119,7 +123,7 @@ $('rememberUser').onclick=async()=>{try{const c=await api('/api/config');c.steam
 $('taskInputForm').addEventListener('submit',async e=>{e.preventDefault();const value=$('taskSecret').value;$('taskSecret').value='';try{await api('/api/input',{job_id:status?.active_job?.id,value});showMessage('一次性输入已提交。');await poll();}catch(err){showMessage(err.message,true);}});
 $('cancelTask').onclick=async()=>{if(!status?.active_job||!confirm('取消会中断 SteamCMD；安装中断后须成功校验才能开服。确认？'))return;try{await api('/api/cancel',{job_id:status.active_job.id});await poll();}catch(e){showMessage(e.message,true);}};
 $('sayForm').addEventListener('submit',async e=>{e.preventDefault();try{await api('/api/console',{command:'say',text:$('sayText').value});$('sayText').value='';showMessage('消息已提交。');}catch(err){showMessage(err.message,true);}});
-$('configForm').addEventListener('submit',async e=>{e.preventDefault();const f=e.target;const c={schema:1,steam_username:config.steam_username};for(const key of ['hostname','map','game_password'])c[key]=f.elements.namedItem(key).value;for(const key of ['port','game_mode'])c[key]=Number(f.elements.namedItem(key).value);for(const key of ['auto_start','auto_restart','cheats','insecure'])c[key]=f.elements.namedItem(key).checked;try{const r=await api('/api/config',c);config=c;$('serverName').textContent=c.hostname;showMessage('配置已保存。'+(r.restart_required?'下次重启游戏后生效。':'')+'更改端口须同步 PVE 防火墙。');}catch(err){showMessage(err.message,true);}});
+$('configForm').addEventListener('submit',async e=>{e.preventDefault();const f=e.target;const c={schema:1};for(const key of ['hostname','map','game_password'])c[key]=f.elements.namedItem(key).value;for(const key of ['port','game_mode'])c[key]=Number(f.elements.namedItem(key).value);for(const key of ['auto_start','auto_restart','cheats','insecure'])c[key]=f.elements.namedItem(key).checked;try{const r=await api('/api/config',c);config={...config,...c};$('serverName').textContent=c.hostname;showMessage('配置已保存。'+(r.restart_required?'下次重启游戏后生效。':'')+'更改端口须同步 PVE 防火墙。');}catch(err){showMessage(err.message,true);}});
 $('reloadConfig').onclick=()=>loadConfig().then(()=>showMessage('已重新读取配置。')).catch(e=>showMessage(e.message,true));
 $('refreshLog').onclick=()=>refreshExtra().catch(e=>showMessage(e.message,true));$('logChoice').onchange=$('refreshLog').onclick;
 poll();

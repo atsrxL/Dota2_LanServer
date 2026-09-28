@@ -124,8 +124,8 @@ function Engine:dispatch(source,keys)
     elseif action=='options' then
         local raw=keys.options
         if type(raw)=='table' then
-            local allowed={bot_mode=true,fill_bots=true,ack_unverified=true,radiant_difficulty=true,dire_difficulty=true,
-                selection_seconds=true,pregame_seconds=true}
+            -- Hero selection and pregame are fixed at 45 seconds; clients cannot change them.
+            local allowed={bot_mode=true,fill_bots=true,ack_unverified=true,radiant_difficulty=true,dire_difficulty=true}
             local value={}; local unknown=false
             for k,v in pairs(raw) do
                 if not allowed[k] then unknown=true
@@ -158,16 +158,14 @@ function Engine:start_match()
     if not method(self.mode,'SetModifyGoldFilter') then
         self:error('gold_filter_unavailable'); return
     end
-    if method(self.mode,'SetModifyGoldFilter') then
-        if method(self.mode,'SetFilterMoreGold') then self.mode:SetFilterMoreGold(true) end
-        self.mode:SetModifyGoldFilter(function(_,event)
-            if type(event.gold)=='number' and event.gold>0 then
-                event.gold=require('lan.bot_comeback').scale(self,event.player_id_const,'gold',event.gold)
-            end
-            return true
-        end,self)
-        self:emit('GOLD_RULE',{base_start_seconds=300,base_end_seconds=900,base_max=1.5,scope='positive_gold_filter_events'})
-    end
+    if method(self.mode,'SetFilterMoreGold') then self.mode:SetFilterMoreGold(true) end
+    self.mode:SetModifyGoldFilter(function(_,event)
+        if type(event.gold)=='number' and event.gold>0 then
+            event.gold=require('lan.bot_comeback').scale(self,event.player_id_const,'gold',event.gold)
+        end
+        return true
+    end,self)
+    self:emit('GOLD_RULE',{base_start_seconds=300,base_end_seconds=900,base_max=1.5,scope='positive_gold_filter_events'})
     require('lan.rules').start(self)
     r:begin() -- latch before any engine side effect / duplicate event
     GameRules:SetHeroSelectionTime(o.selection_seconds)

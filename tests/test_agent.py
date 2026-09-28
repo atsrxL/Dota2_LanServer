@@ -62,6 +62,10 @@ def test_successful_login_remembers_only_account(manager):
     saved = manager.paths.config.read_text()
     assert 'test-secret-123' not in saved
     assert json.loads(saved)['steam_username'] == 'tester'
+    # Saving server settings afterwards must not clear the remembered account.
+    form = {k: v for k, v in manager.config.items() if k != 'steam_username'}
+    manager.save_config(dict(form, hostname='After Login'))
+    assert manager.config['steam_username'] == 'tester'
 
 def test_twofactor_input(manager):
     j=manager.submit({'action':'install','username':'tester','password':'needs_guard'})

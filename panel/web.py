@@ -15,6 +15,11 @@ STATIC = Path(__file__).parent / "static"
 MAX_BODY = 16384
 CSP = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
 
+def _chunks(handle):
+    with handle:
+        yield from iter(lambda: handle.read(client_downloads.CHUNK), b"")
+
+
 class WebApp:
     def __init__(self, settings_file: Path | None = None, rpc_call=None):
         self.settings_file = settings_file
@@ -29,6 +34,7 @@ class WebApp:
     def __call__(self, env: dict, start_response):
         extra_headers: list[tuple[str, str]] = []
         status, content_type, body = 200, "application/json; charset=utf-8", b""
+        stream, stream_size = None, 0
         try:
             host = env.get("HTTP_HOST", "")
             hostname = self._host(host)
@@ -71,7 +77,7 @@ class WebApp:
                 elif path == "/api/client-resources":
                     body = self._json(client_downloads.metadata())
                 elif path == "/api/client-download":
-                    body, filename = client_downloads.download(q.get('kind', ['exe'])[0])
+                    stream, stream_size, filename = client_downloads.download(q.get('kind', ['exe'])[0])
                     content_type = 'application/octet-stream'
                     extra_headers.append(('Content-Disposition', 'attachment; filename="' + filename + '"'))
                 elif path == "/api/logs":
@@ -94,11 +100,14 @@ class WebApp:
         except Exception as exc:
             # Request bodies and exception buffers never go to access logs.
             status, body = 500, self._json({"error": f"面板内部错误（{type(exc).__name__}）"})
-        headers = [("Content-Type", content_type), ("Content-Length", str(len(body))),
+        headers = [("Content-Type", content_type), ("Content-Length", str(stream_size if stream else len(body))),
                    ("Cache-Control", "no-store"), ("X-Content-Type-Options", "nosniff"),
                    ("X-Frame-Options", "DENY"), ("Referrer-Policy", "no-referrer"),
                    ("Content-Security-Policy", CSP)] + extra_headers
         start_response(f"{status} {HTTPStatus(status).phrase}", headers)
+        if stream:
+            wrapper = env.get("wsgi.file_wrapper")
+            return wrapper(stream, client_downloads.CHUNK) if wrapper else _chunks(stream)
         return [body]
 
     @staticmethod

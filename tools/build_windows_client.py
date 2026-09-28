@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -37,17 +38,32 @@ def build(source, output, version):
         subprocess.run(['makensis', '-V2', str(root / 'installer.nsi')], cwd=root, check=True)
         entries = {}
         for kind, name in [('exe', 'Dota2-LAN-Client.exe'), ('zip', 'Dota2-LAN-Client.zip')]:
-            p = root / name
-            data = p.read_bytes()
+            data = (root / name).read_bytes()
             if kind == 'exe' and not data.startswith(b'MZ'):
                 raise ValueError('NSIS did not produce a Windows executable')
-            shutil.copy2(p, output / name)
             entries[kind] = {'name': name, 'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest()}
         manifest = {'version': version, 'built_at': datetime.now(timezone.utc).isoformat(),
                     'source_sha256': status['source_sha256'], 'ui_source_sha256': status['ui_source_sha256'],
                     'files': entries, 'resource_count': len(files)}
-        (output / 'manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2))
+        (root / 'manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2))
+        publish(root, output, ['Dota2-LAN-Client.exe', 'Dota2-LAN-Client.zip', 'manifest.json'])
         return manifest
+
+
+def publish(built, output, names):
+    """Copy into the output filesystem first, then rename, so readers never see partial files.
+
+    The manifest goes last; a download racing the swap fails its hash check (503) instead of
+    serving a mismatched package.
+    """
+    staging = Path(tempfile.mkdtemp(prefix='.publish-', dir=output))
+    try:
+        for name in names:
+            shutil.copy2(built / name, staging / name)
+        for name in names:
+            os.replace(staging / name, output / name)
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
 
 
 if __name__ == '__main__':

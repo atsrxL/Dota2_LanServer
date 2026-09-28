@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dota 2 LAN · 控制中心</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script><script src="/metrics.js" defer></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dota 2 LAN · 控制中心</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script><script src="/metrics.js" defer></script><script src="/addon.js" defer></script></head>
 <body>
 <div id="application" class="shell">
   <aside class="sidebar"><div class="brand"><span class="brand-mark small">D2</span><div><strong>LAN CONTROL</strong><small>Dota 2 / 自托管控制台</small></div></div>
@@ -8,7 +8,6 @@
       <button data-page="overview" class="nav active"><span>◈</span>运行概览</button>
       <button data-page="steam" class="nav"><span>↓</span>SteamCMD</button>
       <button data-page="client" class="nav"><span>▣</span>Windows 客户端资源</button>
-
       <button data-page="jobs" class="nav"><span>≡</span>任务记录</button>
       <button data-page="logs" class="nav"><span>›_</span>日志与控制台</button>
       <button data-page="settings" class="nav"><span>⚙</span>服务器配置</button>
@@ -16,7 +15,6 @@
     </nav><div class="sidebar-bottom"><a class="help-link" href="/help" target="_blank" rel="noopener">使用帮助 ↗</a></div>
   </aside>
   <main><header class="topbar"><div><h1 id="pageTitle">运行概览</h1></div><div class="top-actions"><span id="apiState" class="badge">连接中</span></div></header>
-
     <div id="toast" class="notice" role="status" hidden></div>
     <div id="maintenanceWarning" class="notice danger" hidden>检测到未完成维护。成功更新或校验之前，服务器启动已锁定。</div>
     <div id="pendingInput" class="notice input-notice" hidden><div><strong id="inputTitle">任务需要输入</strong><p id="inputMessage"></p></div><form id="taskInputForm"><input id="taskSecret" type="password" autocomplete="off" placeholder="一次性输入，不保存" required><button type="submit" class="primary">提交一次性输入</button></form></div>
@@ -27,11 +25,11 @@
         <div id="clientLinks" class="button-row" hidden><a class="button primary" href="/api/client-download?kind=exe">下载 Windows 自解压安装包 ↓</a><a class="button secondary" href="/api/client-download?kind=zip">下载 ZIP 手动安装包</a></div>
         <p id="clientDetails" class="muted"></p><p id="clientHash" class="footnote"></p>
       </article>
-
     </section>
     <section id="overview" class="page">
       <div class="hero card"><div><h2 id="serverName">Dota 2 LAN</h2><p id="serverState" class="state-line">正在读取代理状态…</p><div class="button-row"><button class="primary action" data-action="start">启动服务器</button><button class="secondary action" data-action="restart">重启</button><button class="danger-button action" data-action="stop">停止</button></div></div><div class="hero-side"><code id="connectCommand">connect —:27015</code><button id="copyConnect" class="ghost">复制连接命令 ↗</button></div></div>
       <div class="metric-grid"><article class="metric card"><span>游戏运行时间</span><strong id="uptime">—</strong><small id="pid">等待进程启动</small></article><article class="metric card"><span>容器内存 / cgroup</span><strong id="memory">—</strong></article><article class="metric card"><span>剩余磁盘</span><strong id="disk">—</strong><small id="diskTotal">—</small></article><article class="metric card"><span>本地 Build ID</span><strong id="buildId">未安装</strong><small id="udpState">UDP 监听待检查</small></article></div>
+      <article class="card"><h3>游戏资源版本</h3><p id="addonSummary" class="state-line">正在读取资源状态…</p><p id="addonVersions" class="footnote"></p></article>
       <article id="resourceMonitor" class="card resource-monitor">
         <div class="section-head"><div><h3>CPU 与内存实时监控</h3></div><span id="resourceState" class="badge">首次采样中</span></div>
         <p id="resourceFreshness" class="footnote">每 2 秒刷新；页面隐藏时暂停，返回自动恢复。</p>
@@ -48,15 +46,12 @@
         <p id="resourceWarnings" class="notice subtle" role="status"></p>
       </article>
 
-
     </section>
     <section id="steam" class="page" hidden><article class="card"><h3 id="steamAuthState">尚无登录验证记录</h3><p id="steamAuthDetail"></p><p id="steamAccountState"></p></article>
-
       <div class="two-columns"><article class="card"><h3>Steam 身份验证</h3><div class="form-stack"><label>Steam 登录账号名<input id="steamUser" autocomplete="off" placeholder="不是个人昵称，也不是电子邮箱"></label><label>Steam 密码<input id="steamPass" type="password" autocomplete="off" placeholder="留空尝试复用 SteamCMD 缓存"></label><label>Steam Guard 验证码（可留空）<input id="steamGuard" type="password" autocomplete="off" maxlength="12" placeholder="也可在任务等待时补交"></label><div class="button-row"><button class="secondary steam-action" data-action="login">测试登录 / 授权</button><button id="rememberUser" class="ghost">仅保存账号名</button></div></div></article>
       <article class="card"><h3>安装与维护</h3><div class="stack-buttons"><button class="primary steam-action" data-action="install">↓ 安装 Dota 2（含校验）</button><button class="secondary steam-action" data-action="update">↻ 更新现有安装</button><button class="secondary steam-action" data-action="validate">✓ 校验 / 修复游戏文件</button></div><label class="check"><input id="stopForUpdate" type="checkbox">允许本次维护先停止正在运行的服务器</label><label class="check"><input id="restartAfter" type="checkbox">成功后恢复原先运行中的服务器</label></article></div>
       <article class="card"><div class="section-head"><h3>最近任务输出</h3><button id="cancelTask" class="danger-button">取消当前 SteamCMD 任务</button></div><pre id="steamLog" class="console">暂无任务日志。</pre></article>
     </section>
-
     <section id="jobs" class="page" hidden><article class="card"><div class="section-head"><h3>任务历史</h3><span class="muted">保留最近 100 条</span></div><div class="table-wrap"><table><thead><tr><th>任务 / ID</th><th>状态</th><th>阶段</th><th>开始时间</th><th>结果</th></tr></thead><tbody id="jobTable"></tbody></table></div></article></section>
     <section id="logs" class="page" hidden><article class="card"><div class="section-head"><h3>日志流</h3><div class="button-row"><select id="logChoice" aria-label="日志来源"><option value="server">游戏服务器</option><option value="agent">运行代理</option></select><button id="refreshLog" class="ghost">刷新</button></div></div><pre id="mainLog" class="console tall">暂无日志。</pre></article><article class="card"><h3>受限游戏控制台</h3><div class="button-row"><button class="secondary console-preset" data-command="status">status</button><button class="secondary console-preset" data-command="pause">暂停 / 恢复</button></div><form id="sayForm" class="inline-form"><input id="sayText" maxlength="160" placeholder="向游戏内发送消息" required><button class="secondary" type="submit">发送 say</button></form></article></section>
     <section id="settings" class="page" hidden><form id="configForm" class="card"><div class="section-head"><h3>启动配置</h3><button id="reloadConfig" type="button" class="ghost">重新读取</button></div><div class="form-grid"><label>服务器名称<input name="hostname" maxlength="80" required></label><label>游戏端口<input name="port" type="number" min="1024" max="65535" required></label><label>初始地图<input name="map" required></label><label>游戏模式编号<input name="game_mode" type="number" min="0" max="30" required></label><label>游戏连接密码<input name="game_password" type="password" maxlength="64" autocomplete="off"></label></div><div class="form-grid"><label class="check"><input name="auto_start" type="checkbox">代理启动时自动开服（安装完整时）</label><label class="check"><input name="auto_restart" type="checkbox">崩溃自动拉起（10 分钟最多 3 次）</label><label class="check"><input name="cheats" type="checkbox">允许游戏作弊指令（训练用途）</label><label class="check"><input name="insecure" type="checkbox">启用 -insecure（关闭服务器 VAC，非默认）</label></div><button type="submit" class="primary">保存配置</button></form></section>

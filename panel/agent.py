@@ -325,10 +325,13 @@ class Manager:
         return name
 
     def save_config(self, raw: dict) -> dict:
-        config = validate_config(raw)
         with self.lock:
             if self.active:
                 raise Fault("任务运行中不能修改配置", 409)
+            # The settings form omits the account name, which a login job may save meanwhile.
+            if isinstance(raw, dict) and "steam_username" not in raw:
+                raw = dict(raw, steam_username=self.config.get("steam_username", ""))
+            config = validate_config(raw)
             self._backup()
             atomic_json(self.paths.config, config)
             self.config = config

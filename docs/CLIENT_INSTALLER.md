@@ -9,12 +9,19 @@ Build on the server with Ubuntu nsis installed:
 
     python3 tools/build_windows_client.py --source /opt/dota2-lan-kit/addon/lan_dota --output /var/lib/dota2/client-release --version r23
 
+Normally use `tools/release.py` (see LINUX_PANORAMA_BUILD.md) so the server source, compiled UI
+and package are produced together. Files are published by rename, manifest last.
+
 The builder validates actual compiled resources before packaging. NSIS creates a Unicode
 Windows executable containing only project client resources and the installer script.
 Windows PowerShell 5.1 reads the script as UTF-8 with BOM. The installer detects Steam
 from the registry, resolves libraryfolders.vdf, accepts an explicit Dota directory,
 requires Dota to be closed, backs up overwritten files under LOCALAPPDATA/Dota2LAN/Backups,
-checks hashes before/after copying and attempts rollback on copy failure.
+checks hashes before/after copying and attempts rollback on copy failure. Candidate Dota
+directories are compared case-insensitively after path normalization (registry SteamPath and
+libraryfolders.vdf spell the same folder differently). Files under game/dota_addons/lan_dota
+that are not in the new package are backed up and removed. The result message is passed to
+NSIS through a UTF-16 file so Chinese text is not garbled.
 
 2026-09-20: built on CT270; published r23 to match the installed server source.
 r24 is compiled but remains separate until coordinated server/client deployment.

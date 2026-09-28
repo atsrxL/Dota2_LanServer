@@ -5,18 +5,23 @@ function M.base()
  local seconds=GameRules:GetDOTATime(false,false)
  return 1+math.max(0,math.min(600,seconds-300))/1200
 end
-function M.bonus(e,pid,kind)
- if type(pid)~='number' or not PlayerResource:IsValidPlayerID(pid)
-  or not PlayerResource.IsFakeClient or not PlayerResource:IsFakeClient(pid) then return 0 end
+local function is_bot(pid)
+ return type(pid)=='number' and PlayerResource:IsValidPlayerID(pid)
+  and PlayerResource.IsFakeClient~=nil and PlayerResource:IsFakeClient(pid)
+end
+-- Gold and XP share the same stack bonus.
+function M.bonus(e,pid)
+ if not is_bot(pid) then return 0 end
  local deaths=e.bot_death_bonus and e.bot_death_bonus[pid] or 0
  return deaths*(deaths+1)/20
 end
+function M.multiplier(e,pid)
+ local base=M.base()
+ return is_bot(pid) and math.min(5,base+M.bonus(e,pid)) or base
+end
 function M.scale(e,pid,kind,amount)
  if amount<=0 then return amount end
- local base=M.base()
- local bonus=M.bonus(e,pid,kind)
- local bot=type(pid)=='number' and PlayerResource:IsValidPlayerID(pid) and PlayerResource.IsFakeClient and PlayerResource:IsFakeClient(pid)
- local multiplier=bot and math.min(5,base+bonus) or base
+ local multiplier=M.multiplier(e,pid)
  -- Carry fractional rewards so frequent 1-gold ticks still receive the bonus.
  e.bot_reward_remainders=e.bot_reward_remainders or {}
  local key=pid or -1
@@ -56,8 +61,6 @@ end
 function M.report(e,pid,team,event)
  local base=M.base()
  e:emit(event,{pid=pid,layers=e.bot_death_bonus[pid],
-  base_multiplier=base,
-  gold_multiplier=math.min(5,base+M.bonus(e,pid,'gold')),
-  xp_multiplier=math.min(5,base+M.bonus(e,pid,'xp'))})
+  base_multiplier=base,gold_multiplier=M.multiplier(e,pid),xp_multiplier=M.multiplier(e,pid)})
 end
 return M

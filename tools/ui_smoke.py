@@ -68,7 +68,7 @@ def main():
         expect(page.locator('#application')).to_be_visible()
         expect(page.locator('#serverName')).to_contain_text('开发测试')
         expect(page.locator('#buildId')).to_have_text('TEST-4242')
-        expect(page.locator('#serverState')).to_contain_text('游戏进程运行中')
+        expect(page.locator('#serverState')).to_contain_text('运行中')
         results.append('Passwordless dashboard shows real fake-process status / test Build ID')
         expect(page.locator('#resourceMonitor')).to_be_visible()
         expect(page.locator('#resourceState')).to_contain_text('实时',timeout=10000)
@@ -144,6 +144,9 @@ def main():
         assert page.locator('[data-command="bots"]').count() == 0
         results.append('Archived Bot controls are absent')
         assert page.locator('#addonForm').count() == 0
+        expect(page.locator('#addonSummary')).not_to_contain_text('正在读取',timeout=10000)
+        expect(page.locator('#addonVersions')).to_contain_text('源码')
+        results.append('Overview shows source / deployment / client package consistency')
         help_page = context.new_page()
         if args.offline_transport:
             assert http_call('/help')['status']==200

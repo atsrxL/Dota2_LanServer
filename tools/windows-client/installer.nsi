@@ -21,9 +21,24 @@ Section
   File /r "payload/*"
   SetOutPath "$PLUGINSDIR"
   File "install.ps1"
-  nsExec::ExecToStack '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$PLUGINSDIR\install.ps1" -SteamRoot "$INSTDIR" -Payload "$PLUGINSDIR\payload"'
+  nsExec::ExecToStack '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$PLUGINSDIR\install.ps1" -SteamRoot "$INSTDIR" -Payload "$PLUGINSDIR\payload" -ResultFile "$PLUGINSDIR\result.txt"'
   Pop $0
   Pop $1
+  ; Console output uses the ANSI code page; the UTF-16 result file keeps Chinese text intact.
+  StrCpy $1 ""
+  ClearErrors
+  FileOpen $2 "$PLUGINSDIR\result.txt" r
+  IfErrors read_done
+read_line:
+  FileReadUTF16LE $2 $3
+  IfErrors read_close
+  StrCpy $1 "$1$3"
+  Goto read_line
+read_close:
+  FileClose $2
+read_done:
+  StrCmp $1 "" 0 +2
+  StrCpy $1 "安装脚本没有返回结果（退出码 $0）。"
   DetailPrint "$1"
   StrCmp $0 "0" success
   MessageBox MB_OK|MB_ICONSTOP "安装未完成：$\r$\n$1"

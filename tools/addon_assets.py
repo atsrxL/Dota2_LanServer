@@ -94,7 +94,7 @@ def collect(source: Path,dota: Path,output: Path):
     return write_zip(output,files)
 
 
-def import_assets(source: Path,archive: Path,apply=False):
+def import_assets(source: Path,archive: Path,apply=False,replace_invalid=False):
     source=no_links(source);target=source/'compiled'
     allowed=set(COMPILED_FILES)|{'asset_manifest.json'}
     with tempfile.TemporaryDirectory() as temp:
@@ -116,7 +116,9 @@ def import_assets(source: Path,archive: Path,apply=False):
         backup=None
         if apply:
             if target.exists():
-                if not compiled_status(source)['ready']: raise Fault('现有 compiled 已修改或无效；人工备份后再导入',409)
+                # A UI source change makes the old compiled set invalid by design; the release
+                # pipeline still keeps it as a backup instead of deleting it.
+                if not replace_invalid and not compiled_status(source)['ready']: raise Fault('现有 compiled 已修改或无效；人工备份后再导入',409)
                 backup=source.parent/(source.name+'.compiled-backup-'+str(time.time_ns()))
                 os.replace(target,backup)
             try: shutil.copytree(out,target)

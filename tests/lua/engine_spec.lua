@@ -179,11 +179,15 @@ assert(chats.button(tutorial,0,'self_bat_reset'))
 for i=1,3 do assert(chats.button(tutorial,0,'self_bat_up')) end
 assert(bat==2 and not chats.button(tutorial,0,'self_bat_up'))
 chats.handle(tutorial,{playerid=0,text='-basetime 0.8'});assert(bat==0.8 and ownHero.lan_initial_bat==1.7)
-chats.handle(tutorial,{playerid=0,text='-basetime 12'});assert(bat==12)
-for _,arg in ipairs({'0','-1','nan','inf','1;quit','1.7 2','1e999'}) do
- chats.handle(tutorial,{playerid=0,text='-basetime '..arg});assert(bat==12)
+chats.handle(tutorial,{playerid=0,text='-basetime 3'});assert(bat==3)
+for _,arg in ipairs({'0','0.05','12','-1','nan','inf','1;quit','1.7 2','1e999'}) do
+ chats.handle(tutorial,{playerid=0,text='-basetime '..arg});assert(bat==3)
 end
-assert(not chats.button(tutorial,0,'self_bat_down'))
+-- Outside the panel range, "up" is refused and "down" steps back to the nearest edge.
+assert(not chats.button(tutorial,0,'self_bat_up'));assert(bat==3)
+assert(chats.button(tutorial,0,'self_bat_down'));assert(math.abs(bat-2)<0.00001)
+chats.handle(tutorial,{playerid=0,text='-basetime 0.8'})
+assert(not chats.button(tutorial,0,'self_bat_down'));assert(chats.button(tutorial,0,'self_bat_up'));assert(math.abs(bat-1.4)<0.00001)
 assert(chats.button(tutorial,0,'self_bat_reset'));assert(bat==1.7)
 for name in pairs(chats.abilities) do
  assert(chats.button(tutorial,0,'self_ability_'..name));assert(abilities[name].level==4)
