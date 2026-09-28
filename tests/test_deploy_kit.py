@@ -11,8 +11,8 @@ COMMIT = 'a' * 40
 
 def package(files):
     files = dict(files)
-    files['BUILD.json'] = json.dumps({'version': '1.3.0', 'commit': COMMIT, 'dirty': False}).encode()
     sums = ''.join(f'{hashlib.sha256(v).hexdigest()}  {k}\n' for k, v in sorted(files.items()))
+    files['BUILD.json'] = json.dumps({'version': '1.3.0', 'commit': COMMIT, 'dirty': False}).encode()
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, 'w') as z:
         for k, v in files.items():

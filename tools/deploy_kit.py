@@ -59,7 +59,8 @@ def read_archive(archive: Path) -> tuple[dict[str, bytes], dict]:
     for rel, digest in listed.items():
         if rel not in files or hashlib.sha256(files[rel]).hexdigest() != digest:
             raise DeployError('文件校验失败: ' + rel)
-    unlisted = set(files) - set(listed) - {'SHA256SUMS'}
+    # BUILD.json is metadata written at packaging time and only parsed as JSON.
+    unlisted = set(files) - set(listed) - {'SHA256SUMS', 'BUILD.json'}
     if unlisted:
         raise DeployError('压缩包含未列入 SHA256SUMS 的文件: ' + ', '.join(sorted(unlisted)[:5]))
     build = json.loads(files['BUILD.json'])

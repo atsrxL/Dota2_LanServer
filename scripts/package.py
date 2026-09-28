@@ -61,12 +61,15 @@ def main() -> None:
     files = sorted(p for p in ROOT.rglob('*') if p.is_file() and allowed(p))
     if any(p.is_symlink() for p in files):
         raise SystemExit('Refusing source symlinks; review the tree first')
+    # BUILD.json changes on every run; keep it out of SHA256SUMS so the checked-in list stays stable.
+    build_path = ROOT/'BUILD.json'
+    files = [p for p in files if p != build_path]
     manifest = ''.join(f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.relative_to(ROOT).as_posix()}\n' for p in files)
     manifest_path = ROOT/'SHA256SUMS'
     manifest_path.write_text(manifest, encoding='utf-8')
     target = out/f'dota2-lan-kit-{version}.zip'
     with zipfile.ZipFile(target, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
-        for path in files + [manifest_path]:
+        for path in files + [build_path, manifest_path]:
             name = 'dota2-lan-kit/'+path.relative_to(ROOT).as_posix()
             info = zipfile.ZipInfo(name, date_time=(2026, 9, 16, 0, 0, 0))
             info.create_system = 3
