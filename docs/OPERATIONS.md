@@ -14,6 +14,12 @@
 - 结果：`Success. Downloaded item 2781880190`，56621288 字节；日志在 `/var/lib/dota2/workshop-ref/steamcmd-2781880190.log`。
 - 已复制到开发机 `reference/workshop-2781880190/` 并解包，只作功能参考，不部署。
 
+## 2026-09-28 · 代码 ed14ac3 + r27
+
+- 快捷技能改为 36 个先天技能的二级菜单。内部名称来自官方 datafeed，并与服务器 Dota 自带的 `abilities_schinese.txt` 逐一核对，名称全部一致。
+- 用 `deploy_kit.py` 部署后运行 `release.py --version r27 --restart`：部署源码与代码目录一致，都是 `47a75765b120`；心跳正常，没有错误，客户端包 r27 与服务器一致。
+- 尚未实测：游戏内二级菜单，以及这 36 个技能添加到英雄后的实际效果（部分先天技能依赖原英雄的机制）。
+
 ## 2026-09-28 · 代码 7b6d0ad + r26
 
 - 第一次用 `tools/deploy_kit.py` 部署代码包：校验通过，当时没有玩家在线；备份在 `/var/lib/dota2/kit-backups/kit-20260928-093106-7b6d0add067b.tgz`，`DEPLOYED.json` 已写入，面板页脚显示该提交。脚本正确提示 UI 源码已变化，需要重新发布。
