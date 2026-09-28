@@ -110,4 +110,4 @@ vzdump 270 --mode stop --compress zstd --storage BACKUP_STORAGE
 - 模式/机器人命令无效：查看游戏输出，当前版本可能不支持该 cvar/模式或需要特定条件。不要把“写入 PTY 成功”当作游戏执行成功。
 - 内存不足：用户规格固定 6 GiB，先缩小工作负载并读取 OOM 证据，再决定是否调整；代码不自行增加分配。
 
-更多现场验收项见 `ACCEPTANCE.md`；引用 [S1]～[S7] 在 `SOURCES.md`。
+更多现场验收项见 `ACCEPTANCE.md`；引用 [S1]～[S7] 在 `archive/SOURCES.md`。已有服务器的代码更新和游戏资源发布见 `RELEASE.md`。

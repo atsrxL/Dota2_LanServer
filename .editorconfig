@@ -1,0 +1,21 @@
+# New and edited code wraps normally; existing long lines are left as-is (see AGENTS.md).
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{py,lua,sh}]
+indent_style = space
+indent_size = 4
+max_line_length = 120
+
+[*.{js,css,html,xml,json}]
+indent_style = space
+indent_size = 2
+max_line_length = 120
+
+[*.md]
+trim_trailing_whitespace = false
