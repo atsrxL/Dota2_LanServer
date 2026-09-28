@@ -106,3 +106,9 @@ Button:disabled { opacity:0.35; }
     border:1px solid #d08a4a;
 }
 #BuildWarning.Visible { visibility:visible; }
+
+/* Quick ability submenu: collapsed until the toggle is pressed, two buttons per row. */
+#QuickAbilityMenu { visibility:collapse; width:100%; flow-children:right-wrap; margin-top:3px; }
+#QuickAbilityMenu.Open { visibility:visible; }
+.QuickAbility { width:49%; margin:2px 1% 0px 0px; padding:4px 2px; }
+.QuickAbility Label { font-size:13px; horizontal-align:center; }

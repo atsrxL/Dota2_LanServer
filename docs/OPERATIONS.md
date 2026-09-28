@@ -8,6 +8,12 @@
 - 代码目录 `/opt/dota2-lan-kit`（不是 git 检出，以 `BUILD.json` / `DEPLOYED.json` 记录版本）；状态目录 `/var/lib/dota2`。
 - 面板和代理服务：`dota-panel`、`dota-agent`。重启 `dota-agent` 会结束正在运行的游戏。
 
+## 2026-09-28 · 下载参考地图 Workshop 2781880190
+
+- 用 steam 用户和缓存登录手动跑 SteamCMD `workshop_download_item 570 2781880190 validate`，`force_install_dir` 设为独立目录 `/var/lib/dota2/workshop-ref`，没有动 `/srv/dota2` 和面板任务；当时没有正在执行的任务，游戏服照常运行。
+- 结果：`Success. Downloaded item 2781880190`，56621288 字节；日志在 `/var/lib/dota2/workshop-ref/steamcmd-2781880190.log`。
+- 已复制到开发机 `reference/workshop-2781880190/` 并解包，只作功能参考，不部署。
+
 ## 2026-09-28 · 代码 7b6d0ad + r26
 
 - 第一次用 `tools/deploy_kit.py` 部署代码包：校验通过，当时没有玩家在线；备份在 `/var/lib/dota2/kit-backups/kit-20260928-093106-7b6d0add067b.tgz`，`DEPLOYED.json` 已写入，面板页脚显示该提交。脚本正确提示 UI 源码已变化，需要重新发布。

@@ -275,3 +275,12 @@ def test_nettable_registration_uses_kv3_array():
     assert text.startswith('<!-- kv3 encoding:text:version{')
     body=re.sub(r'<!--.*?-->', '', text, flags=re.S).strip()
     assert re.fullmatch(r'\{\s*custom_net_tables\s*=\s*\[\s*"lan_room"\s*\]\s*\}',body)
+
+def test_quick_ability_lists_match_between_ui_and_server():
+    import re
+    js=(ROOT/'addon/lan_dota/content/panorama/scripts/custom_game/lan_setup.js').read_text()
+    lua=(ROOT/'addon/lan_dota/game/scripts/vscripts/lan/cheats.lua').read_text()
+    ui=re.findall(r"^ \['([a-z0-9_]+)','[^']+','[^']+'\]",js,re.M)
+    block=lua.split('for _,name in ipairs({',1)[1].split('})',1)[0]
+    server=re.findall(r"'([a-z0-9_]+)'",block)
+    assert len(ui)==36 and ui==server and len(set(ui))==36

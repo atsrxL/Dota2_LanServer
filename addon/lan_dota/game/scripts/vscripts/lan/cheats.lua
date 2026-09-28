@@ -1,7 +1,22 @@
 -- Personal LAN chat cheats. This does not change the GC lobby cheat flag.
 local M={}
 M.bat_min,M.bat_max=0.1,10
-M.abilities={death_prophet_witchcraft=true,razor_unstable_current=true,bloodseeker_thirst=true,winter_wyvern_eldwurms_edda=true,tinker_eureka=true,silencer_brain_drain=true}
+-- Quick-add innate abilities; keep in sync with QUICK_ABILITIES in lan_setup.js.
+M.abilities={}
+for _,name in ipairs({
+ 'ancient_apparition_bone_chill','bane_ichor_of_nyctasha','bloodseeker_sanguivore',
+ 'brewmaster_liquid_courage','centaur_horsepower','chaos_knight_fundamental_forging',
+ 'rattletrap_armor_power','dark_seer_aggrandize','death_prophet_witchcraft',
+ 'drow_ranger_trueshot','enigma_event_horizon','grimstroke_ink_trail',
+ 'huskar_blood_magic','jakiro_double_trouble','largo_encore',
+ 'leshrac_defilement','medusa_mana_shield','morphling_ebb_and_flow',
+ 'necrolyte_sadist','omniknight_degen_aura','obsidian_destroyer_equilibrium',
+ 'phoenix_dying_light','primal_beast_colossal','pudge_innate_graft_flesh',
+ 'razor_unstable_current','rubick_curiosity','shadow_demon_menace',
+ 'silencer_brain_drain','slark_essence_shift','tinker_eureka',
+ 'tiny_insurmountable','vengefulspirit_retribution','void_spirit_intrinsic_edge',
+ 'windrunner_tailwind','winter_wyvern_eldwurms_edda','skeleton_king_vampiric_spirit',
+}) do M.abilities[name]=true end
 function M.hero_tool(e,pid,action,input)
  local h=PlayerResource:GetSelectedHeroEntity(pid)
  if not h then return false,'尚未选择英雄' end

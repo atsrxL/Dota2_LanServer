@@ -85,7 +85,65 @@ send('solo_start',{options:options});
  $.Schedule(5,function(){if(pending){pending=false;msg('尚未收到确认，请检查连接后重试。');render(state);}});
  }catch(e){pending=false;msg('操作失败：'+String(e));render(state);}
 });
-[['SelfRespawn','self_respawn'],['SelfRefresh','self_refresh'],['SelfGold','self_gold'],['AllyGold','ally_gold'],['EnemyGold','enemy_gold'],['AllyLevel','ally_level'],['EnemyLevel','enemy_level'],['BatDown','self_bat_down'],['BatUp','self_bat_up'],['BatReset','self_bat_reset'],['Add_death_prophet_witchcraft','self_ability_death_prophet_witchcraft'],['Add_razor_unstable_current','self_ability_razor_unstable_current'],['Add_bloodseeker_thirst','self_ability_bloodseeker_thirst'],['Add_winter_wyvern_eldwurms_edda','self_ability_winter_wyvern_eldwurms_edda'],['Add_tinker_eureka','self_ability_tinker_eureka'],['Add_silencer_brain_drain','self_ability_silencer_brain_drain']].forEach(function(pair){el(pair[0]).SetPanelEvent('onactivate',function(){msg('正在执行…');send('match_tool',{tool:pair[1]});});});
+// Quick-add innate abilities: [internal name, ability, hero]. Keep in sync with cheats.lua M.abilities.
+var QUICK_ABILITIES=[
+ ['ancient_apparition_bone_chill','刺骨严寒','远古冰魄'],
+ ['bane_ichor_of_nyctasha','妮塔莎脓血','祸乱之源'],
+ ['bloodseeker_sanguivore','食血动物','血魔'],
+ ['brewmaster_liquid_courage','壮胆酒','酒仙'],
+ ['centaur_horsepower','开足马力','半人马战行者'],
+ ['chaos_knight_fundamental_forging','基本法则锻造','混沌骑士'],
+ ['rattletrap_armor_power','装甲力量','发条技师'],
+ ['dark_seer_aggrandize','才思敏捷','黑暗贤者'],
+ ['death_prophet_witchcraft','巫术精研','死亡先知'],
+ ['drow_ranger_trueshot','精准光环','卓尔游侠'],
+ ['enigma_event_horizon','事件视界','谜团'],
+ ['grimstroke_ink_trail','墨痕','天涯墨客'],
+ ['huskar_blood_magic','血魔法','哈斯卡'],
+ ['jakiro_double_trouble','天生一对','杰奇洛'],
+ ['largo_encore','安可','朗戈'],
+ ['leshrac_defilement','大肆污染','拉席克'],
+ ['medusa_mana_shield','魔法盾','美杜莎'],
+ ['morphling_ebb_and_flow','潮涨潮落','变体精灵'],
+ ['necrolyte_sadist','施虐之心','瘟疫法师'],
+ ['omniknight_degen_aura','退化光环','全能骑士'],
+ ['obsidian_destroyer_equilibrium','精华变迁','殁境神蚀者'],
+ ['phoenix_dying_light','消逝之光','凤凰'],
+ ['primal_beast_colossal','庞','獸'],
+ ['pudge_innate_graft_flesh','腐肉堆积','帕吉'],
+ ['razor_unstable_current','不稳定电流','雷泽'],
+ ['rubick_curiosity','奇心','拉比克'],
+ ['shadow_demon_menace','威胁','暗影恶魔'],
+ ['silencer_brain_drain','默默受苦','沉默术士'],
+ ['slark_essence_shift','能量转移','斯拉克'],
+ ['tinker_eureka','尤里卡！','修补匠'],
+ ['tiny_insurmountable','不可逾越','小小'],
+ ['vengefulspirit_retribution','恶有恶报','复仇之魂'],
+ ['void_spirit_intrinsic_edge','内在优势','虚无之灵'],
+ ['windrunner_tailwind','一路顺风','风行者'],
+ ['winter_wyvern_eldwurms_edda','古龙诗集','寒冬飞龙'],
+ ['skeleton_king_vampiric_spirit','吸血灵魂','冥魂大帝']
+];
+function buildQuickAbilityMenu(){
+ var menu=el('QuickAbilityMenu');
+ QUICK_ABILITIES.forEach(function(a){
+  var button=$.CreatePanel('Button',menu,'Quick_'+a[0],{class:'QuickAbility'});
+  var label=$.CreatePanel('Label',button,'',{text:a[1]});label.hittest=false;
+  button.SetPanelEvent('onactivate',function(){msg('正在添加 '+a[1]+'…');send('match_tool',{tool:'self_ability_'+a[0]});});
+  button.SetPanelEvent('onmouseover',function(){$.DispatchEvent('DOTAShowTextTooltip',button,a[2]+' · '+a[0]);});
+  button.SetPanelEvent('onmouseout',function(){$.DispatchEvent('DOTAHideTextTooltip',button);});
+ });
+}
+var quickAbilitiesOpen=false;
+function setQuickAbilitiesOpen(open){
+ quickAbilitiesOpen=open;
+ el('QuickAbilityMenu').SetHasClass('Open',open);
+ el('QuickAbilityToggleText').text='快捷技能（'+QUICK_ABILITIES.length+'）'+(open?'▾':'▸');
+}
+buildQuickAbilityMenu();
+setQuickAbilitiesOpen(false);
+el('QuickAbilityToggle').SetPanelEvent('onactivate',function(){setQuickAbilitiesOpen(!quickAbilitiesOpen);});
+[['SelfRespawn','self_respawn'],['SelfRefresh','self_refresh'],['SelfGold','self_gold'],['AllyGold','ally_gold'],['EnemyGold','enemy_gold'],['AllyLevel','ally_level'],['EnemyLevel','enemy_level'],['BatDown','self_bat_down'],['BatUp','self_bat_up'],['BatReset','self_bat_reset']].forEach(function(pair){el(pair[0]).SetPanelEvent('onactivate',function(){msg('正在执行…');send('match_tool',{tool:pair[1]});});});
 function addTypedAbility(){
  var name=String(el('AbilityName').text||'').trim();
  if(!/^[a-z][a-z0-9_]{0,95}$/.test(name)){msg('只填技能内部名称，例如 bloodseeker_thirst');return;}

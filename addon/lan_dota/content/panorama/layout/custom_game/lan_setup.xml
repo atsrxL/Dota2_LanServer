@@ -68,24 +68,10 @@
 <Label hittest="false" text="删除该技能" />
 </Button>
 </Panel>
-<Button id="Add_death_prophet_witchcraft" class="ToolButton">
-<Label hittest="false" text="死亡先知 · 巫术精研" />
+<Button id="QuickAbilityToggle" class="ToolButton">
+<Label id="QuickAbilityToggleText" hittest="false" text="快捷技能（36）▸" />
 </Button>
-<Button id="Add_razor_unstable_current" class="ToolButton">
-<Label hittest="false" text="剃刀 · 不稳定电流" />
-</Button>
-<Button id="Add_bloodseeker_thirst" class="ToolButton">
-<Label hittest="false" text="血魔 · 焦渴" />
-</Button>
-<Button id="Add_winter_wyvern_eldwurms_edda" class="ToolButton">
-<Label hittest="false" text="寒冬飞龙 · 古龙之诗" />
-</Button>
-<Button id="Add_tinker_eureka" class="ToolButton">
-<Label hittest="false" text="修补匠 · 尤里卡" />
-</Button>
-<Button id="Add_silencer_brain_drain" class="ToolButton">
-<Label hittest="false" text="沉默术士 · 脑力汲取" />
-</Button>
+<Panel id="QuickAbilityMenu" />
 <Label class="ToolSection" text="基础攻击间隔（秒）" />
 <Label class="Hint" text="按钮范围：初始值 ±0.3；聊天 -basetime 1.7 可直接设置" />
 <Panel class="BatButtons">

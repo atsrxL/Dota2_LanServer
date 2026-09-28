@@ -44,7 +44,14 @@ all.get('SelfRespawn').events.onactivate();assert(sent.at(-1).tool==='self_respa
 all.get('BatDown').events.onactivate();assert(sent.at(-1).tool==='self_bat_down');
 all.get('BatUp').events.onactivate();assert(sent.at(-1).tool==='self_bat_up');
 all.get('BatReset').events.onactivate();assert(sent.at(-1).tool==='self_bat_reset');
-for(const id of all.keys())if(id.startsWith('Add_')){all.get(id).events.onactivate();assert(sent.at(-1).tool==='self_ability_'+id.slice(4));}
+// Quick abilities live in a collapsed submenu built from QUICK_ABILITIES.
+assert(!all.get('QuickAbilityMenu').classes.Open && all.get('QuickAbilityToggleText').text.includes('▸'));
+all.get('QuickAbilityToggle').events.onactivate();
+assert(all.get('QuickAbilityMenu').classes.Open && all.get('QuickAbilityToggleText').text.includes('▾'));
+const quick=all.get('QuickAbilityMenu').children;
+assert(quick.length===36 && quick.every(b=>b.id.startsWith('Quick_') && b.children[0].text));
+for(const b of quick){b.events.onactivate();assert(sent.at(-1).tool==='self_ability_'+b.id.slice(6));}
+all.get('QuickAbilityToggle').events.onactivate();assert(!all.get('QuickAbilityMenu').classes.Open);
 
 assert(!all.has('Difficulty') && !all.has('bot_protection') && !all.has('radiant_lvl_start') && !all.has('dire_lvl_start'));
 assert(sent.find(x=>x.action==='solo_start').options.dire_difficulty===4);
@@ -63,12 +70,12 @@ all.get('AbilityName').text='  axe_berserkers_call  ';all.get('AddAbilityName').
 assert(sent.at(-1).tool==='self_add_ability' && sent.at(-1).ability_name==='axe_berserkers_call');
 let beforeInvalid=sent.length;all.get('AbilityName').text='bad;quit';all.get('AbilityName').events.oninputsubmit();assert(sent.length===beforeInvalid);
 
-assert(!all.has('Add_faceless_void_distortion_field'));
-assert(!all.has('Add_beastmaster_inner_beast'));
+assert(!all.has('Quick_faceless_void_distortion_field') && !all.has('Quick_beastmaster_inner_beast'));
+assert(!/id="Add_/.test(xml));
 for(const id of ['PregameSeconds','radiant_gold_start','dire_gold_start','radiant_gold_multiplier','dire_gold_multiplier','radiant_xp_multiplier','dire_xp_multiplier']){
  assert(!all.has(id));assert(!(id in sent.find(x=>x.action==='solo_start').options));
 }
-assert.deepStrictEqual([...xml.matchAll(/id="Add_([^"]+)"/g)].map(m=>m[1]),['death_prophet_witchcraft','razor_unstable_current','bloodseeker_thirst','winter_wyvern_eldwurms_edda','tinker_eureka','silencer_brain_drain']);
+assert.deepStrictEqual(quick.slice(0,3).map(b=>b.id),['Quick_ancient_apparition_bone_chill','Quick_bane_ichor_of_nyctasha','Quick_bloodseeker_sanguivore']);
 
 // Remove typed ability.
 all.get('AbilityName').text=' axe_berserkers_call ';all.get('RemoveAbilityName').events.onactivate();

@@ -205,7 +205,7 @@ for _,invalid in ipairs({'','does_not_exist','axe_berserkers_call;quit','dota_cr
 assert(not chats.button(tutorial,0,'self_add_ability',{}))
 tutorial.room.players[0].hello=false;assert(not chats.button(tutorial,0,'self_add_ability','axe_berserkers_call'));tutorial.room.players[0].hello=true
 ownHero.AddAbility=function()error('engine rejected ability')end;abilities={}
-assert(not chats.button(tutorial,0,'self_ability_bloodseeker_thirst'))
+assert(not chats.button(tutorial,0,'self_ability_bloodseeker_sanguivore'))
 assert(tutorial.room.phase=='playing')
 tutorial.room.players[0].hello=false;assert(not chats.button(tutorial,0,'self_bat_up'))
 tutorial.room.players[0].hello=true
@@ -236,8 +236,8 @@ do
  assert(owned.axe_berserkers_call==nil and points==5 and destroyed==1)
  assert(not chats.button(tutorial,0,'self_remove_ability','axe_berserkers_call'))
  -- Quick-button abilities are granted at max level for free, so no refund.
- assert(chats.button(tutorial,0,'self_ability_bloodseeker_thirst'))
- assert(chats.button(tutorial,0,'self_remove_ability','bloodseeker_thirst'));assert(points==5)
+ assert(chats.button(tutorial,0,'self_ability_bloodseeker_sanguivore'))
+ assert(chats.button(tutorial,0,'self_remove_ability','bloodseeker_sanguivore'));assert(points==5)
 end
 
 -- Only the host may request a restart, and only once; the agent performs it.
