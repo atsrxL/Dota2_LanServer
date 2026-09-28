@@ -8,7 +8,7 @@ from tools.build_windows_client import publish
 @pytest.fixture
 def steps(monkeypatch):
     calls = []
-    monkeypatch.setattr(r, 'as_user', lambda user, args: calls.append(('as_user', user, Path(args[1]).name)))
+    monkeypatch.setattr(r, 'as_user', lambda user, args: calls.append(('as_user', user, Path(args[1]).name)) if args[0] != 'find' else calls.append(('prune',)))
     monkeypatch.setattr(r.addon_assets, 'collect', lambda s, t, a: calls.append(('collect', a.name)))
     monkeypatch.setattr(r.addon_assets, 'import_assets', lambda s, a, apply, replace_invalid: calls.append(('import', apply, replace_invalid)))
     monkeypatch.setattr(r, 'compiled_status', lambda s: {'ready': True, 'source_sha256': 'abc'})
@@ -18,9 +18,9 @@ def steps(monkeypatch):
 
 def test_release_runs_every_step_in_order(steps, tmp_path):
     result = r.release('r25', tmp_path, tmp_path, tmp_path, 'steam', False, log=lambda _: None)
-    assert [c[0] for c in steps] == ['as_user', 'as_user', 'collect', 'import', 'build']
-    assert steps[0][2] == 'addon_assets.py' and steps[1][2] == 'compile_panorama_wine.py'
-    assert steps[3] == ('import', True, True) and steps[4] == ('build', 'r25')
+    assert [c[0] for c in steps] == ['as_user', 'prune', 'as_user', 'collect', 'import', 'build']
+    assert steps[0][2] == 'addon_assets.py' and steps[2][2] == 'compile_panorama_wine.py'
+    assert steps[4] == ('import', True, True) and steps[5] == ('build', 'r25')
     assert result['source_sha256'] == 'abc' and result['restarted'] is False
 
 

@@ -38,6 +38,10 @@ def release(version: str, source: Path, tools_root: Path, client_output: Path,
     log('1/5 stage UI sources into Workshop Tools root')
     as_user(tools_user, [py, str(ROOT / 'tools/addon_assets.py'), '--source', str(source), 'stage',
                          '--dota-root', str(tools_root), '--apply', '--replace-managed'])
+    # stage() keeps the previous copy beside the target; it only held verified release sources.
+    as_user(tools_user, ['find', str(tools_root / 'game/dota_addons'), str(tools_root / 'content/dota_addons'),
+                         '-maxdepth', '1', '-name', addon_assets.ADDON_NAME + '.source-backup-*',
+                         '-exec', 'rm', '-rf', '{}', '+'])
     log('2/5 compile Panorama with resourcecompiler (Wine)')
     as_user(tools_user, [py, str(ROOT / 'tools/compile_panorama_wine.py'), '--tools-root', str(tools_root)])
     with tempfile.TemporaryDirectory(prefix='dota-release-') as temp:
