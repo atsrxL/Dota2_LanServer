@@ -8,6 +8,14 @@
 - 代码目录 `/opt/dota2-lan-kit`（不是 git 检出，以 `BUILD.json` / `DEPLOYED.json` 记录版本）；状态目录 `/var/lib/dota2`。
 - 面板和代理服务：`dota-panel`、`dota-agent`。重启 `dota-agent` 会结束正在运行的游戏。
 
+## 2026-09-28 · 代码 7b6d0ad + r26
+
+- 第一次用 `tools/deploy_kit.py` 部署代码包：校验通过，当时没有玩家在线；备份在 `/var/lib/dota2/kit-backups/kit-20260928-093106-7b6d0add067b.tgz`，`DEPLOYED.json` 已写入，面板页脚显示该提交。脚本正确提示 UI 源码已变化，需要重新发布。
+- `tools/release.py --version r26 --restart`：四个 UI 输入都编译成功，产物保存在 `/var/lib/dota2/artifacts/r26/`，`compiled-backup-*` 剩 2 份。
+- 重启后部署源码与代码目录一致，都是 `4c0b9a339643`；心跳正常，没有错误。编译后的 `lan_setup.vjs_c` 里已写入该源码哈希，占位符 `__LAN_SOURCE_SHA256__` 已被替换。
+- 线上下载 EXE 为 150520 字节，与清单 SHA-256 `96a1734e99e32b43…` 一致。
+- 尚未实测：游戏内的 restart 按钮、删除技能、版本不一致提示，以及 r26 在 Windows 上的安装。
+
 ## 2026-09-28 · r25
 
 - 用 `tools/release.py` 发布 r25。之前手工放入编译工具目录的两个副本没有 stage 标记，`game/dota_addons` 也属于 root，所以先把副本移到 `/root/agent.backup/dota-tools-stage-pre-r25-20260928/`，并把该目录交给 steam（一次性处理）。
