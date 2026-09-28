@@ -22,6 +22,9 @@ function AddDropDown(tDropDown, hParent) {
  $("#"+tDropDown.id).SetPanelEvent('oninputsubmit',function(){GameOptions[tDropDown.id]=$("#"+tDropDown.id).GetSelected().id;});
 }
 
+// Replaced with the server source identity when the release pipeline stages this file
+// for compilation (tools/addon_assets.py). Left as-is, the build is unknown.
+var CLIENT_BUILD='__LAN_SOURCE_SHA256__';
 var context=$.GetContextPanel(), state=null, lastPhase=null, initialized=false, collapsed=false, pending=false;
 function el(id){return context.FindChildTraverse(id);}
 [
@@ -38,7 +41,17 @@ function value(id){return Number(el(id).GetSelected().id);}
 
 function yes(v){return v===true || v===1 || v==='1';}
 function msg(s){el('Message').text=String(s);el('ToolMessage').text=String(s);}
-function send(action,extra){var d=extra||{};d.action=action;d.revision=state?Number(state.revision):0;d.client_revision='lanlab-130.1';GameEvents.SendCustomGameEventToServer('lan_action',d);}
+function send(action,extra){var d=extra||{};d.action=action;d.revision=state?Number(state.revision):0;d.client_revision='lanlab-130.1';d.client_build=CLIENT_BUILD;GameEvents.SendCustomGameEventToServer('lan_action',d);}
+function renderBuildWarning(s){
+ var known=CLIENT_BUILD.indexOf('__')!==0;
+ var server=String(s.source_sha256||'');
+ var stale=known && /^[0-9a-f]{64}$/.test(server) && server!==CLIENT_BUILD;
+ var text='';
+ if(yes(s.restarting))text='对局正在重启：服务器将关闭并重开，约 30 秒后请重新连接。';
+ else if(stale)text='客户端资源版本与服务器不一致：请退出 Dota 2，从控制面板重新安装客户端资源。';
+ el('BuildWarning').text=text;
+ el('BuildWarning').SetHasClass('Visible',text!=='');
+}
 function render(s){
  if(!s)return;state=s;
  if(lastPhase!==s.phase){lastPhase=s.phase;collapsed=['hero_selection','pregame','playing','postgame'].indexOf(s.phase)>=0;}
@@ -52,6 +65,8 @@ function render(s){
  if(!initialized && s.options){initialized=true;el('radiant_difficulty').SetSelected(String(s.options.radiant_difficulty));el('dire_difficulty').SetSelected(String(s.options.dire_difficulty));}
  el('BotInfo').text=yes(s.bot_available)?'天地星 AI 已加载 · 按双方人数自动补位':'天地星 AI 加载异常，请检查服务器。';
  el('Start').enabled=s.phase==='setup' && Number(s.host)===Game.GetLocalPlayerID() && yes(s.bot_available) && !pending;
+ renderBuildWarning(s);
+ el('RestartMatch').enabled=!yes(s.restarting) && s.phase!=='waiting_engine';
  if(s.error)msg(s.error);
 }
 el('Start').SetPanelEvent('onactivate',function(){
@@ -76,11 +91,29 @@ function addTypedAbility(){
  if(!/^[a-z][a-z0-9_]{0,95}$/.test(name)){msg('只填技能内部名称，例如 bloodseeker_thirst');return;}
  msg('正在添加技能…');send('match_tool',{tool:'self_add_ability',ability_name:name});
 }
+function removeTypedAbility(){
+ var name=String(el('AbilityName').text||'').trim();
+ if(!/^[a-z][a-z0-9_]{0,95}$/.test(name)){msg('只填技能内部名称，例如 bloodseeker_thirst');return;}
+ msg('正在删除技能…');send('match_tool',{tool:'self_remove_ability',ability_name:name});
+}
+// Destroying the match needs a second click within 5 seconds.
+var restartArmed=false;
+function disarmRestart(){restartArmed=false;el('RestartMatch').SetHasClass('Confirm',false);el('RestartMatchText').text='restart：摧毁本局并重启一局游戏';}
+el('RestartMatch').SetPanelEvent('onactivate',function(){
+ if(!restartArmed){
+  restartArmed=true;el('RestartMatch').SetHasClass('Confirm',true);el('RestartMatchText').text='再次点击确认：本局将被销毁';
+  $.Schedule(5,function(){if(restartArmed)disarmRestart();});
+  return;
+ }
+ disarmRestart();msg('正在请求重启…');send('restart_match');
+});
+el('RemoveAbilityName').SetPanelEvent('onactivate',removeTypedAbility);
 el('AddAbilityName').SetPanelEvent('onactivate',addTypedAbility);
 el('AbilityName').SetPanelEvent('oninputsubmit',addTypedAbility);
 el('Toggle').SetPanelEvent('onactivate',function(){collapsed=!collapsed;render(state);});
-var errors={solo_requires_one_player:'单人模式只允许一名真人连接。',bot_snapshot_missing:'尚未加载 AI 脚本。',invalid_options:'参数无效，请检查设置。',invalid_number:'参数超出允许范围。',bot_populate_requires_explicit_cheats:'服务器需要开启 sv_cheats 后重开。',stale_revision:'状态已更新，请重试。'};
-GameEvents.Subscribe('lan_reply',function(r){pending=false;msg(yes(r.ok)?(r.message&&r.message!=='ok'?r.message:'设置已确认。'):(errors[r.message]||String(r.message)));render(state);});
+var errors={solo_requires_one_player:'单人模式只允许一名真人连接。',bot_snapshot_missing:'尚未加载 AI 脚本。',invalid_options:'参数无效，请检查设置。',invalid_number:'参数超出允许范围。',bot_populate_requires_explicit_cheats:'服务器需要开启 sv_cheats 后重开。',stale_revision:'状态已更新，请重试。',only_host_can_restart:'只有房主可以重启对局。',restart_already_requested:'已在重启中，请稍候。',engine_not_ready:'服务器尚未就绪。'};
+var notices={restart_requested:'已请求重启：服务器即将关闭并重开，约 30 秒后重新连接。'};
+GameEvents.Subscribe('lan_reply',function(r){pending=false;msg(yes(r.ok)?(r.message&&r.message!=='ok'?(notices[r.message]||r.message):'设置已确认。'):(errors[r.message]||String(r.message)));render(state);});
 CustomNetTables.SubscribeNetTableListener('lan_room',function(_,key,v){if(key==='state')render(v);});
 function poll(){if(!context.IsValid())return;var s=CustomNetTables.GetTableValue('lan_room','state');render(s);var ps=s?Object.keys(s.players||{}).map(function(k){return s.players[k];}):[];if(!ps.some(function(p){return Number(p.pid)===Game.GetLocalPlayerID()&&yes(p.hello);}))send('hello');$.Schedule(2,poll);}
 poll();

@@ -22,10 +22,18 @@ function M.hero_tool(e,pid,action,input)
   if not a then return false,'当前游戏版本无法添加该技能：'..name end
   local kv=a.GetAbilityKeyValues and a:GetAbilityKeyValues() or {}
   local innate=kv and (kv.Innate==true or tonumber(kv.Innate)==1)
-  if action~='self_add_ability' or innate then a:SetLevel(math.max(1,a:GetMaxLevel()))
-  else a:SetLevel(0) end
+  local trained=action=='self_add_ability' and not innate
+  if trained then a:SetLevel(0)
+  else a:SetLevel(math.max(1,a:GetMaxLevel())) end
+  -- Remember panel-added abilities; only these may be removed again.
+  -- Trained ones refund the skill points the player spent on them.
+  h.lan_added_abilities=h.lan_added_abilities or {}
+  h.lan_added_abilities[name]={refund=trained}
   e:emit('MENU_ABILITY',{pid=pid,ability=name,level=a:GetLevel()})
   return true,'已添加：'..name
+ end
+ if action=='self_remove_ability' then
+  return M.remove_ability(e,pid,h,input)
  end
  if action=='self_bat_down' or action=='self_bat_up' or action=='self_bat_reset' then
   if not h.lan_initial_bat then h.lan_initial_bat=h:GetBaseAttackTime(false) end
@@ -97,11 +105,38 @@ function M.handle(e,k)
  end
  e:emit('CHAT_CHEAT',result)
 end
+function M.remove_ability(e,pid,h,input)
+ local name=type(input)=='string' and input:match('^%s*(.-)%s*$') or ''
+ if #name==0 or #name>96 or not name:match('^[a-z][a-z0-9_]*$') then
+  return false,'只填技能内部名称，例如 bloodseeker_thirst'
+ end
+ local added=h.lan_added_abilities and h.lan_added_abilities[name]
+ if not added then return false,'只能删除通过面板添加的技能：'..name end
+ local a=h:FindAbilityByName(name)
+ if not a then
+  h.lan_added_abilities[name]=nil
+  return false,'英雄身上没有该技能：'..name
+ end
+ local refund=added.refund and a:GetLevel() or 0
+ -- RemoveAbility leaves passive/intrinsic modifiers behind; drop them first.
+ if h.FindAllModifiers then
+  for _,m in ipairs(h:FindAllModifiers()) do
+   if m.GetAbility and m:GetAbility()==a then m:Destroy() end
+  end
+ end
+ h:RemoveAbilityByHandle(a)
+ h.lan_added_abilities[name]=nil
+ if refund>0 then h:SetAbilityPoints(h:GetAbilityPoints()+refund) end
+ e:emit('MENU_ABILITY_REMOVED',{pid=pid,ability=name,refund=refund})
+ if refund>0 then return true,string.format('已删除：%s，返还 %d 技能点',name,refund) end
+ return true,'已删除：'..name
+end
 function M.button(e,pid,action,input)
  if type(action)~='string' then return false,'未知操作' end
  local actions={self_respawn=true,self_refresh=true,self_gold=true,ally_gold=true,enemy_gold=true,ally_level=true,enemy_level=true}
  local ability=type(action)=='string' and action:match('^self_ability_(.+)$')
- local hero_tool=action=='self_add_ability' or (ability and M.abilities[ability]) or action=='self_bat_down' or action=='self_bat_up' or action=='self_bat_reset'
+ local hero_tool=action=='self_add_ability' or action=='self_remove_ability' or (ability and M.abilities[ability])
+  or action=='self_bat_down' or action=='self_bat_up' or action=='self_bat_reset'
  if not actions[action] and not hero_tool then return false,'未知操作' end
  if e.room.phase~='pregame' and e.room.phase~='playing' then return false,'进入比赛后才能操作' end
  local p=e.room.players[pid]

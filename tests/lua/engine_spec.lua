@@ -210,6 +210,60 @@ assert(tutorial.room.phase=='playing')
 tutorial.room.players[0].hello=false;assert(not chats.button(tutorial,0,'self_bat_up'))
 tutorial.room.players[0].hello=true
 bat=0.1;assert(not chats.button(tutorial,0,'self_bat_down'));assert(bat==0.1)
+-- Panel-added abilities can be removed again; trained ones refund their points.
+do
+ local owned,points,destroyed={},2,0
+ local hero={FindAbilityByName=function(_,name)return owned[name] end,GetAbilityByIndex=function()return {} end,
+  AddAbility=function(_,name)
+   local a={name=name,GetAbilityKeyValues=function()return {Innate=name=='silencer_brain_drain' and '1' or '0'} end,
+    GetMaxLevel=function()return 4 end,SetLevel=function(self,n)self.level=n end,GetLevel=function(self)return self.level end}
+   owned[name]=a;return a
+  end,
+  RemoveAbilityByHandle=function(_,a)owned[a.name]=nil end,
+  FindAllModifiers=function()
+   return {{GetAbility=function()return owned.axe_berserkers_call end,Destroy=function()destroyed=destroyed+1 end},
+           {GetAbility=function()return nil end,Destroy=function()error('unrelated modifier destroyed') end}}
+  end,
+  GetAbilityPoints=function()return points end,SetAbilityPoints=function(_,n)points=n end}
+ PlayerResource.GetSelectedHeroEntity=function()return hero end
+ GetAbilityKeyValuesByName=function()return {AbilityType='DOTA_ABILITY_TYPE_BASIC'} end
+ owned.native_skill={name='native_skill',GetLevel=function()return 1 end}
+ assert(not chats.button(tutorial,0,'self_remove_ability','native_skill'));assert(owned.native_skill)
+ assert(not chats.button(tutorial,0,'self_remove_ability','bad;name'))
+ assert(chats.button(tutorial,0,'self_add_ability','axe_berserkers_call'))
+ owned.axe_berserkers_call.level=3
+ assert(chats.button(tutorial,0,'self_remove_ability',' axe_berserkers_call '))
+ assert(owned.axe_berserkers_call==nil and points==5 and destroyed==1)
+ assert(not chats.button(tutorial,0,'self_remove_ability','axe_berserkers_call'))
+ -- Quick-button abilities are granted at max level for free, so no refund.
+ assert(chats.button(tutorial,0,'self_ability_bloodseeker_thirst'))
+ assert(chats.button(tutorial,0,'self_remove_ability','bloodseeker_thirst'));assert(points==5)
+end
+
+-- Only the host may request a restart, and only once; the agent performs it.
+do
+ local lines={}
+ local e=Engine.new({client_revision='v1',session=string.rep('e',32),source_sha256=string.rep('f',64),bot_available=true})
+ e.emit=function(_,kind,detail)lines[#lines+1]={kind=kind,detail=detail} end
+ e.room.phase='playing';e.room.host=0
+ e.room.players={[0]={pid=0,connected=true,hello=true},[1]={pid=1,connected=true,hello=true}}
+ assert(select(2,e:request_restart(1))=='only_host_can_restart')
+ local ok,msg=e:request_restart(0);assert(ok and msg=='restart_requested')
+ assert(lines[#lines].kind=='RESTART_REQUEST' and lines[#lines].detail.pid==0)
+ assert(select(2,e:request_restart(0))=='restart_already_requested')
+ e.room.phase='waiting_engine';e.restart_requested=false
+ assert(select(2,e:request_restart(0))=='engine_not_ready')
+ -- Client build: reported once per change, never rejected.
+ e:check_client_build(0,string.rep('f',64));assert(e.room.players[0].build_ok==1)
+ local n=#lines;e:check_client_build(0,string.rep('f',64));assert(#lines==n)
+ e:check_client_build(0,'stale');assert(e.room.players[0].build_ok==0 and lines[#lines].kind=='CLIENT_BUILD')
+ assert(e.room:snapshot().players[1].build_ok==0 and e.room:snapshot().players[2].build_ok==-1)
+end
+-- Income rules come from one table.
+do
+ local rules=require('lan.bot_comeback').RULES
+ assert(rules.ramp_start_seconds==300 and rules.ramp_end_seconds==900 and rules.ramp_max==1.5 and rules.max_multiplier==5)
+end
 -- River-only spawn filter rejects bounty/xp and unknown spawners.
 local runes=require('lan.runes')
 EntIndexToHScript=function(id)

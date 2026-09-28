@@ -1,9 +1,20 @@
--- Per-bot triangular income stacks, capped at nine (5x from a 1x baseline).
+-- Match income rules: a shared time ramp plus per-bot triangular death stacks.
 local M={}
+-- Single source for every income number; engine GOLD_RULE reports these values.
+M.RULES={
+ ramp_start_seconds=300,  -- base multiplier starts rising at 5:00
+ ramp_end_seconds=900,    -- and reaches ramp_max at 15:00
+ ramp_max=1.5,
+ max_layers=9,            -- bot death stacks: bonus = layers*(layers+1)/20
+ kill_reduce_layers=3,    -- a bot hero kill removes this many stacks
+ max_multiplier=5,        -- total cap for bots (base + stack bonus)
+}
 function M.base()
  -- The match clock excludes pregame and stops while paused.
+ local r=M.RULES
  local seconds=GameRules:GetDOTATime(false,false)
- return 1+math.max(0,math.min(600,seconds-300))/1200
+ local progress=(seconds-r.ramp_start_seconds)/(r.ramp_end_seconds-r.ramp_start_seconds)
+ return 1+(r.ramp_max-1)*math.max(0,math.min(1,progress))
 end
 local function is_bot(pid)
  return type(pid)=='number' and PlayerResource:IsValidPlayerID(pid)
@@ -17,7 +28,7 @@ function M.bonus(e,pid)
 end
 function M.multiplier(e,pid)
  local base=M.base()
- return is_bot(pid) and math.min(5,base+M.bonus(e,pid)) or base
+ return is_bot(pid) and math.min(M.RULES.max_multiplier,base+M.bonus(e,pid)) or base
 end
 function M.scale(e,pid,kind,amount)
  if amount<=0 then return amount end
@@ -42,7 +53,7 @@ function M.hero_kill(e,victim,attacker)
  local killer=PlayerResource:GetSelectedHeroEntity(pid)
  if not killer or killer:GetTeamNumber()==victim:GetTeamNumber() then return end
  -- Player-owned summons/illusions attribute the kill to their owning bot.
- e.bot_death_bonus=e.bot_death_bonus or {};e.bot_death_bonus[pid]=math.max(0,(e.bot_death_bonus[pid] or 0)-3)
+ e.bot_death_bonus=e.bot_death_bonus or {};e.bot_death_bonus[pid]=math.max(0,(e.bot_death_bonus[pid] or 0)-M.RULES.kill_reduce_layers)
  if e.bot_reward_remainders then e.bot_reward_remainders[pid]=nil end
  M.report(e,pid,killer:GetTeamNumber(),'BOT_COMEBACK_REDUCED')
 end
@@ -55,7 +66,7 @@ function M.killed(e,h)
  if not PlayerResource:IsValidPlayerID(pid) or not PlayerResource:IsFakeClient(pid)
   or PlayerResource:GetSelectedHeroEntity(pid)~=h then return end
  e.bot_death_bonus=e.bot_death_bonus or {}
- e.bot_death_bonus[pid]=math.min(9,(e.bot_death_bonus[pid] or 0)+1)
+ e.bot_death_bonus[pid]=math.min(M.RULES.max_layers,(e.bot_death_bonus[pid] or 0)+1)
  M.report(e,pid,h:GetTeamNumber(),'BOT_COMEBACK')
 end
 function M.report(e,pid,team,event)

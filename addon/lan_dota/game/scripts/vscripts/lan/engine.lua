@@ -31,6 +31,7 @@ function Engine:publish()
     local state=self.room:snapshot()
     state.source_sha256=self.config.source_sha256
     state.bot_version=self.config.bot and self.config.bot.version or ''
+    state.restarting=self.restart_requested and 1 or 0
     -- NetTable values use 0/1 for booleans at protocol boundaries.
     for k,v in pairs(state.options) do if type(v)=='boolean' then state.options[k]=v and 1 or 0 end end
     for k,v in pairs(state.capabilities) do if type(v)=='boolean' then state.capabilities[k]=v and 1 or 0 end end
@@ -56,6 +57,31 @@ function Engine:refresh_players()
     end
     self.room:sync(rows)
 end
+-- The client bakes the source identity it was compiled from; a stale install is reported,
+-- not rejected, so a player can still finish the match and reinstall afterwards.
+function Engine:check_client_build(pid,build)
+    local p=self.room.players[pid]
+    if not p or not p.hello then return end
+    local expected=self.config.source_sha256
+    local value=type(build)=='string' and build:sub(1,64) or ''
+    local ok=value==expected and 1 or 0
+    if p.build_ok~=ok then
+        p.build_ok=ok
+        self:emit('CLIENT_BUILD',{pid=pid,ok=ok,client=value:sub(1,12),server=tostring(expected):sub(1,12)})
+    end
+end
+-- Destroying the match is done by the panel agent (full process restart and redeploy);
+-- the engine only validates who asked and announces it.
+function Engine:request_restart(pid)
+    local p=self.room.players[pid]
+    if self.room.phase=='waiting_engine' then return false,'engine_not_ready' end
+    if not p or not p.connected or not p.hello then return false,'ui_handshake_required' end
+    if self.room.host>=0 and self.room.host~=pid then return false,'only_host_can_restart' end
+    if self.restart_requested then return false,'restart_already_requested' end
+    self.restart_requested=true
+    self:emit('RESTART_REQUEST',{pid=pid,phase=self.room.phase})
+    return true,'restart_requested'
+end
 function Engine:reply(pid,ok,message)
     local player=PlayerResource:GetPlayer(pid)
     if player then CustomGameEventManager:Send_ServerToPlayer(player,'lan_reply',{ok=ok and 1 or 0,message=message or 'ok'}) end
@@ -77,8 +103,11 @@ function Engine:dispatch(source,keys)
         local before=self.room.players[pid] and self.room.players[pid].hello
         ok,err=self.room:hello(pid,keys.client_revision)
         if ok and not before then self:emit('UI_HELLO',tostring(pid)) end
+        self:check_client_build(pid,keys.client_build)
     elseif action=='match_tool' then
         ok,err=require('lan.cheats').button(self,pid,keys.tool,keys.ability_name)
+    elseif action=='restart_match' then
+        ok,err=self:request_restart(pid)
     elseif action=='solo_start' then
         ok,err=self.room:authorize(pid,rev,true)
         if ok then
@@ -165,7 +194,7 @@ function Engine:start_match()
         end
         return true
     end,self)
-    self:emit('GOLD_RULE',{base_start_seconds=300,base_end_seconds=900,base_max=1.5,scope='positive_gold_filter_events'})
+    self:emit('GOLD_RULE',{rules=require('lan.bot_comeback').RULES,scope='positive_gold_filter_events'})
     require('lan.rules').start(self)
     r:begin() -- latch before any engine side effect / duplicate event
     GameRules:SetHeroSelectionTime(o.selection_seconds)

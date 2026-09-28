@@ -185,6 +185,17 @@ def test_telemetry_invalid_and_bounded():
     assert t.snapshot(True)['state'] is None
     for i in range(700):t.feed('LANLAB|'+SESSION+'|BOT_ENTRY|entry'+str(i)+':loaded\n')
     assert len(t.entries)<=500 and len(t.events)==100
+    calls=[]
+    t.on_restart=lambda:calls.append(1)
+    for _ in range(2):t.feed('LANLAB|'+SESSION+'|RESTART_REQUEST|{"pid":0,"phase":"playing"}\n')
+    for _ in range(50):
+        if calls:break
+        __import__('time').sleep(.01)
+    assert calls==[1] and t.snapshot(True)['restart_requested']
+    t.feed('LANLAB|'+SESSION+'|CLIENT_BUILD|{"pid":3,"ok":0,"client":"a","server":"b"}\n')
+    assert t.snapshot(True)['stale_clients']==[3]
+    t.feed('LANLAB|'+SESSION+'|CLIENT_BUILD|{"pid":3,"ok":1,"client":"b","server":"b"}\n')
+    assert t.snapshot(True)['stale_clients']==[]
     t.feed('S2C_CONNREJECT 129 #GameUI_ServerNoLobby\n')
     assert 'ServerNoLobby' in t.snapshot(True)['connection_rejections']
 
@@ -193,6 +204,12 @@ def test_offline_tools_roundtrip(source,tmp_path):
     assert stage(source,dota)['dry_run']
     assert not (dota/'game/dota_addons/lan_dota').exists()
     stage(source,dota,True)
+    staged_js=(dota/'content/dota_addons/lan_dota/panorama/scripts/custom_game/lan_setup.js').read_text()
+    assert '__LAN_SOURCE_SHA256__' not in staged_js
+    assert "CLIENT_BUILD='"+source_identity(source)['source_sha256']+"'" in staged_js
+    assert '__LAN_SOURCE_SHA256__' in (source/'content/panorama/scripts/custom_game/lan_setup.js').read_text()
+    # Re-staging an unmodified managed copy is allowed (release pipeline path).
+    stage(source,dota,True,True)
     for name in COMPILED_FILES:
         p=dota/'game/dota_addons/lan_dota'/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(synthetic_resource())
     archive=tmp_path/'assets.zip';collect(source,dota,archive)

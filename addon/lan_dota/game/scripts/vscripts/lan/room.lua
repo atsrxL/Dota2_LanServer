@@ -147,7 +147,8 @@ end
 function Room:snapshot()
     local rows={}
     for _,p in pairs(self.players) do rows[#rows+1]={pid=p.pid,name=p.name,team=p.team,role=p.role,
-        ready=p.ready and 1 or 0,hello=p.hello and 1 or 0,connected=p.connected and 1 or 0} end
+        ready=p.ready and 1 or 0,hello=p.hello and 1 or 0,connected=p.connected and 1 or 0,
+        build_ok=p.build_ok==nil and -1 or p.build_ok} end
     table.sort(rows,function(a,b) return a.pid<b.pid end)
     return {schema=1,client_revision=self.client_revision,phase=self.phase,revision=self.revision,
         host=self.host,players=rows,options=copy(self.options),error=self.error,

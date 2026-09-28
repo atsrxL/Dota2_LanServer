@@ -36,6 +36,7 @@ class Manager:
         self.worker = None
         self.closed = False
         self.game = GameProcess(paths)
+        self.game.on_restart_request = self._in_game_restart
         self.bots = BotLibrary(paths)
         self.addon = LanAddon(paths)
         self.workshop_lookup = workshop_lookup or lookup_item
@@ -53,6 +54,16 @@ class Manager:
         self.crashes: list[float] = []
         self.handled_generation = 0
         self.audit.event("运行代理启动；SteamCMD 与游戏均使用非特权 steam 用户。")
+
+    def _in_game_restart(self, delay: float = 3.0) -> None:
+        """The in-game host asked to destroy the match; restart like the panel button would."""
+        # Give the engine time to publish the "restarting" banner to connected clients.
+        time.sleep(delay)
+        try:
+            job = self.submit({"action": "restart"})
+            self.audit.event(f"游戏内房主请求重启对局；已提交任务 {job['id']}。")
+        except Fault as exc:
+            self.audit.event(f"游戏内房主请求重启对局，但未能执行：{exc}")
 
     def _persist(self) -> None:
         atomic_json(self.paths.state / "jobs.json", self.jobs[-100:])

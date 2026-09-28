@@ -144,3 +144,15 @@ def test_fixed_tiandixing_policy_rejects_bot_management_and_other_selection(mana
             manager.submit({'action':action})
     with pytest.raises(Fault,match='固定版本'):
         manager._start_game()
+
+def test_in_game_restart_request_restarts_server(manager):
+    assert install(manager)['state']=='success'
+    manager.submit({'action':'start'});assert wait(manager)['state']=='success'
+    manager._in_game_restart(delay=0)
+    job=wait(manager)
+    assert job['action']=='restart' and job['state']=='success' and manager.status()['running']
+    assert '游戏内房主请求重启' in (manager.paths.state/'logs/agent.log').read_text()
+    # A second request while a job runs is logged, not raised into the reader thread.
+    manager.submit({'action':'backup'})
+    manager._in_game_restart(delay=0)
+    wait(manager)

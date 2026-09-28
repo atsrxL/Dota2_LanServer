@@ -45,6 +45,7 @@ class GameProcess:
         self.bot_entry_seen = False
         self.addon_spec = None
         self.addon_telemetry = None
+        self.on_restart_request = None
 
     def running(self) -> bool:
         return bool(self.child and self.child.isalive())
@@ -55,7 +56,7 @@ class GameProcess:
                 raise Fault("服务器已经在运行", 409)
             cmd, env = build_command(self.paths, config, bot, addon)
             self.addon_spec = addon
-            self.addon_telemetry = AddonTelemetry(addon["session"]) if addon else None
+            self.addon_telemetry = AddonTelemetry(addon["session"], on_restart=self.on_restart_request) if addon else None
             self.bot_spec = dict(bot) if bot else None
             self.bot_entry_seen = False
             self.log = SafeLog(self.paths.state / "logs/server.log", [config["game_password"]])

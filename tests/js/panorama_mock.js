@@ -69,3 +69,36 @@ for(const id of ['PregameSeconds','radiant_gold_start','dire_gold_start','radian
  assert(!all.has(id));assert(!(id in sent.find(x=>x.action==='solo_start').options));
 }
 assert.deepStrictEqual([...xml.matchAll(/id="Add_([^"]+)"/g)].map(m=>m[1]),['death_prophet_witchcraft','razor_unstable_current','bloodseeker_thirst','winter_wyvern_eldwurms_edda','tinker_eureka','silencer_brain_drain']);
+
+// Remove typed ability.
+all.get('AbilityName').text=' axe_berserkers_call ';all.get('RemoveAbilityName').events.onactivate();
+assert(sent.at(-1).tool==='self_remove_ability' && sent.at(-1).ability_name==='axe_berserkers_call');
+beforeInvalid=sent.length;all.get('AbilityName').text='Bad Name';all.get('RemoveAbilityName').events.onactivate();assert(sent.length===beforeInvalid);
+
+// Restart needs two clicks; the first only arms the button.
+beforeInvalid=sent.length;all.get('RestartMatch').events.onactivate();
+assert(sent.length===beforeInvalid && all.get('RestartMatch').classes.Confirm);
+all.get('RestartMatch').events.onactivate();
+assert(sent.at(-1).action==='restart_match' && !all.get('RestartMatch').classes.Confirm);
+handlers.lan_reply({ok:1,message:'restart_requested'});assert(all.get('ToolMessage').text.includes('重启'));
+
+// Every action carries the baked client build; an unsubstituted placeholder never warns.
+assert(sent.every(x=>x.client_build==='__LAN_SOURCE_SHA256__'));
+current.source_sha256='a'.repeat(64);listeners.lan_room('lan_room','state',current);
+assert(!all.get('BuildWarning').classes.Visible);
+current.restarting=1;listeners.lan_room('lan_room','state',current);
+assert(all.get('BuildWarning').classes.Visible && !all.get('RestartMatch').enabled);
+
+// A staged build that differs from the server shows the stale-client banner.
+{
+ const staged=source.replace('__LAN_SOURCE_SHA256__','b'.repeat(64));
+ all.clear();sent.length=0;
+ for(const m of xml.matchAll(/\bid="([^"]+)"/g))panel(m[1]);
+ vm.runInNewContext(staged,sandbox,{filename:'lan_setup.js'});
+ current={phase:'playing',revision:1,host:0,players:[{pid:0,hello:1}],bot_available:1,options:{},source_sha256:'a'.repeat(64)};
+ listeners.lan_room('lan_room','state',current);
+ assert(all.get('BuildWarning').classes.Visible && all.get('BuildWarning').text.includes('重新安装'));
+ current.source_sha256='b'.repeat(64);listeners.lan_room('lan_room','state',current);
+ assert(!all.get('BuildWarning').classes.Visible);
+}
+console.log('Panorama MOCK: remove ability, two-step restart, client build banner PASS');

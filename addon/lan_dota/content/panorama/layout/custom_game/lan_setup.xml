@@ -8,6 +8,7 @@
 </scripts>
 <Panel class="LANRoot" hittest="false">
 <Panel id="LANRoot" hittest="false">
+<Label id="BuildWarning" hittest="false" text="" />
 <Panel id="LANWindow">
 <Panel class="Header">
 <Button id="SelfRespawn" class="QuickReset" onmouseover="$.DispatchEvent('DOTAShowTextTooltip', this, '重置英雄');" onmouseout="$.DispatchEvent('DOTAHideTextTooltip', this);">
@@ -31,6 +32,10 @@
 </Button>
 </Panel>
 <Panel id="MatchBody">
+<Label class="ToolSection" text="对局" />
+<Button id="RestartMatch" class="ToolButton Danger">
+<Label id="RestartMatchText" hittest="false" text="restart：摧毁本局并重启一局游戏" />
+</Button>
 <Label class="ToolSection" text="玩家" />
 <Button id="SelfRefresh" class="ToolButton">
 <Label hittest="false" text="刷新" />
@@ -53,11 +58,16 @@
 <Label hittest="false" text="给对方 Bot +1 级" />
 </Button>
 <Label class="ToolSection" text="添加技能" />
-<Label class="Hint" text="输入添加：非先天技能需手动加点" />
+<Label class="Hint" text="输入添加：非先天技能需手动加点；只能删除面板添加的技能" />
 <TextEntry id="AbilityName" maxchars="128" placeholder="粘贴技能内部名称" />
-<Button id="AddAbilityName" class="ToolButton">
+<Panel class="AbilityButtons">
+<Button id="AddAbilityName">
 <Label hittest="false" text="添加输入的技能" />
 </Button>
+<Button id="RemoveAbilityName" class="Danger">
+<Label hittest="false" text="删除该技能" />
+</Button>
+</Panel>
 <Button id="Add_death_prophet_witchcraft" class="ToolButton">
 <Label hittest="false" text="死亡先知 · 巫术精研" />
 </Button>

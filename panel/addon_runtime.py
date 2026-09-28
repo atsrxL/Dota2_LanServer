@@ -7,11 +7,21 @@ import time
 from collections import deque
 
 class AddonTelemetry:
-    def __init__(self, session: str, clock=time.monotonic):
+    def __init__(self, session: str, clock=time.monotonic, on_restart=None):
         self.session = session; self.clock = clock; self.lock = threading.RLock()
+        # Called once, on a separate thread, when the in-game host asks to destroy the match.
+        self.on_restart = on_restart; self.restart_requested = False
         self.buffer = ''; self.state = None; self.seen = None; self.started = clock()
         self.events = deque(maxlen=100); self.entries = set(); self.callbacks = {}; self.api_missing = {}
         self.contexts = {}; self.errors = deque(maxlen=20); self.rejections = set(); self.dropped = 0
+        self.stale_clients = set()
+
+    def _client_build(self, detail: str):
+        try: obj = json.loads(detail)
+        except (ValueError, RecursionError): return
+        if not isinstance(obj, dict) or type(obj.get('pid')) is not int: return
+        if obj.get('ok') == 0 and len(self.stale_clients) < 64: self.stale_clients.add(obj['pid'])
+        elif obj.get('ok') == 1: self.stale_clients.discard(obj['pid'])
 
     def feed(self, chunk: str):
         with self.lock:
@@ -35,9 +45,14 @@ class AddonTelemetry:
                             or not isinstance(obj.get('players'), list) or len(obj['players']) > 64): continue
                         self.state = obj; self.seen = self.clock()
                     except (ValueError, RecursionError): continue
-                elif kind in {'BOOT','ERROR','CAPS','BOT_ENTRY','BOT_CALLBACK','BOT_API','BOT_CONTEXT','UI_HELLO','START','FILL'}:
+                elif kind in {'BOOT','ERROR','CAPS','BOT_ENTRY','BOT_CALLBACK','BOT_API','BOT_CONTEXT','UI_HELLO','START','FILL',
+                              'CLIENT_BUILD','RESTART_REQUEST'}:
                     self.events.append({'elapsed': round(self.clock()-self.started, 1), 'kind': kind, 'detail': detail[:1500]})
                     if kind == 'ERROR': self.errors.append(detail[:1000])
+                    if kind == 'CLIENT_BUILD': self._client_build(detail)
+                    if kind == 'RESTART_REQUEST' and not self.restart_requested:
+                        self.restart_requested = True
+                        if self.on_restart: threading.Thread(target=self.on_restart, daemon=True).start()
                     if kind == 'BOT_ENTRY' and len(self.entries)<500: self.entries.add(detail.split(':',1)[0][:200])
                     elif kind == 'BOT_CALLBACK':
                         parts = detail.split(':')
@@ -59,5 +74,6 @@ class AddonTelemetry:
                     'events': list(self.events), 'bot_entries': sorted(self.entries), 'bot_callbacks': dict(self.callbacks),
                     'bot_missing_apis': dict(self.api_missing), 'bot_contexts': dict(self.contexts),
                     'errors': list(self.errors), 'connection_rejections': sorted(self.rejections),
+                    'stale_clients': sorted(self.stale_clients), 'restart_requested': self.restart_requested,
                     'dropped_lines': self.dropped, 'full_ai_verified': False,
                     'notice': '日志为当前进程证据，不是防伪认证。未检测到不等于不存在；行为与整场对局仍需人工验收。'}

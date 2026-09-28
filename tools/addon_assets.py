@@ -22,6 +22,19 @@ from panel.addon_assets import (ADDON_NAME,CLIENT_REVISION,COMPILED_FILES,MAX_AS
 from panel.common import Fault
 SOURCE=Path(__file__).resolve().parents[1]/'addon'/ADDON_NAME
 STAGE_MARKER='.lanlab-source-stage.json'
+# The in-game UI compares this baked value with the source_sha256 the server publishes.
+BUILD_PLACEHOLDER=b'__LAN_SOURCE_SHA256__'
+BUILD_FILE='panorama/scripts/custom_game/lan_setup.js'
+
+
+def staged_content(source: Path) -> dict[str,bytes]:
+    """UI sources exactly as they must be compiled: the build placeholder is replaced once."""
+    files={name:(source/'content'/name).read_bytes() for name in tree_inventory(source/'content')}
+    if BUILD_FILE in files:
+        data=files[BUILD_FILE]
+        if data.count(BUILD_PLACEHOLDER)!=1: raise Fault('客户端构建标记必须恰好出现一次: '+BUILD_FILE,409)
+        files[BUILD_FILE]=data.replace(BUILD_PLACEHOLDER,source_identity(source)['source_sha256'].encode())
+    return files
 
 
 def no_links(path: Path) -> Path:
@@ -68,7 +81,9 @@ def stage(source: Path, dota: Path, apply=False, replace_managed=False):
             backup=dest.with_name(dest.name+'.source-backup-'+str(time.time_ns()))
             os.replace(dest,backup);backups.append(str(backup))
         shutil.copytree(source/folder,dest)
-        (dest/STAGE_MARKER).write_text(json.dumps({'schema':1,**identity,'files':tree_inventory(source/folder)},indent=2))
+        if folder=='content':
+            for name,data in staged_content(source).items(): (dest/name).write_bytes(data)
+        (dest/STAGE_MARKER).write_text(json.dumps({'schema':1,**identity,'files':tree_inventory(dest)},indent=2))
     return {'dry_run':False,'backups':backups,**identity,
         'next':'在 Workshop Tools 编译四个 Panorama 资源，collect 只收集不执行编译。'}
 
@@ -77,9 +92,9 @@ def collect(source: Path,dota: Path,output: Path):
     identity=source_identity(source)
     content=no_links(dota/'content/dota_addons'/ADDON_NAME)
     # Verify sources actually staged; no guess from filename or compiled mtime.
-    for name,meta in tree_inventory(source/'content').items():
+    for name,data in staged_content(source).items():
         p=content/name
-        if not p.is_file() or p.is_symlink() or hashlib.sha256(p.read_bytes()).hexdigest()!=meta['sha256']:
+        if not p.is_file() or p.is_symlink() or p.read_bytes()!=data:
             raise Fault('Tools 中 UI 源码与交付源码不同；重新 stage/编译或先合并修改',409)
     game=no_links(dota/'game/dota_addons'/ADDON_NAME)
     files={};manifest={}
