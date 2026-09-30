@@ -32,6 +32,7 @@
 </Button>
 </Panel>
 <Panel id="MatchBody">
+<Panel id="MatchMain">
 <Label class="ToolSection" text="对局" />
 <Button id="RestartMatch" class="ToolButton Danger">
 <Label id="RestartMatchText" hittest="false" text="restart：摧毁本局并重启一局游戏" />
@@ -71,7 +72,6 @@
 <Button id="QuickAbilityToggle" class="ToolButton">
 <Label id="QuickAbilityToggleText" hittest="false" text="快捷技能（36）▸" />
 </Button>
-<Panel id="QuickAbilityMenu" />
 <Label class="ToolSection" text="基础攻击间隔（秒）" />
 <Label class="Hint" text="按钮范围：初始值 ±0.3；聊天 -basetime 1.7 可直接设置" />
 <Panel class="BatButtons">
@@ -86,6 +86,8 @@
 </Button>
 </Panel>
 <Label id="ToolMessage" class="Message" text="选择操作" />
+</Panel>
+<Panel id="QuickAbilityMenu" />
 </Panel>
 </Panel>
 </Panel>

@@ -107,10 +107,18 @@ Button:disabled { opacity:0.35; }
 }
 #BuildWarning.Visible { visibility:visible; }
 
-/* Quick ability submenu: collapsed until the toggle is pressed, three buttons per row. */
-#QuickAbilityMenu { visibility:collapse; width:100%; flow-children:right-wrap; margin-top:3px; }
+/* Quick ability submenu: a second column beside the match tools, three buttons per row.
+   Opening it widens the window instead of making it taller, so no scrollbar appears. */
+#MatchMain { width:100%; flow-children:down; }
+#QuickAbilityMenu { visibility:collapse; flow-children:right-wrap; }
 #QuickAbilityMenu.Open { visibility:visible; }
-.QuickAbility { width:32%; margin:2px 1% 0px 0px; padding:5px 2px; }
+.QuickAbility { width:32%; margin:3px 1% 0px 0px; padding:5px 2px; }
 .QuickAbility Label { font-size:14px; horizontal-align:center; text-align:center; }
-#LANRoot.InMatch.QuickOpen #LANWindow { width:420px; }
+#LANRoot.InMatch.QuickOpen #LANWindow { width:620px; }
+#LANRoot.InMatch.QuickOpen #MatchBody { flow-children:right; }
+#LANRoot.InMatch.QuickOpen #MatchMain { width:245px; }
+#LANRoot.InMatch.QuickOpen #QuickAbilityMenu { width:fill-parent-flow(1); margin:6px 0px 0px 8px; }
+/* Match tools never scroll; content is squished rather than showing a side scrollbar. */
+#LANRoot.InMatch #LANWindow { overflow:squish squish; max-height:100%; }
+#LANRoot.InMatch #MatchBody { overflow:squish squish; max-height:100%; }
 .QuickAbility.Owned { background-color:#24636b; border:1px solid #52969c; }
