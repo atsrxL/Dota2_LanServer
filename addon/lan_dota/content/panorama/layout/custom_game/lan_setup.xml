@@ -58,7 +58,7 @@
 <Label hittest="false" text="给对方 Bot +1 级" />
 </Button>
 <Label class="ToolSection" text="添加技能" />
-<Label class="Hint" text="输入添加：非先天技能需手动加点；只能删除面板添加的技能" />
+<Label class="Hint" text="输入添加：非先天技能需手动加点；只能删除面板添加的技能。快捷技能再点一次即移除" />
 <TextEntry id="AbilityName" maxchars="128" placeholder="粘贴技能内部名称" />
 <Panel class="AbilityButtons">
 <Button id="AddAbilityName">

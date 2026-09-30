@@ -49,8 +49,18 @@ assert(!all.get('QuickAbilityMenu').classes.Open && all.get('QuickAbilityToggleT
 all.get('QuickAbilityToggle').events.onactivate();
 assert(all.get('QuickAbilityMenu').classes.Open && all.get('QuickAbilityToggleText').text.includes('▾'));
 const quick=all.get('QuickAbilityMenu').children;
-assert(quick.length===36 && quick.every(b=>b.id.startsWith('Quick_') && b.children[0].text));
+assert(quick.length===36 && quick.every(b=>b.id.startsWith('Quick_') && b.children[0].text && b.classes.Owned===false));
 for(const b of quick){b.events.onactivate();assert(sent.at(-1).tool==='self_ability_'+b.id.slice(6));}
+// Owned quick abilities are marked and a click removes them instead of adding.
+sandbox.Players={GetPlayerHeroEntityIndex:()=>7};
+sandbox.Entities={GetAbilityByName:(hero,name)=>hero===7&&name==='tinker_eureka'?42:-1};
+handlers.lan_reply({ok:1,message:'ok'});
+assert(all.get('Quick_tinker_eureka').classes.Owned && all.get('Quick_tinker_eureka_Label').text==='✓ 尤里卡！');
+assert(!all.get('Quick_centaur_horsepower').classes.Owned && all.get('Quick_centaur_horsepower_Label').text==='开足马力');
+all.get('Quick_tinker_eureka').events.onactivate();
+assert(sent.at(-1).tool==='self_remove_ability' && sent.at(-1).ability_name==='tinker_eureka');
+all.get('Quick_centaur_horsepower').events.onactivate();assert(sent.at(-1).tool==='self_ability_centaur_horsepower');
+delete sandbox.Players;delete sandbox.Entities;
 all.get('QuickAbilityToggle').events.onactivate();assert(!all.get('QuickAbilityMenu').classes.Open);
 
 assert(!all.has('Difficulty') && !all.has('bot_protection') && !all.has('radiant_lvl_start') && !all.has('dire_lvl_start'));

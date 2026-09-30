@@ -128,10 +128,29 @@ function buildQuickAbilityMenu(){
  var menu=el('QuickAbilityMenu');
  QUICK_ABILITIES.forEach(function(a){
   var button=$.CreatePanel('Button',menu,'Quick_'+a[0],{class:'QuickAbility'});
-  var label=$.CreatePanel('Label',button,'',{text:a[1]});label.hittest=false;
-  button.SetPanelEvent('onactivate',function(){msg('正在添加 '+a[1]+'…');send('match_tool',{tool:'self_ability_'+a[0]});});
-  button.SetPanelEvent('onmouseover',function(){$.DispatchEvent('DOTAShowTextTooltip',button,a[2]+' · '+a[0]);});
+  var label=$.CreatePanel('Label',button,'Quick_'+a[0]+'_Label',{text:a[1]});label.hittest=false;
+  // A second click on an owned ability removes it (the server only removes panel-added ones).
+  button.SetPanelEvent('onactivate',function(){
+   if(heroHasAbility(a[0])){msg('正在移除 '+a[1]+'…');send('match_tool',{tool:'self_remove_ability',ability_name:a[0]});}
+   else{msg('正在添加 '+a[1]+'…');send('match_tool',{tool:'self_ability_'+a[0]});}
+  });
+  button.SetPanelEvent('onmouseover',function(){
+   $.DispatchEvent('DOTAShowTextTooltip',button,a[2]+' · '+a[0]+(heroHasAbility(a[0])?'（已拥有，点击移除）':''));
+  });
   button.SetPanelEvent('onmouseout',function(){$.DispatchEvent('DOTAHideTextTooltip',button);});
+ });
+}
+function heroHasAbility(name){
+ if(typeof Players==='undefined'||typeof Entities==='undefined')return false;
+ var hero=Players.GetPlayerHeroEntityIndex(Game.GetLocalPlayerID());
+ return hero!==-1 && Entities.GetAbilityByName(hero,name)!==-1;
+}
+// Owned abilities are highlighted and marked with ✓; refreshed on every poll and reply.
+function refreshQuickAbilities(){
+ QUICK_ABILITIES.forEach(function(a){
+  var owned=heroHasAbility(a[0]);
+  el('Quick_'+a[0]).SetHasClass('Owned',owned);
+  el('Quick_'+a[0]+'_Label').text=(owned?'✓ ':'')+a[1];
  });
 }
 var quickAbilitiesOpen=false;
@@ -171,8 +190,8 @@ el('AbilityName').SetPanelEvent('oninputsubmit',addTypedAbility);
 el('Toggle').SetPanelEvent('onactivate',function(){collapsed=!collapsed;render(state);});
 var errors={solo_requires_one_player:'单人模式只允许一名真人连接。',bot_snapshot_missing:'尚未加载 AI 脚本。',invalid_options:'参数无效，请检查设置。',invalid_number:'参数超出允许范围。',bot_populate_requires_explicit_cheats:'服务器需要开启 sv_cheats 后重开。',stale_revision:'状态已更新，请重试。',only_host_can_restart:'只有房主可以重启对局。',restart_already_requested:'已在重启中，请稍候。',engine_not_ready:'服务器尚未就绪。'};
 var notices={restart_requested:'已请求重启：服务器即将关闭并重开，约 30 秒后重新连接。'};
-GameEvents.Subscribe('lan_reply',function(r){pending=false;msg(yes(r.ok)?(r.message&&r.message!=='ok'?(notices[r.message]||r.message):'设置已确认。'):(errors[r.message]||String(r.message)));render(state);});
+GameEvents.Subscribe('lan_reply',function(r){pending=false;refreshQuickAbilities();msg(yes(r.ok)?(r.message&&r.message!=='ok'?(notices[r.message]||r.message):'设置已确认。'):(errors[r.message]||String(r.message)));render(state);});
 CustomNetTables.SubscribeNetTableListener('lan_room',function(_,key,v){if(key==='state')render(v);});
-function poll(){if(!context.IsValid())return;var s=CustomNetTables.GetTableValue('lan_room','state');render(s);var ps=s?Object.keys(s.players||{}).map(function(k){return s.players[k];}):[];if(!ps.some(function(p){return Number(p.pid)===Game.GetLocalPlayerID()&&yes(p.hello);}))send('hello');$.Schedule(2,poll);}
+function poll(){if(!context.IsValid())return;var s=CustomNetTables.GetTableValue('lan_room','state');render(s);refreshQuickAbilities();var ps=s?Object.keys(s.players||{}).map(function(k){return s.players[k];}):[];if(!ps.some(function(p){return Number(p.pid)===Game.GetLocalPlayerID()&&yes(p.hello);}))send('hello');$.Schedule(2,poll);}
 poll();
 })();
