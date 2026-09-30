@@ -8,6 +8,12 @@
 - 代码目录 `/opt/dota2-lan-kit`（不是 git 检出，以 `BUILD.json` / `DEPLOYED.json` 记录版本）；状态目录 `/var/lib/dota2`。
 - 面板和代理服务：`dota-panel`、`dota-agent`。重启 `dota-agent` 会结束正在运行的游戏。
 
+## 2026-09-30 · 代码 ee4a1b8 + r28
+
+- 快捷技能二级菜单改为每行 3 个；已拥有的技能显示 ✓ 并高亮，再点一次发送移除。
+- `deploy_kit.py` 部署后运行 `release.py --version r28 --restart`：部署源码与代码目录一致，都是 `707bcee0f70f`；没有错误，客户端包 r28 与服务器一致。
+- 尚未实测：游戏内每行 3 个的排版，以及点击移除。
+
 ## 2026-09-28 · 下载参考地图 Workshop 2781880190
 
 - 用 steam 用户和缓存登录手动跑 SteamCMD `workshop_download_item 570 2781880190 validate`，`force_install_dir` 设为独立目录 `/var/lib/dota2/workshop-ref`，没有动 `/srv/dota2` 和面板任务；当时没有正在执行的任务，游戏服照常运行。
