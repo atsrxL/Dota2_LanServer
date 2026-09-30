@@ -48,6 +48,10 @@ all.get('BatReset').events.onactivate();assert(sent.at(-1).tool==='self_bat_rese
 assert(!all.get('QuickAbilityMenu').classes.Open && all.get('QuickAbilityToggleText').text.includes('▸'));
 all.get('QuickAbilityToggle').events.onactivate();
 assert(all.get('QuickAbilityMenu').classes.Open && all.get('QuickAbilityToggleText').text.includes('▾'));
+assert(all.get('LANRoot').classes.QuickOpen);
+// Collapsing the match window drops the wide layout; expanding restores it.
+all.get('Toggle').events.onactivate();assert(!all.get('LANRoot').classes.QuickOpen);
+all.get('Toggle').events.onactivate();assert(all.get('LANRoot').classes.QuickOpen);
 const quick=all.get('QuickAbilityMenu').children;
 assert(quick.length===36 && quick.every(b=>b.id.startsWith('Quick_') && b.children[0].text && b.classes.Owned===false));
 for(const b of quick){b.events.onactivate();assert(sent.at(-1).tool==='self_ability_'+b.id.slice(6));}
@@ -61,7 +65,7 @@ all.get('Quick_tinker_eureka').events.onactivate();
 assert(sent.at(-1).tool==='self_remove_ability' && sent.at(-1).ability_name==='tinker_eureka');
 all.get('Quick_centaur_horsepower').events.onactivate();assert(sent.at(-1).tool==='self_ability_centaur_horsepower');
 delete sandbox.Players;delete sandbox.Entities;
-all.get('QuickAbilityToggle').events.onactivate();assert(!all.get('QuickAbilityMenu').classes.Open);
+all.get('QuickAbilityToggle').events.onactivate();assert(!all.get('QuickAbilityMenu').classes.Open && !all.get('LANRoot').classes.QuickOpen);
 
 assert(!all.has('Difficulty') && !all.has('bot_protection') && !all.has('radiant_lvl_start') && !all.has('dire_lvl_start'));
 assert(sent.find(x=>x.action==='solo_start').options.dire_difficulty===4);

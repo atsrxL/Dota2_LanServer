@@ -56,6 +56,7 @@ function render(s){
  if(!s)return;state=s;
  if(lastPhase!==s.phase){lastPhase=s.phase;collapsed=['hero_selection','pregame','playing','postgame'].indexOf(s.phase)>=0;}
  el('LANRoot').SetHasClass('Compact',collapsed);
+ el('LANRoot').SetHasClass('QuickOpen',quickAbilitiesOpen&&!collapsed);
  var inMatch=['pregame','playing','postgame'].indexOf(s.phase)>=0;
  el('LANRoot').SetHasClass('InMatch',inMatch);
  el('MenuTitle').text=inMatch?'对局操作':'游戏选项';
@@ -157,6 +158,8 @@ var quickAbilitiesOpen=false;
 function setQuickAbilitiesOpen(open){
  quickAbilitiesOpen=open;
  el('QuickAbilityMenu').SetHasClass('Open',open);
+ // The match window widens only while the submenu is open and the window is expanded.
+ el('LANRoot').SetHasClass('QuickOpen',open&&!collapsed);
  el('QuickAbilityToggleText').text='快捷技能（'+QUICK_ABILITIES.length+'）'+(open?'▾':'▸');
 }
 buildQuickAbilityMenu();
